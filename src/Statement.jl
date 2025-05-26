@@ -3,7 +3,7 @@ abstract type AbstractStatement <: AbstractExpression end
 
 struct EvalContext
   namespace::AbstractNamespace
-  stack::Vector{Any}
+  stack::Vector{Tuple{AbstractStatement,Any}}
 end
 
 struct TemplateCallArgument
@@ -23,6 +23,14 @@ function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObjec
   if template === nothing
     return NameError("Template named $(call.templatename) not found in namespace", call.templatename, ctx.namespace, call.stack)
   end
+  while length(ctx.stack) > 0 && last(ctx.stack)[1].indent >= call.indent
+    pop!(ctx.stack)
+  end
+  parent = length(ctx.stack) > 0 ? last(ctx.stack)[2] : nothing
+  comp = template(call.arguments, ctx.namespace, parent)
+  parent === nothing || push!(parent, comp)
+  push!(ctx.stack, (call, comp))
+  comp
 end
 
 struct ECode <: EObject
@@ -34,7 +42,7 @@ function eval!(ctx::EvalContext, code::ECode)::Union{Nothing,EObject}
     val = eval!(ctx, statement::AbstractStatement)
     iserror(val) && return val
   end
-  length(ctx.stack) > 0 ? first(ctx.stack) : nothing
+  length(ctx.stack) > 0 ? first(ctx.stack)[2] : nothing
 end
 
 

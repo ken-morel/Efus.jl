@@ -5,7 +5,7 @@ abstract type AbstractFileLocation end
 @enum LocatedArroundSide BEFORE AFTER AT
 
 
-iserror(e::Any) = typeof(e) <: AbstractError
+iserror(e::Any) = isa(e, AbstractError)
 struct ParserStack
   file::String
   location::AbstractFileLocation

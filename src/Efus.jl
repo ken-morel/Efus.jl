@@ -1,8 +1,4 @@
 module Efus
-
-export Parser
-
-
 include("Objects.jl")
 include("Errors.jl")
 include("TemplateBackends.jl")
