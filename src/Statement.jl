@@ -4,6 +4,8 @@ abstract type AbstractStatement <: AbstractExpression end
 struct EvalContext
   namespace::AbstractNamespace
   stack::Vector{Tuple{AbstractStatement,Any}}
+  EvalContext(namespace::AbstractNamespace, stack::Vector{Tuple{AbstractStatement,Any}}) = new(namespace, stack)
+  EvalContext() = new(Namespace(), [])
 end
 
 struct TemplateCallArgument
@@ -12,6 +14,7 @@ struct TemplateCallArgument
 end
 
 struct TemplateCall <: AbstractStatement
+  templatemod::Union{Symbol,Nothing}
   templatename::Symbol
   objectalias::Union{Symbol,Nothing}
   arguments::Vector{TemplateCallArgument}
@@ -33,6 +36,29 @@ function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObjec
   comp
 end
 
+
+struct EUsing <: AbstractStatement
+  mod::Symbol
+  imports::Union{Nothing,Vector{Symbol}}
+  stack::ParserStack
+  indent::Int
+end
+function eval!(ctx::EvalContext, eusing::EUsing)::Union{AbstractError,Nothing}
+  mod = getmodule(eusing.mod)
+  mod === nothing && return ImportError("Could not import module $(eusing.mod)", eusing.stack)
+  if eusing.imports === nothing
+    for tmpl ∈ mod.templates
+      addtemplate!(ctx.namespace, tmpl)
+    end
+  else
+    for tmplname ∈ eusing.imports
+      templ = gettemplate(mod, tmplname)
+      templ === nothing && return ImportError("Could not import template $tmplname from module $(eusing.mod)", eusing.stack)
+      addtemplate!(ctx.namespace, templ)
+    end
+  end
+end
+
 struct ECode <: EObject
   statements::Vector{AbstractStatement}
   filename::String
@@ -43,6 +69,9 @@ function eval!(ctx::EvalContext, code::ECode)::Union{Nothing,EObject}
     iserror(val) && return val
   end
   length(ctx.stack) > 0 ? first(ctx.stack)[2] : nothing
+end
+function eval!(code::ECode)::Union{Nothing,EObject}
+  eval!(EvalContext(), code)
 end
 
 
@@ -55,13 +84,11 @@ struct NameError <: AbstractError
   NameError(msg::String, name::Symbol, namespace::AbstractNamespace, stacks::Vector{ParserStack}) = new(msg, stacks, name, namespace)
   NameError(msg::String, name::Symbol, namespace::AbstractNamespace, stack::ParserStack) = new(msg, ParserStack[stack], name, namespace)
 end
-getstacks(e::NameError) = e.stacks
-function prependstack!(e::NameError, stack::ParserStack)::NameError
-  pushfirst!(e.stacks, stack)
-  e
+
+struct ImportError <: AbstractError
+  message::String
+  stacks::Vector{ParserStack}
+  ImportError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
+  ImportError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
 end
-function format(error::NameError)::String
-  stacktrace = join(format.(getstacks(error)) .* "\n")
-  message = String(nameof(typeof(error))) * ": " * error.message
-  stacktrace * message
-end
+

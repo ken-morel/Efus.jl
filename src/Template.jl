@@ -14,6 +14,15 @@ struct Template <: EObject
   backend::TemplateBackend
   parameters::Vector{TemplateParameter}
 end
+struct TemplateModule
+  name::Symbol
+  templates::Vector{Template}
+end
+function gettemplate(mod::TemplateModule, templatename::Symbol)::Union{Template,Nothing}
+  index = findfirst(tmpl -> tmpl.name == templatename, mod.templates)
+  index === nothing && return nothing
+  mod.templates[index]
+end
 
 
 struct ComponentParameter
@@ -29,9 +38,13 @@ struct Component <: EObject
   children::Vector{Component}
   mount::Union{Nothing,AbstractMount}
 end
-mount!(component::Component)::Union{Nothing,AbstractMount} = component.template.backend.mount(component)
-unmount!(component::Component) = component.template.backend.unmount(component)
-update!(component::Component) = component.template.backend.update(component)
+
+mount!(_::TemplateBackend, _::Component) = throw("Mounting not supported by backend")
+unmount!(_::TemplateBackend, _::Component) = throw("Unmounting not supported by backend")
+update!(_::TemplateBackend, _::Component) = throw("Updating not supported by backend")
+mount!(component::Component)::Union{Nothing,AbstractMount} = mount!(component.template.backend, component)
+unmount!(component::Component) = unmount!(component.template.backend, component)
+update!(component::Component) = update!(component.template.backend, component)
 function Base.getindex(comp::Component, key::Symbol)
   val = get(comp.params, key, nothing)
   val === nothing && return missing

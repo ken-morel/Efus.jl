@@ -1,5 +1,12 @@
 abstract type AbstractError <: EObject end
 Base.display(error::AbstractError) = println(format(error))
+getstacks(e::AbstractError) = e.stacks
+
+function format(error::AbstractError)::String
+  stacktrace = join(format.(getstacks(error)) .* "\n")
+  message = String(nameof(typeof(error))) * ": " * error.message
+  stacktrace * message
+end
 
 abstract type AbstractFileLocation end
 @enum LocatedArroundSide BEFORE AFTER AT
@@ -19,7 +26,10 @@ function format(stack::ParserStack)::String
   sample = styleunderline(stack.location, stack.line)
   location * ":\n" * sample
 end
-
+function prependstack!(e::T, stack::ParserStack)::T where T<:AbstractError
+  pushfirst!(e.stacks, stack)
+  e
+end
 
 
 
@@ -47,6 +57,6 @@ struct LocatedBetween <: AbstractFileLocation
 end
 format(loc::LocatedBetween)::String = "line $(loc.line), between column $(loc.from) and $(loc.to)"
 function styleunderline(location::LocatedBetween, line::String)::String
-  underline = " "^(location.from - 1) * "~"^(location.to - location.from)
+  underline = " "^(location.from - 1) * "~"^(location.to - location.from + 1)
   line * "\n" * underline
 end

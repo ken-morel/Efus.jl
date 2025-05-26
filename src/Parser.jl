@@ -1,6 +1,17 @@
 const SYMBOL::Regex = r"\w[\w\d]*"
 const SPACES = " \t"
 
+macro efus_str(text::String)
+  parse!(Parser(; text=text))
+end
+macro efuseval_str(text::String)
+  code = parse!(Parser(; text=text))
+  iserror(code) && return code
+  ctx = EvalContext()
+  eval!(ctx, code)
+end
+
+
 mutable struct Parser
   text::String
   index::UInt
@@ -10,6 +21,9 @@ mutable struct Parser
       return new(read(f, String), 1, file)
     end
   end
+  function Parser(; text::String, file::String="<string>")
+    return new(text, 1, file)
+  end
 end
 
 """
@@ -17,13 +31,22 @@ end
 Strips the text before the cursor if index is after end of text.
 """
 beforecursor(parser::Parser)::String = parser.text[begin:min(parser.index, length(parser.text))]
+beforecursor(parser::Parser, idx::Integer)::String = parser.text[begin:min(idx, length(parser.text))]
 aftercursor(parser::Parser)::String = parser.text[min(parser.index, length(parser.text)):end]
+aftercursor(parser::Parser, idx::Integer)::String = parser.text[min(idx, length(parser.text)):end]
 line(parser::Parser)::Int = 1 + count('\n', beforecursor(parser))
+line(parser::Parser, idx::Integer)::Integer = one(idx) + count('\n', beforecursor(parser, idx))
 char(parser::Parser)::Union{Char,Nothing} = parser.index <= length(parser.text) ? parser.text[parser.index] : nothing
+char(parser::Parser, idx::Integer)::Union{Char,Nothing} = idx <= length(parser.text) ? parser.text[idx] : nothing
 function col(parser::Parser)::Int
   text = beforecursor(parser)
-  last_newline = '\n' in text ? findlast('\n', text) : 1
-  length(text[last_newline:end])
+  after_last_newline = '\n' in text ? findlast('\n', text) + 1 : 1
+  length(text[after_last_newline:end])
+end
+function col(parser::Parser, idx::Integer)::Int
+  text = beforecursor(parser, idx)
+  after_last_newline = '\n' in text ? findlast('\n', text) + 1 : 1
+  length(text[after_last_newline:end])
 end
 function skipspaces!(parser::Parser)::Union{Int,Nothing}
   start = parser.index
@@ -59,9 +82,7 @@ function parsesymbol!(parser::Parser)::Union{String,Nothing}
   m.match
 end
 function getline(parser::Parser)::String
-  after = findfirst('\n', aftercursor(parser))
-  before = findlast('\n', beforecursor(parser))
-  strip(parser.text[(before !== nothing ? before : 1):(after !== nothing ? after : length(parser.text))], '\n')
+  split(parser.text, '\n')[line(parser)]
 end
 function skipemptylines!(parser::Parser)::Int
   skept = 0
@@ -93,7 +114,7 @@ function parse!(parser::Parser)::Union{ECode,Nothing,AbstractError}
     skipemptylines!(parser)
     parser.index > length(parser.text) && break
     parser.text[parser.index:end] ⊆ (SPACES * '\n') && break
-    statement = parsenextstatement!(parser)
+    statement = parsestatement!(parser)
     iserror(statement) && return statement
     statement === nothing && return SyntaxError("Unexpected statement", ParserStack(parser, AFTER, "in statement"))
     push!(statements, statement)
@@ -101,14 +122,50 @@ function parse!(parser::Parser)::Union{ECode,Nothing,AbstractError}
   ECode(statements, parser.filename)
 end
 
-function parsenextstatement!(parser::Parser)::Union{AbstractStatement,Nothing,AbstractError}
+function parsestatement!(parser::Parser)::Union{AbstractStatement,Nothing,AbstractError}
   resetiferror(parser) do
-    tests = [parsetemplatecall!]
+    tests = [parseusing!, parsetemplatecall!]
     for test! in tests
       value = test!(parser)
       value === nothing || return value
     end
     nothing
+  end
+end
+function parseusing!(parser::Parser)::Union{EUsing,Nothing,AbstractError}
+  resetiferror(parser) do
+    start = parser.index
+    if parsesymbol!(parser) == "using"
+      stack = ParserStack(parser, AFTER, "in using statement")
+      skipspaces!(parser)
+      mod = parsesymbol!(parser)
+      skipspaces!(parser)
+      mod === nothing && return SyntaxError("Expected module name in using statement", ParserStack(parser, AFTER, "after using keyword"))
+      if char(parser) == ':'
+        parser.index += 1
+        skipspaces!(parser)
+        importnames = Symbol[]
+        while true
+          name = parsesymbol!(parser)
+          name === nothing && return SyntaxError("Unexpected tokens in using statement list", ParserStack(parser, AFTER, "in using statement"))
+          push!(importnames, Symbol(name))
+          skipspaces!(parser)
+          char(parser) == '\n' && break
+          if char(parser) == ','
+            parser.index += 1
+            skipspaces!(parser)
+          else
+            return SyntaxError("Unexpected token in using statement", ParserStack(parser, AT, "in using statement imports list"))
+          end
+        end
+        EUsing(Symbol(mod), importnames, stack, 0)
+      else
+        EUsing(Symbol(mod), nothing, stack, 0)
+      end
+    else
+      parser.index = start
+      nothing
+    end
   end
 end
 
@@ -122,7 +179,14 @@ function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,Abstract
       "in template call",
     )
     templatename = parsesymbol!(parser)
+    modname = nothing
     templatename === nothing && return nothing
+    if char(parser) == '.'
+      modname = Symbol(templatename)
+      parser.index += 1
+      templatename = parsesymbol!(parser)
+      templatename === nothing && return SyntaxError("Expected module template name", ParserStack(parser, AT, "in template name"))
+    end
     alias = if char(parser) === '&'
       parser.index += 1
       symbol = parsesymbol!(parser)
@@ -139,7 +203,7 @@ function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,Abstract
     if iserror(parse)
       prependstack!(parse, stack)
     else
-      TemplateCall(Symbol(templatename), Symbol(alias), parse, indent === nothing ? 0 : indent, stack)
+      TemplateCall(modname, Symbol(templatename), Symbol(alias), parse, indent === nothing ? 0 : indent, stack)
     end
   end
 end
@@ -208,7 +272,7 @@ function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractError}
   start = parser.index
   while true
     n = nextinline!(parser, "in string literal")
-    iserror(n) && return SyntaxError("Unterminated string literal", ParserStack(parser, start:parser.index+1, "in string literal"))
+    iserror(n) && return SyntaxError("Unterminated string literal", ParserStack(parser, col(parser, start):col(parser, parser.index), "in string literal"))
     if char(parser) == '\\'
       parser.index += 1
       continue
