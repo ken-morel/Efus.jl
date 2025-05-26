@@ -5,8 +5,8 @@ struct TemplateParameter
   required::Bool
   TemplateParameter(pair::Pair{Symbol,DataType})::TemplateParameter =
     new(first(pair), last(pair), nothing, true)
-  #TemplateParameter(pair::Pair{Symbol,Pair{DataType,Any}})::TemplateParameter =
-  #  new(first(pair), first(last(pair)), last(last(pair)))
+  TemplateParameter(pair::Pair{Symbol,<:Pair{DataType,<:EObject}})::TemplateParameter =
+    new(first(pair), first(last(pair)), last(last(pair)))
 end
 Base.convert(::Type{TemplateParameter}, pair::Pair)::TemplateParameter = TemplateParameter(pair)
 struct Template <: EObject
@@ -52,7 +52,7 @@ function Base.getindex(comp::Component, key::Symbol)
 end
 
 Base.push!(parent::Component, child::Component) = push!(parent.children, child)
-function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing})::Union{Component,AbstractError}
+function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractError}
   params::Dict{Symbol,ComponentParameter} = Dict()
   arguments = arguments[:]
   for parameter ∈ template.parameters
@@ -64,13 +64,16 @@ function (template::Template)(arguments::Vector, namespace::AbstractNamespace, p
         return TemplateCallError(
           "Missing value for required parameter $(parameter.name) to template $(template.name)",
           template,
-          ParserStack[]
+          stack === nothing ? ParserStack[] : ParserStack[stack]
         )
       else
         push!(params, ComponentParameter(parameter, parameter.default))
       end
     else
       argument = popat!(arguments, index)
+      if !isa(argument.value, parameter.type)
+        return ETypeError("argument of type $(typeof(argument.value)) does not match spec of parameter $(parameter.name)::$(parameter.type) of template $(template.name)", argument.stack)
+      end
       params[parameter.name] = ComponentParameter(parameter, argument.value)
     end
   end
@@ -79,7 +82,7 @@ function (template::Template)(arguments::Vector, namespace::AbstractNamespace, p
     return TemplateCallError(
       "extra argument $(arg.name) to template $(template.name)",
       template,
-      ParserStack[]
+      ParserStack[arg.stack]
     )
   end
   return Component(template, params, namespace, parent, Component[], nothing)
@@ -93,13 +96,9 @@ struct TemplateCallError <: AbstractError
   TemplateCallError(msg::String, template::Template, stacks::Vector{ParserStack}) = new(msg, stacks, template)
   TemplateCallError(msg::String, template::Template, stack::ParserStack) = new(msg, ParserStack[stack], template)
 end
-getstacks(e::TemplateCallError) = e.stacks
-function prependstack!(e::TemplateCallError, stack::ParserStack)::TemplateCallError
-  pushfirst!(e.stacks, stack)
-  e
-end
-function format(error::TemplateCallError)::String
-  stacktrace = join(format.(getstacks(error)) .* "\n")
-  message = String(nameof(typeof(error))) * ": " * error.message
-  stacktrace * message
+struct ETypeError <: AbstractError
+  message::String
+  stacks::Vector{ParserStack}
+  ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
+  ETypeError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
 end

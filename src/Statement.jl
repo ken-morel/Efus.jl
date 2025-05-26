@@ -11,6 +11,7 @@ end
 struct TemplateCallArgument
   name::Symbol
   value::EObject
+  stack::ParserStack
 end
 
 struct TemplateCall <: AbstractStatement
@@ -30,7 +31,7 @@ function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObjec
     pop!(ctx.stack)
   end
   parent = length(ctx.stack) > 0 ? last(ctx.stack)[2] : nothing
-  comp = template(call.arguments, ctx.namespace, parent)
+  comp = template(call.arguments, ctx.namespace, parent, call.stack)
   parent === nothing || push!(parent, comp)
   push!(ctx.stack, (call, comp))
   comp

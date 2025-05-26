@@ -3,7 +3,7 @@ println("Starting to run")
 
 
 module Gtk
-using ..Efus: Efus, AbstractMount, AbstractError, TemplateBackend, Component, Template, TemplateParameter, EString
+using ..Efus: Efus, AbstractMount, AbstractError, TemplateBackend, Component, Template, TemplateParameter, EString, EDecimal, ESize
 using Gtk4
 
 @kwdef struct GtkMount <: AbstractMount
@@ -22,11 +22,13 @@ templates = [
     :Window,
     GtkBackend(
       mounter=function (component)
-        component.mount = GtkMount(GtkWindow(component[:title]))
+        size = component[:size].value
+        component.mount = GtkMount(GtkWindow(component[:title], size...))
       end,
     ),
     TemplateParameter[
-      :title=>EString
+      :title => EString
+      :size => ESize{Int,:px} => ESize((500, 300), :px)
     ],
   ),
 ]
@@ -46,7 +48,7 @@ using .Efus: @efuseval_str, AbstractError, EvalContext, eval!, mount!
 component = efuseval"""
 using Gtk: Window
 
-Window title="Hello world
+Window title="I love" size=500x300px
 """
 if typeof(component) <: AbstractError
   display(component)

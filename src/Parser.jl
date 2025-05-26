@@ -1,5 +1,6 @@
 const SYMBOL::Regex = r"\w[\w\d]*"
 const SPACES = " \t"
+const ESIZE = r"(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)(\w+)?"
 
 macro efus_str(text::String)
   parse!(Parser(; text=text))
@@ -57,9 +58,17 @@ function skipspaces!(parser::Parser)::Union{Int,Nothing}
   parser.index - start
 end
 location(parser::Parser)::Tuple{Int,Int} = (line(parser), col(parser))
-ParserStack(parser::Parser, side::LocatedArroundSide, inside::String)::ParserStack = ParserStack(parser.filename, LocatedArround(side, location(parser)...), getline(parser), inside)
-function ParserStack(parser::Parser, range::UnitRange{<:Integer}, inside::String)::ParserStack
-  ParserStack(parser.filename, LocatedBetween(line(parser), first(range), last(range)), getline(parser), inside)
+function ParserStack(parser::Parser, side::LocatedArroundSide, inside::String; add::Int=0)::ParserStack
+  parser.index += add
+  stack = ParserStack(parser.filename, LocatedArround(side, location(parser)...), getline(parser), inside)
+  parser.index -= add
+  stack
+end
+function ParserStack(parser::Parser, range::UnitRange{<:Integer}, inside::String; add::Int=0)::ParserStack
+  parser.index += add
+  stack = ParserStack(parser.filename, LocatedBetween(line(parser), first(range), last(range)), getline(parser), inside)
+  parser.index -= add
+  stack
 end
 function nextinline!(parser::Parser, inside::String="<here>")::Union{Nothing,AbstractError}
   resetiferror(parser) do
@@ -224,15 +233,17 @@ end
 
 function parsetemplatecallargument!(parser::Parser)::Union{TemplateCallArgument,Nothing,AbstractError}
   resetiferror(parser) do
+    start = parser.index
     name = parsesymbol!(parser)
     iserror(name) && return name
     name === nothing && return nothing
-    char(parser) != '=' && return SyntaxError("Expected equal to sign after template all argument name", ParserStack(parser, AFTER, "after template call argument parameter name"))
+    char(parser) != '=' && return SyntaxError("Expected equal to sign after template all argument name", ParserStack(parser, AFTER, "after template call argument parameter name"; add=-1))
     parser.index += 1
     value = parsevalue!(parser)
     value === nothing && return SyntaxError("Expected value after equal to sign", ParserStack(parser, AT, "in template call argument key=value pair"))
     iserror(value) && return value
-    TemplateCallArgument(Symbol(name), value)
+    stack = ParserStack(parser, col(parser, start):col(parser, parser.index - 1), "in template call argument"; add=-1)
+    TemplateCallArgument(Symbol(name), value, stack)
   end
 end
 
@@ -244,7 +255,17 @@ function resetiferror(func::Function, parser::Parser)
   end
   value
 end
-
+function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractError}
+  m = match(ESIZE, parser.text, parser.index)
+  m === nothing || m.offset != parser.index && return nothing
+  parser.index += length(m.match)
+  vals = if '.' in m[1] * m[2]
+    parse(Float32, m[1]), parse(Float32, m[2])
+  else
+    parse(Int, m[1]), parse(Int, m[2])
+  end
+  ESize(vals, m[3] === nothing ? nothing : Symbol(m[3]))
+end
 function parseeint!(parser::Parser)::Union{EInt,Nothing,AbstractError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing
   resetiferror(parser) do
@@ -267,6 +288,32 @@ function parseeint!(parser::Parser)::Union{EInt,Nothing,AbstractError}
     EInt(parse(Int, beforecursor(parser)[start:end]))
   end
 end
+function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractError}
+  char(parser) in "+-" || isdigit(char(parser)) || return nothing
+  resetiferror(parser) do
+    start = parser.index
+    if char(parser) in "-+"
+      val = nextinline!(parser, "in decimal literal")
+      iserror(val) && return val
+    end
+    dec = false
+    while true
+      if char(parser) == '.'
+        dec && return SyntaxError("Second decimal point in decimal literal", ParserStack(parser, AT, "in decimal literal"))
+        dec = true
+      elseif char(parser) == ' '
+        break
+      elseif !isdigit(char(parser))
+        return SyntaxError("Unexpected charater in decimal literal", ParserStack(parser, AT, "in integer literal"))
+      end
+      if iserror(nextinline!(parser))
+        parser.index += 1
+        break
+      end
+    end
+    EDecimal(parse(Float32, beforecursor(parser)[start:end]))
+  end
+end
 function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractError}
   char(parser) != '"' && return nothing
   start = parser.index
@@ -286,7 +333,7 @@ end
 
 
 function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractError}
-  tests = [parseeint!, parseestring!]
+  tests = [parseesize!, parseedecimal!, parseeint!, parseestring!]
   for test! in tests
     value = test!(parser)
     value === nothing || return value
