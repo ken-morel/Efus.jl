@@ -1,3 +1,5 @@
+export Parser, @efus_str, @efuseval_str
+
 const SYMBOL::Regex = r"\w[\w\d]*"
 const SPACES = " \t"
 const ESIZE = r"(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)(\w+)?"
@@ -11,17 +13,19 @@ macro efuseval_str(text::String)
   ctx = EvalContext()
   eval!(ctx, code)
 end
+macro efuseval_str(text::String, mod::String)
+  namespace = ModuleNamespace(eval(Symbol(mod)))
+  code = parse!(Parser(; text=text))
+  iserror(code) && return code
+  ctx = EvalContext(namespace)
+  eval!(ctx, code)
+end
 
 
 mutable struct Parser
   text::String
   index::UInt
   filename::String
-  function Parser(; file::String)
-    open(file) do f
-      return new(read(f, String), 1, file)
-    end
-  end
   function Parser(; text::String, file::String="<string>")
     return new(text, 1, file)
   end
@@ -257,7 +261,9 @@ function resetiferror(func::Function, parser::Parser)
 end
 function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractError}
   m = match(ESIZE, parser.text, parser.index)
-  m === nothing || m.offset != parser.index && return nothing
+  if m === nothing || m.offset != parser.index
+    return nothing
+  end
   parser.index += length(m.match)
   vals = if '.' in m[1] * m[2]
     parse(Float32, m[1]), parse(Float32, m[2])
@@ -330,16 +336,60 @@ function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractError}
   end
   EString(parser.text[start+1:parser.index-2])
 end
-
+function parsekwconstant!(parser::Parser)::Union{EObject,Nothing}
+  start = parser.index
+  word = parsesymbol!(parser)
+  value = if word == "true"
+    EBool(true)
+  elseif word == "false"
+    EBool(false)
+  elseif word in ["left", "right", "top", "bottom", "center"]
+    ESide(Symbol(word))
+  elseif word in ["vertical", "horizontal"]
+    EOrient(Symbol(word))
+  else
+    nothing
+  end
+  if value === nothing
+    parser.index = start
+  end
+  value
+end
+function parseeexpr!(parser::Parser)::Union{AbstractError,EExpr,Nothing}
+  char(parser) != '(' && return nothing
+  resetiferror(parser) do
+    start = parser.index
+    count = 1
+    while true
+      e = nextinline!(parser)
+      iserror(e) && return SyntaxError("Unterminated expression", ParserStack(parser, AT, "in expression literal"))
+      if char(parser) == '('
+        count += 1
+      elseif char(parser) == ')'
+        count -= 1
+        count == 0 && break
+      end
+    end
+    stack = ParserStack(parser, col(parser, start):col(parser), "in efus expr")
+    try
+      expr = Meta.parse(parser.text[(start+1):(parser.index-1)])
+      parser.index += 1
+      return EExpr(expr, stack)
+    catch exception
+      return EJuliaException("Error parsing julia snippet, error following", exception, stack)
+    end
+  end
+end
 
 function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractError}
-  tests = [parseesize!, parseedecimal!, parseeint!, parseestring!]
+  tests = [parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
   for test! in tests
     value = test!(parser)
     value === nothing || return value
   end
   nothing
 end
+
 function parsefile(path::String)::ECode
   parse!(Parser(; file=path))
 end
@@ -351,13 +401,15 @@ struct SyntaxError <: AbstractError
   SyntaxError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
   SyntaxError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
 end
-getstacks(e::SyntaxError) = e.stacks
-function prependstack!(e::SyntaxError, stack::ParserStack)::SyntaxError
-  pushfirst!(e.stacks, stack)
-  e
+struct EJuliaException <: AbstractError
+  message::String
+  stacks::Vector{ParserStack}
+  error::Exception
+  EJuliaException(msg::String, err::Exception, stacks::Vector{ParserStack}) = new(msg, stacks, err)
+  EJuliaException(msg::String, err::Exception, stack::ParserStack) = new(msg, ParserStack[stack], err)
 end
-function format(error::SyntaxError)::String
-  stacktrace = join(format.(getstacks(error)) .* "\n")
-  message = String(nameof(typeof(error))) * ": " * error.message
-  stacktrace * message
+function Base.display(err::EJuliaException)
+  println(format(err))
+  showerror(stdout, err.error)
 end
+

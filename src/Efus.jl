@@ -1,4 +1,6 @@
 module Efus
+
+export getmodule, gettemplate, registertemplatemodule, registertemplate
 include("Objects.jl")
 include("Errors.jl")
 include("TemplateBackends.jl")
@@ -8,9 +10,8 @@ include("Statement.jl")
 include("Parser.jl")
 const TEMPLATE_MODULES = TemplateModule[]
 function getmodule(mod::Symbol)::Union{TemplateModule,Nothing}
-  modindex = findfirst(TEMPLATE_MODULES) do tmplmod
-    tmplmod.name == mod
-  end
+  modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
+
   modindex === nothing && return nothing
   TEMPLATE_MODULES[modindex]
 end
@@ -20,6 +21,15 @@ function gettemplate(mod::Symbol, name::Symbol)::Union{Template,Nothing}
   gettemplate(mod, name)
 end
 function registertemplatemodule(name::Symbol, templates::Vector{Template})
-  push!(TEMPLATE_MODULES, TemplateModule(name, templates))
+  exists = findfirst(mod -> mod.name == name, TEMPLATE_MODULES)
+  if exists === nothing
+    push!(TEMPLATE_MODULES, TemplateModule(name, templates))
+  else
+    append!(TEMPLATE_MODULES[exists].templates, templates)
+  end
 end
+registertemplatemodule(name::Symbol) = registertemplatemodule(name, Template[])
+registertemplate(mod::Symbol, tmpl::Template) = registertemplatemodule(mod, Template[tmpl])
+
+
 end

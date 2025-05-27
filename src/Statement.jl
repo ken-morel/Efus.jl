@@ -1,3 +1,5 @@
+export AbstractStatement, AbstractExpression, EvalContext, eval!, ECode
+
 abstract type AbstractExpression <: EObject end
 abstract type AbstractStatement <: AbstractExpression end
 
@@ -6,6 +8,7 @@ struct EvalContext
   stack::Vector{Tuple{AbstractStatement,Any}}
   EvalContext(namespace::AbstractNamespace, stack::Vector{Tuple{AbstractStatement,Any}}) = new(namespace, stack)
   EvalContext() = new(Namespace(), [])
+  EvalContext(namespace::AbstractNamespace) = new(namespace, [])
 end
 
 struct TemplateCallArgument
@@ -23,7 +26,13 @@ struct TemplateCall <: AbstractStatement
   stack::ParserStack
 end
 function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObject}
-  template = gettemplate(ctx.namespace, call.templatename)
+  template = if call.templatemod === nothing
+    gettemplate(ctx.namespace, call.templatename)
+  else
+    tmpl = gettemplate(call.templatemod, call.templatename)
+    tmpl === nothing && return NameError("Template named $(call.templatename) not found in module $(call.templatemod)", call.templatename, ctx.namespace, call.stack)
+    tmpl
+  end
   if template === nothing
     return NameError("Template named $(call.templatename) not found in namespace", call.templatename, ctx.namespace, call.stack)
   end
@@ -32,7 +41,7 @@ function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObjec
   end
   parent = length(ctx.stack) > 0 ? last(ctx.stack)[2] : nothing
   comp = template(call.arguments, ctx.namespace, parent, call.stack)
-  parent === nothing || push!(parent, comp)
+  iserror(comp) && return comp
   push!(ctx.stack, (call, comp))
   comp
 end
@@ -45,19 +54,9 @@ struct EUsing <: AbstractStatement
   indent::Int
 end
 function eval!(ctx::EvalContext, eusing::EUsing)::Union{AbstractError,Nothing}
-  mod = getmodule(eusing.mod)
-  mod === nothing && return ImportError("Could not import module $(eusing.mod)", eusing.stack)
-  if eusing.imports === nothing
-    for tmpl ∈ mod.templates
-      addtemplate!(ctx.namespace, tmpl)
-    end
-  else
-    for tmplname ∈ eusing.imports
-      templ = gettemplate(mod, tmplname)
-      templ === nothing && return ImportError("Could not import template $tmplname from module $(eusing.mod)", eusing.stack)
-      addtemplate!(ctx.namespace, templ)
-    end
-  end
+  imp = importmodule!(ctx.namespace, eusing.mod, eusing.imports)
+  iserror(imp) && prependstack!(imp, eusing.stack)
+  imp
 end
 
 struct ECode <: EObject

@@ -1,3 +1,5 @@
+export iserror
+
 abstract type AbstractError <: EObject end
 Base.display(error::AbstractError) = println(format(error))
 getstacks(e::AbstractError) = e.stacks
