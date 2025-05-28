@@ -50,7 +50,7 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
       branchstatements = AbstractStatement[]
       while true
         println("parsing next...")
-        statement = parsenextstatementorfragment!(parser)
+        statement = parsenextstatementorfragment!(parser) #TODO: Add recursive combining
         println("got: $statement")
         if statement === nothing # end of file
           endofif = true
@@ -68,7 +68,7 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
       # is it an end or a contiuation
       statement === nothing && break
       if statement.indent == iffragment.indent
-        if statement isa EndStatementFragment
+        if statement isa EndStatement
           break
         end
         if statement isa EIfFragment

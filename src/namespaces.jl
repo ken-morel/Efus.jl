@@ -1,10 +1,10 @@
-export Namespace, gettemplate, getmodule, addtemplate!, importmodule!
+export DictNamespace, gettemplate, getmodule, addtemplate!, importmodule!
 
 
 struct ModuleNamespace <: AbstractNamespace
   mod::Module
   parent::Union{Nothing,AbstractNamespace}
-  templates::Dict{Symbol,Template}
+  templates::Dict{Symbol,AbstractTemplate}
   modules::Dict{Symbol,TemplateModule}
   componentclasses::Dict{Symbol,Vector{Component}}
   ModuleNamespace(mod::Module) = new(mod, nothing, Dict(), Dict(), Dict())
@@ -20,25 +20,31 @@ function getname(names::ModuleNamespace, name::Symbol, default)
   end
 end
 
-struct Namespace <: AbstractNamespace
+struct DictNamespace <: AbstractNamespace
   variables::Dict{Symbol,EObject}
-  templates::Dict{Symbol,Template}
-  parent::Union{Nothing,Namespace}
+  templates::Dict{Symbol,AbstractTemplate}
+  parent::Union{Nothing,AbstractNamespace}
   modules::Dict{Symbol,TemplateModule}
   componentclasses::Dict{Symbol,Vector{Component}}
-  Namespace() = new(Dict(), Dict(), nothing, Dict(), Dict())
+  DictNamespace() = new(Dict(), Dict(), nothing, Dict(), Dict())
+  DictNamespace(parent::Union{AbstractNamespace,Nothing}) = new(Dict(), Dict(), parent, Dict(), Dict())
 end
-getcompclasses(names::Union{Namespace,ModuleNamespace}) = names.componentclasses
+getcompclasses(names::Union{DictNamespace,ModuleNamespace}) = names.componentclasses
 
-function gettemplate(namespace::Union{Namespace,ModuleNamespace}, templatename::Symbol)::Union{Template,Nothing}
+function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   t = get(namespace.templates, templatename, nothing)
-  if t === nothing && namespace.parent !== nothing
+  templ = if t === nothing && namespace.parent !== nothing
     gettemplate(namespace.parent, templatename)
   else
     t
   end
+  if templ === nothing && namespace isa ModuleNamespace
+    template = getname(namespace, templatename, nothing)
+    template isa AbstractTemplate && return template
+  end
+  templ
 end
-function getname(names::Namespace, name::Symbol, default)
+function getname(names::DictNamespace, name::Symbol, default)
   if name in keys(names.variables)
     names.variables[name]
   elseif names.parent !== nothing
@@ -47,24 +53,24 @@ function getname(names::Namespace, name::Symbol, default)
     default
   end
 end
-function getmodule(namespace::Union{Namespace,ModuleNamespace}, mod::Symbol)::Union{TemplateModule,Nothing}
+function getmodule(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol)::Union{TemplateModule,Nothing}
   m = get(namespace.modules, mod, nothing)
   if m === nothing && namespace.parent !== nothing
-    gettemplate(namespace.parent, mod)
   else
+    gettemplate(namespace.parent, mod)
     m
   end
 end
-function gettemplate(namespace::Union{Namespace,ModuleNamespace}, mod::Symbol, templatename::Symbol)::Union{Template,Nothing}
+function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   mod = getmodule(namespace, mod)
   mod === nothing && return nothing
   gettemplate(mod, templatename)
 end
-function addtemplate!(namespace::Union{Namespace,ModuleNamespace}, template::Template)::Template
+function addtemplate!(namespace::Union{DictNamespace,ModuleNamespace}, template::AbstractTemplate)::AbstractTemplate
   namespace.templates[template.name] = template
 end
 
-function importmodule!(namespace::Union{Namespace,ModuleNamespace}, mod::Symbol, names::Union{Nothing,Vector{Symbol}}=nothing)
+function importmodule!(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol, names::Union{Nothing,Vector{Symbol}}=nothing)
   mod = getmodule(mod)
   mod === nothing && return ImportError("Could not import module $(mod)", ParserStack[])
   if names === nothing

@@ -1,6 +1,7 @@
 export Template, Component, getmount, mount!, unmount!, update!, query, queryone
 
-using Base: require
+abstract type AbstractTemplate <: EObject end
+
 struct TemplateParameter
   name::Symbol
   type::Union{DataType,Union}
@@ -30,16 +31,16 @@ function Base.convert(::Type{TemplateParameter}, pair::Pair)::TemplateParameter
   end
   TemplateParameter(name, typespec, def, required)
 end
-struct Template <: EObject
+struct Template <: AbstractTemplate
   name::Symbol
   backend::TemplateBackend
   parameters::Vector{TemplateParameter}
 end
 struct TemplateModule
   name::Symbol
-  templates::Vector{Template}
+  templates::Vector{AbstractTemplate}
 end
-function gettemplate(mod::TemplateModule, templatename::Symbol)::Union{Template,Nothing}
+function gettemplate(mod::TemplateModule, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   index = findfirst(tmpl -> tmpl.name == templatename, mod.templates)
   index === nothing && return nothing
   mod.templates[index]
@@ -53,9 +54,9 @@ end
 struct TemplateCallError <: AbstractError
   message::String
   stacks::Vector{ParserStack}
-  template::Template
-  TemplateCallError(msg::String, template::Template, stacks::Vector{ParserStack}) = new(msg, stacks, template)
-  TemplateCallError(msg::String, template::Template, stack::ParserStack) = new(msg, ParserStack[stack], template)
+  template::AbstractTemplate
+  TemplateCallError(msg::String, template::AbstractTemplate, stacks::Vector{ParserStack}) = new(msg, stacks, template)
+  TemplateCallError(msg::String, template::AbstractTemplate, stack::ParserStack) = new(msg, ParserStack[stack], template)
 end
 struct ETypeError <: AbstractError
   message::String
@@ -63,7 +64,4 @@ struct ETypeError <: AbstractError
   ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
   ETypeError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
 end
-
-
-
 

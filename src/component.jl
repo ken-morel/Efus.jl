@@ -1,3 +1,19 @@
+abstract type AbstractComponent <: EObject end
+function master(comp::AbstractComponent)
+  while parent(comp) !== nothing
+    comp = inlet(parent(comp))
+  end
+  comp
+end
+function Base.getindex(comp::AbstractComponent, key::Symbol)
+  get(getargs(comp), key, nothing)
+end
+function Base.setindex!(comp::AbstractComponent, value, key::Symbol)
+  param = get(comp.params, key, nothing)
+  comp.params[key] = ComponentParameter(param !== nothing ? param.param : nothing, key, value, true, nothing)
+  comp.dirty = true
+end
+
 struct ComponentParameter
   param::Union{TemplateParameter,Nothing}
   name::Symbol
@@ -6,22 +22,26 @@ struct ComponentParameter
   stack::Union{ParserStack,Nothing}
 end
 
-mutable struct Component <: EObject
+mutable struct Component <: AbstractComponent
   template::Template
   params::Dict{Symbol,ComponentParameter}
   args::Dict{Symbol,Any}
   namespace::AbstractNamespace
-  parent::Union{Component,Nothing}
-  children::Vector{Component}
+  parent::Union{AbstractComponent,Nothing}
+  children::Vector{AbstractComponent}
   mount::Union{Nothing,AbstractMount}
   dirty::Bool
-  Component(template::Template,
+  Component(template::AbstractTemplate,
     params::Dict{Symbol,ComponentParameter},
     args::Dict{Symbol,Any},
     namespace::AbstractNamespace,
-    parent::Union{Component,Nothing},
-  ) = new(template, params, args, namespace, parent, Component[], nothing, false)
+    parent::Union{AbstractComponent,Nothing},
+  ) = new(template, params, args, namespace, parent, AbstractComponent[], nothing, false)
 end
+getargs(comp::AbstractComponent) = comp.args
+getparams(comp::AbstractComponent) = comp.params
+isdirty(comp::AbstractComponent) = comp.dirty
+dirty!(comp::AbstractComponent, dirt::Bool) = (comp.dirty = dirt)
 getmount(comp::Component) = comp.mount
 mount!(_::TemplateBackend, _::Component) = throw("Mounting not supported by backend")
 unmount!(_::TemplateBackend, _::Component) = throw("Unmounting not supported by backend")
@@ -30,23 +50,13 @@ mount!(component::Component)::Union{Nothing,AbstractMount} = mount!(component.te
 unmount!(component::Component) = unmount!(component.template.backend, component)
 update!(component::Component) = update!(component.template.backend, component)
 parent(comp::Component) = comp.parent
-function master(comp::Component)
-  while parent(comp) !== nothing
-    comp = parent(comp)
-  end
-  comp
-end
-function Base.getindex(comp::Component, key::Symbol)
-  get(comp.args, key, nothing)
-end
-function Base.setindex!(comp::Component, value, key::Symbol)
-  param = get(comp.params, key, nothing)
-  comp.params[key] = ComponentParameter(param !== nothing ? param.param : nothing, key, value, true, nothing)
-  comp.dirty = true
-end
+inlet(comp::Component)::Component = comp
+outlet(comp::Component)::Component = comp
 
-Base.push!(parent::Component, child::Component) = push!(parent.children, child)
-function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractError}
+
+
+Base.push!(parent::AbstractComponent, child::AbstractComponent) = push!(parent.children, child)
+function matchparams(template::AbstractTemplate, arguments::Vector)::Union{AbstractError,Dict{Symbol,ComponentParameter}}
   params::Dict{Symbol,ComponentParameter} = Dict()
   arguments = arguments[:]
   for parameter ∈ template.parameters
@@ -77,13 +87,17 @@ function (template::Template)(arguments::Vector, namespace::AbstractNamespace, p
       ParserStack[arg.stack]
     )
   end
+  params
+end
+function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractError}
+  params = matchparams(template, arguments)
   comp = Component(template, params, Dict{Symbol,Any}(), namespace, parent)
   err = evaluateargs!(comp)
   iserror(err) && return err
   parent === nothing || iserror(parent) || push!(parent, comp)
   comp
 end
-function evaluateargs(comp::Component)::Union{Dict,AbstractError}
+function evaluateargs(comp::AbstractComponent)::Union{Dict,AbstractError}
   args = Dict{Symbol,Any}()
   for param in values(comp.params)
     name = param.name
@@ -99,19 +113,19 @@ function evaluateargs(comp::Component)::Union{Dict,AbstractError}
   end
   args
 end
-function evaluateargs!(comp::Component)::Union{Dict,AbstractError}
+function evaluateargs!(comp::AbstractComponent)::Union{Dict,AbstractError}
   err = evaluateargs(comp)
   iserror(err) && return err
   comp.args = err
 end
 
-function query(comp::Component; alias::Symbol)::Vector{Component}
-  options = Component[]
+function query(::AbstractComponent; alias::Symbol)::Vector{AbstractComponent}
+  options = AbstractComponent[]
   if alias !== nothing
     append!(options, get(getcompclasses(names), alias, []))
   end
   options
 end
-function queryone(comp::Component; alias::Symbol)::Union{Component,Nothing}
+function queryone(comp::AbstractComponent; alias::Symbol)::Union{AbstractComponent,Nothing}
   get(query(comp; alias=alias), 1, nothing)
 end

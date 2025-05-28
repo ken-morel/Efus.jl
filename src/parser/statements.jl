@@ -10,11 +10,23 @@ end
 
 function parsestatementorfragment!(parser::Parser)::Union{AbstractStatement,AbstractStatementFragment,Nothing,AbstractError}
   resetiferror(parser) do
-    tests = [parseeiffragment!, parseusing!, parsetemplatecall!]
+    tests = [parseendfragment!, parseeiffragment!, parseusing!, parsetemplatecall!]
     for test! in tests
       value = test!(parser)
       value === nothing || return value
     end
+    nothing
+  end
+end
+function parseendfragment!(parser::Parser)::Union{EndStatement,Nothing}
+  start = parser.index
+  indent = skipspaces!(parser)
+  stack = ParserStack(parser, col(parser):(col(parser)+3), "in end statement")
+  statement = parsesymbol!(parser)
+  if statement == "end"
+    EndStatement(indent, stack)
+  else
+    parser.index = start
     nothing
   end
 end

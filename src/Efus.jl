@@ -9,6 +9,7 @@ include("component.jl")
 include("namespaces.jl")
 include("statement.jl")
 include("parser.jl")
+include("customtemplates.jl")
 const TEMPLATE_MODULES = TemplateModule[]
 function getmodule(mod::Symbol)::Union{TemplateModule,Nothing}
   modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
@@ -21,7 +22,7 @@ function gettemplate(mod::Symbol, name::Symbol)::Union{Template,Nothing}
   mod === nothing && return nothing
   gettemplate(mod, name)
 end
-function registertemplatemodule(name::Symbol, templates::Vector{Template})
+function registertemplatemodule(name::Symbol, templates::Vector{<:AbstractTemplate})
   exists = findfirst(mod -> mod.name == name, TEMPLATE_MODULES)
   if exists === nothing
     push!(TEMPLATE_MODULES, TemplateModule(name, templates))

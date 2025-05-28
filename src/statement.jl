@@ -7,7 +7,7 @@ struct EvalContext
   namespace::AbstractNamespace
   stack::Vector{Tuple{AbstractStatement,Any}}
   EvalContext(namespace::AbstractNamespace, stack::Vector{Tuple{AbstractStatement,Any}}) = new(namespace, stack)
-  EvalContext() = new(Namespace(), [])
+  EvalContext() = new(DictNamespace(), [])
   EvalContext(namespace::AbstractNamespace) = new(namespace, [])
 end
 
