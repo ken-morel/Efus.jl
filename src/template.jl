@@ -1,0 +1,69 @@
+export Template, Component, getmount, mount!, unmount!, update!, query, queryone
+
+using Base: require
+struct TemplateParameter
+  name::Symbol
+  type::Union{DataType,Union}
+  default::Union{Nothing,EObject}
+  required::Bool
+end
+function Base.convert(::Type{TemplateParameter}, pair::Pair)::TemplateParameter
+  name = first(pair)
+  required::Bool = false
+  def = nothing
+  name isa Symbol || throw("Typerror, symbol expected as template name")
+  sname = String(name)
+  if endswith(sname, "!")
+    name = Symbol(sname[1:end-1])
+    required = true
+  end
+  spec = last(pair)
+  if spec isa Pair
+    typespec = first(spec)
+    def = last(spec)
+    if def !== nothing && !isa(spec, typespec) && typespec <: EMirrorObject
+      def = typespec(def)
+    end
+  else
+    def = nothing
+    typespec = spec
+  end
+  TemplateParameter(name, typespec, def, required)
+end
+struct Template <: EObject
+  name::Symbol
+  backend::TemplateBackend
+  parameters::Vector{TemplateParameter}
+end
+struct TemplateModule
+  name::Symbol
+  templates::Vector{Template}
+end
+function gettemplate(mod::TemplateModule, templatename::Symbol)::Union{Template,Nothing}
+  index = findfirst(tmpl -> tmpl.name == templatename, mod.templates)
+  index === nothing && return nothing
+  mod.templates[index]
+end
+
+
+
+
+
+
+struct TemplateCallError <: AbstractError
+  message::String
+  stacks::Vector{ParserStack}
+  template::Template
+  TemplateCallError(msg::String, template::Template, stacks::Vector{ParserStack}) = new(msg, stacks, template)
+  TemplateCallError(msg::String, template::Template, stack::ParserStack) = new(msg, ParserStack[stack], template)
+end
+struct ETypeError <: AbstractError
+  message::String
+  stacks::Vector{ParserStack}
+  ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
+  ETypeError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
+end
+
+
+
+

@@ -1,13 +1,14 @@
 module Efus
 
 export getmodule, gettemplate, registertemplatemodule, registertemplate
-include("Objects.jl")
-include("Errors.jl")
-include("TemplateBackends.jl")
-include("Template.jl")
-include("Namespaces.jl")
-include("Statement.jl")
-include("Parser.jl")
+include("objects.jl")
+include("errors.jl")
+include("templatebackends.jl")
+include("template.jl")
+include("component.jl")
+include("namespaces.jl")
+include("statement.jl")
+include("parser.jl")
 const TEMPLATE_MODULES = TemplateModule[]
 function getmodule(mod::Symbol)::Union{TemplateModule,Nothing}
   modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
