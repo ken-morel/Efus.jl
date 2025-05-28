@@ -60,5 +60,5 @@ function parse!(parser::Parser)::Union{ECode,AbstractError}
     iserror(statement) && return statement
     push!(statements, statement)
   end
-  ECode(statements, parser.filename)
+  ECode(ECodeBlock(statements), parser.filename)
 end

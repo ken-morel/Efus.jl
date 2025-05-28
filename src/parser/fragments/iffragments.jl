@@ -64,7 +64,7 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
           break
         end
       end
-      push!(branches, EIfStatementBranch(condition, branchstatements))
+      push!(branches, EIfStatementBranch(condition, ECodeBlock(branchstatements)))
       # is it an end or a contiuation
       statement === nothing && break
       if statement.indent == iffragment.indent

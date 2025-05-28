@@ -11,17 +11,24 @@ struct EvalContext
   EvalContext(namespace::AbstractNamespace) = new(namespace, [])
 end
 
-
-struct ECode <: EObject
+struct ECodeBlock
   statements::Vector{AbstractStatement}
-  filename::String
 end
-function eval!(ctx::EvalContext, code::ECode)::Union{Nothing,EObject}
-  for statement ∈ code.statements
+function eval!(ctx::EvalContext, block::ECodeBlock)::Union{Nothing,EObject}
+  for statement ∈ block.statements
     val = eval!(ctx, statement::AbstractStatement)
     iserror(val) && return val
   end
   length(ctx.stack) > 0 ? first(ctx.stack)[2] : nothing
+end
+
+
+struct ECode <: EObject
+  block::ECodeBlock
+  filename::String
+end
+function eval!(ctx::EvalContext, code::ECode)::Union{Nothing,EObject}
+  eval!(ctx, code.block)
 end
 function eval!(code::ECode)::Union{Nothing,EObject}
   eval!(EvalContext(), code)
