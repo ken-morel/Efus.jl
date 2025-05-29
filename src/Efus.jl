@@ -2,6 +2,8 @@ module Efus
 
 export getmodule, gettemplate, registertemplatemodule, registertemplate
 include("objects.jl")
+include("observed.jl")
+include("reactants.jl")
 include("errors.jl")
 include("templatebackends.jl")
 include("template.jl")

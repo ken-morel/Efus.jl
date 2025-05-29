@@ -1,64 +1,8 @@
-export DictNamespace, gettemplate, getmodule, addtemplate!, importmodule!
-
-function Base.getindex(names::AbstractNamespace, name::Symbol)
-  getname(names, name, nothing)
-end
+include("namespaces/namespaces.jl")
+include("namespaces/modulenamespaces.jl")
+include("namespaces/dictnamespaces.jl")
 
 
-struct ModuleNamespace <: AbstractNamespace
-  mod::Module
-  parent::Union{Nothing,AbstractNamespace}
-  templates::Dict{Symbol,AbstractTemplate}
-  modules::Dict{Symbol,TemplateModule}
-  componentclasses::Dict{Symbol,Vector{Component}}
-  ModuleNamespace(mod::Module) = new(mod, nothing, Dict(), Dict(), Dict())
-end
-function varstomodule!(mod::Module, namespace::ModuleNamespace)::Module
-  for name in names(namespace.mod; all=true, imported=false)
-    if !startswith(String(name), "#") && !(getfield(namespace.mod, name) isa Module)
-      Core.eval(mod, :($name = $(namespace.mod).$name))
-    end
-  end
-
-  mod
-end
-withmodule(fn::Function, names::ModuleNamespace) = fn(names.mod)
-function Base.setindex!(names::ModuleNamespace, value, name::Symbol)
-  Core.eval(names.mod, :($name = $value))
-end
-function getname(names::ModuleNamespace, name::Symbol, default)
-  if name in propertynames(names.mod)
-    getproperty(names.mod, name)
-  elseif names.parent !== nothing
-    getname(names.parent, name, default)
-  else
-    default
-  end
-end
-struct DictNamespace <: AbstractNamespace
-  variables::Dict{Symbol,EObject}
-  templates::Dict{Symbol,AbstractTemplate}
-  parent::Union{Nothing,AbstractNamespace}
-  modules::Dict{Symbol,TemplateModule}
-  componentclasses::Dict{Symbol,Vector{Component}}
-  DictNamespace() = new(Dict(), Dict(), nothing, Dict(), Dict())
-  DictNamespace(parent::Union{AbstractNamespace,Nothing}) = new(Dict(), Dict(), parent, Dict(), Dict())
-end
-getcompclasses(names::Union{DictNamespace,ModuleNamespace}) = names.componentclasses
-function varstomodule!(mod::Module, names::DictNamespace)::Module
-  for (k, v) ∈ names.variables
-    Core.eval(mod, :($k = $v))
-  end
-  if names.parent !== nothing
-    varstomodule!(mod, names.parent)
-  else
-    mod
-  end
-end
-function withmodule(fn::Function, names::DictNamespace)
-  mod = Module(Symbol("Efus.Namespace$(rand(UInt64))"), false, false)
-  fn(varstomodule!(mod, names))
-end
 
 function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   t = get(namespace.templates, templatename, nothing)
@@ -73,18 +17,7 @@ function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, templatena
   end
   templ
 end
-function getname(names::DictNamespace, name::Symbol, default)
-  if name in keys(names.variables)
-    names.variables[name]
-  elseif names.parent !== nothing
-    getname(names.parent, name, default)
-  else
-    default
-  end
-end
-function Base.setindex!(names::DictNamespace, value, name::Symbol)
-  names.variables[name] = value
-end
+
 function getmodule(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol)::Union{TemplateModule,Nothing}
   m = get(namespace.modules, mod, nothing)
   if m === nothing && namespace.parent !== nothing
@@ -116,5 +49,22 @@ function importmodule!(namespace::Union{DictNamespace,ModuleNamespace}, modname:
       addtemplate!(namespace, templ)
     end
   end
-
 end
+function dropsubscriptions!()
+  if vars === nothing
+    names.subscriptions = filter(names.subscriptions) do (obsr, obsfn, obsvars)
+      (obsr != observer && obsfn != fn)
+    end
+  else
+    for (idx, subscription) in enumerate(names.subscriptions)
+      obsr, obsfn, obsvars = subscription
+      if obsr == observer && obsfn != fn
+        names.subscriptions[idx] = (obsr, obsfn, setdiff(obsvars, vars))
+      end
+    end
+  end
+end
+
+getcompclasses(names::Union{DictNamespace,ModuleNamespace}) = names.componentclasses
+getsubscriptions(names::Union{DictNamespace,ModuleNamespace}) = names.subscriptions
+getdirty(names::Union{DictNamespace,ModuleNamespace}) = names.dirty

@@ -1,0 +1,56 @@
+struct DictNamespace <: AbstractNamespace
+  variables::Dict{Symbol,EObject}
+  templates::Dict{Symbol,AbstractTemplate}
+  parent::Union{Nothing,AbstractNamespace}
+  modules::Dict{Symbol,TemplateModule}
+  componentclasses::Dict{Symbol,Vector{Component}}
+  reactants::Dict{Symbol,AbstractReactant}
+  dirty::Vector{Symbol}
+  subscriptions::Vector{
+    Tuple{AbstractObserver,Function,Union{Vector{Symbol},Nothing}}
+  }
+  DictNamespace() = new(
+    Dict(),
+    Dict(),
+    nothing,
+    Dict(),
+    Dict(),
+    Dict(),
+    Vector{Tuple{AbstractObserver,Function,Vector{Symbol}}}(),
+  )
+  DictNamespace(parent::Union{AbstractNamespace,Nothing}) = new(
+    Dict(),
+    Dict(),
+    parent,
+    Dict(),
+    Dict(),
+    Dict(),
+    Vector{Tuple{AbstractObserver,Function,Vector{Symbol}}}(),
+  )
+end
+function varstomodule!(mod::Module, names::DictNamespace)::Module
+  for (k, v) ∈ names.variables
+    Core.eval(mod, :($k = $v))
+  end
+  if names.parent !== nothing
+    varstomodule!(mod, names.parent)
+  else
+    mod
+  end
+end
+function withmodule(fn::Function, names::DictNamespace)
+  mod = Module(Symbol("Efus.Namespace$(rand(UInt64))"), false, false)
+  fn(varstomodule!(mod, names))
+end
+function getname(names::DictNamespace, name::Symbol, default)
+  if name in keys(names.variables)
+    names.variables[name]
+  elseif names.parent !== nothing
+    getname(names.parent, name, default)
+  else
+    default
+  end
+end
+function Base.setindex!(names::DictNamespace, value, name::Symbol)
+  names.variables[name] = value
+end
