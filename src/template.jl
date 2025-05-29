@@ -4,7 +4,7 @@ abstract type AbstractTemplate <: EObject end
 
 struct TemplateParameter
   name::Symbol
-  type::Union{DataType,Union}
+  type::Union{DataType,Union,UnionAll}
   default::Union{Nothing,EObject}
   required::Bool
 end

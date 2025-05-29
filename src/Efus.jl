@@ -13,7 +13,6 @@ include("customtemplates.jl")
 const TEMPLATE_MODULES = TemplateModule[]
 function getmodule(mod::Symbol)::Union{TemplateModule,Nothing}
   modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
-
   modindex === nothing && return nothing
   TEMPLATE_MODULES[modindex]
 end

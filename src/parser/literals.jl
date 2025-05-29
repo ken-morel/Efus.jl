@@ -9,7 +9,7 @@ function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractError}
   else
     parse(Int, m[1]), parse(Int, m[2])
   end
-  ESize(vals, m[3] === nothing ? nothing : Symbol(m[3]))
+  ESize(vals..., m[3] === nothing ? nothing : Symbol(m[3]))
 end
 function parseeint!(parser::Parser)::Union{EInt,Nothing,AbstractError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing

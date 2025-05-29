@@ -44,6 +44,7 @@ end
 function parseusing!(parser::Parser)::Union{EUsing,Nothing,AbstractError}
   resetiferror(parser) do
     start = parser.index
+    indent = skipspaces!(parser, false)
     if parsesymbol!(parser) == "using"
       stack = ParserStack(parser, AFTER, "in using statement")
       skipspaces!(parser)
@@ -67,9 +68,9 @@ function parseusing!(parser::Parser)::Union{EUsing,Nothing,AbstractError}
             return SyntaxError("Unexpected token in using statement", ParserStack(parser, AT, "in using statement imports list"))
           end
         end
-        EUsing(Symbol(mod), importnames, stack, 0)
+        EUsing(Symbol(mod), importnames, stack, indent)
       else
-        EUsing(Symbol(mod), nothing, stack, 0)
+        EUsing(Symbol(mod), nothing, stack, indent)
       end
     else
       parser.index = start

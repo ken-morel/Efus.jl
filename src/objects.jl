@@ -17,9 +17,10 @@ struct EString <: EMirrorObject{String}
   value::String
 end
 struct ESize{T,U} <: EObject
-  value::Tuple{T,T}
+  width::Int
+  height::Int
   unit::Val{U}
-  ESize(size::Tuple{T,T}, unit::Union{Symbol,Nothing}=nothing) where T = new{T,unit}(size, Val(unit))
+  ESize(width::T, height::T, unit::Union{Symbol,Nothing}=nothing) where T = new{T,unit}(width, height, Val(unit))
 end
 struct ESide <: EObject
   side::Symbol
@@ -40,8 +41,9 @@ function eval(expr::EExpr, names::AbstractNamespace)
     n === missing && return NameError("Name $(expr.expr) is not defined in namespace", expr.expr, names, expr.stack === nothing ? ParserStack[] : expr.stack)
     n
   else
-    eval(names, expr.expr)
+    withmodule(names) do mod
+      Core.eval(mod, expr.expr)
+    end
   end
 end
 unit(s::ESize)::Union{Symbol,Nothing} = typeof(s.unit).parameters[2] #TODO: Improve this
-

@@ -89,8 +89,14 @@ function matchparams(template::AbstractTemplate, arguments::Vector)::Union{Abstr
   end
   params
 end
+"""
+    (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractError}
+
+TBW
+"""
 function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractError}
   params = matchparams(template, arguments)
+  iserror(params) && return params
   comp = Component(template, params, Dict{Symbol,Any}(), namespace, parent)
   err = evaluateargs!(comp)
   iserror(err) && return err

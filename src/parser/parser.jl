@@ -25,12 +25,12 @@ function col(parser::Parser, idx::Integer)::Int
   after_last_newline = '\n' in text ? findlast('\n', text) + 1 : 1
   length(text[after_last_newline:end])
 end
-function skipspaces!(parser::Parser)::Union{Int,Nothing}
+function skipspaces!(parser::Parser, canbenothing::Bool=true)::Union{Int,Nothing}
   start = parser.index
   while parser.index <= length(parser.text) && char(parser) in SPACES
     parser.index += 1
   end
-  parser.index == start && return nothing
+  canbenothing && parser.index == start && return nothing
   parser.index - start
 end
 location(parser::Parser)::Tuple{Int,Int} = (line(parser), col(parser))
