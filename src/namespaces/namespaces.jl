@@ -1,5 +1,6 @@
 export DictNamespace, gettemplate, getmodule, addtemplate!, importmodule!
 
+abstract type AbstractNamespaceReactant{T} <: AbstractReactant{T} end
 abstract type ENamespace <: AbstractNamespace end
 
 function Base.getindex(names::AbstractNamespace, name::Symbol)
@@ -43,4 +44,11 @@ function unsubscribe!(
 end
 function getreactant(namespace::DictNamespace, name::Symbol)
   #TODO
+end
+function dirty!(namespace::ENamespace, name::Symbol, dirt::Bool=true)
+  if dirt && name ∉ namespace.dirty
+    push!(namespace.dirty, name)
+  elseif !dirt && name ∈ namespace.dirty
+    filter!(x -> x != name, namespace.dirty)
+  end
 end

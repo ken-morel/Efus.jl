@@ -28,6 +28,14 @@ struct DictNamespace <: AbstractNamespace
     Vector{Tuple{AbstractObserver,Function,Vector{Symbol}}}(),
   )
 end
+function addsubscription!(
+  namespace::DictNamespace,
+  observer::Union{EObserver,Nothing},
+  fn::Function,
+  names::Union{Vector{Symbol},Nothing}=nothing,
+)
+  push!(namespace.subscriptions, (observer, fn, names))
+end
 function varstomodule!(mod::Module, names::DictNamespace)::Module
   for (k, v) ∈ names.variables
     Core.eval(mod, :($k = $v))

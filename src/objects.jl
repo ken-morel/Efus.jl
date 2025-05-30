@@ -47,3 +47,14 @@ function eval(expr::EExpr, names::AbstractNamespace)
   end
 end
 unit(s::ESize)::Union{Symbol,Nothing} = typeof(s.unit).parameters[2] #TODO: Improve this
+
+struct ENameBinding <: EObject
+  name::Symbol
+  stack::ParserStack
+  EVarBinding(name::Symbol,stack::ParserStack=ParserStack[]) = new(name, stack)
+end
+function eval(binding::ENameBinding, namepace::AbstractNamespace)::AbstractReactant
+  getreactant(namespace, binding.name)
+end
+
+

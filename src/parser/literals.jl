@@ -125,8 +125,23 @@ function parseeexpr!(parser::Parser, endtoken::Union{String,Nothing}=nothing)::U
   end
 end
 
+
+function parsernamebinding!(parser::Parser)::Union{ENameBinding,Nothing,AbstractError}
+  char(parser) == '&' || return nothing
+  start = parser.index
+  parser.index += 1 #skip '&'
+  name = parsesymbol!(parser)
+  if name === nothing
+    parser.index = start
+    return nothing
+  end
+  ENameBinding(name, value, ParserStack(parser, col(parser, start):col(parser), "in name binding"))
+end
+
+
+
 function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractError}
-  tests = [parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
+  tests = [parsernamebinding!,parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
   for test! in tests
     value = test!(parser)
     value === nothing || return value

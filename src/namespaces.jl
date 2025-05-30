@@ -1,7 +1,7 @@
 include("namespaces/namespaces.jl")
 include("namespaces/modulenamespaces.jl")
 include("namespaces/dictnamespaces.jl")
-
+include("namespaces/reactants.jl")
 
 
 function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, templatename::Symbol)::Union{AbstractTemplate,Nothing}
@@ -50,20 +50,8 @@ function importmodule!(namespace::Union{DictNamespace,ModuleNamespace}, modname:
     end
   end
 end
-function dropsubscriptions!()
-  if vars === nothing
-    names.subscriptions = filter(names.subscriptions) do (obsr, obsfn, obsvars)
-      (obsr != observer && obsfn != fn)
-    end
-  else
-    for (idx, subscription) in enumerate(names.subscriptions)
-      obsr, obsfn, obsvars = subscription
-      if obsr == observer && obsfn != fn
-        names.subscriptions[idx] = (obsr, obsfn, setdiff(obsvars, vars))
-      end
-    end
-  end
-end
+## subscribe and unsubscribe functions
+
 
 getcompclasses(names::Union{DictNamespace,ModuleNamespace}) = names.componentclasses
 getsubscriptions(names::Union{DictNamespace,ModuleNamespace}) = names.subscriptions
