@@ -8,7 +8,7 @@ To that effect efus provides a syntax called `efus` which is meant to help
 by providing a simple way to define templates, components and their properties.
 But efus does not provide them, efus just provides the syntax to define them.
 
-```efus
+```julia
 using Gtak
 # An example of usage with components from Gtak.jl
 Window title="Sample window with" box=vertical
