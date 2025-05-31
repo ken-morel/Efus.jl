@@ -55,9 +55,8 @@ function query(
   end
 end
 
-function queryone(
+function queryone( # Gemini adviced me to list parameters
   comp::AbstractComponent;
-  # Explicitly list parameters for clarity and to control what's passed
   maxdepth::Union{UInt,Nothing}=nothing,
   name::Union{Symbol,Nothing}=nothing,
   alias::Union{Symbol,Nothing}=nothing

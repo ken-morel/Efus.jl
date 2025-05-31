@@ -35,6 +35,7 @@ mutable struct CustomComponent <: AbstractComponent
   render::Union{ERender,Nothing}
   mount::Union{AbstractMount,Nothing}
   handlers::CustomComponentHandlers
+  aliases::Vector{Symbol}
   CustomComponent(
     template::CustomTemplate,
     params::Dict{Symbol,ComponentParameter},
@@ -42,7 +43,7 @@ mutable struct CustomComponent <: AbstractComponent
     namespace::AbstractNamespace,
     parent::Union{AbstractComponent,Nothing},
     code::ECode,
-  ) = new(template, params, args, namespace, parent, AbstractComponent[], false, nothing, nothing, code, nothing, nothing, CustomComponentHandlers(nothing, nothing))
+  ) = new(template, params, args, namespace, parent, AbstractComponent[], false, nothing, nothing, code, nothing, nothing, CustomComponentHandlers(nothing, nothing), Symbol[])
 end
 getnamespace(comp::CustomComponent) = comp.namespace
 getmount(::CustomComponent) = nothing

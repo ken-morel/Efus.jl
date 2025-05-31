@@ -5,7 +5,7 @@ abstract type AbstractTemplate <: EObject end
 struct TemplateParameter
   name::Symbol
   type::Union{DataType,Union,UnionAll}
-  default::Union{Nothing,EObject}
+  default::Any
   required::Bool
 end
 function Base.convert(::Type{TemplateParameter}, pair::Pair)::TemplateParameter

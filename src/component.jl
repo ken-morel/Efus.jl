@@ -12,6 +12,7 @@ function Base.setindex!(comp::AbstractComponent, value, key::Symbol)
   param = get(comp.params, key, nothing)
   comp.params[key] = ComponentParameter(param !== nothing ? param.param : nothing, key, value, true, nothing)
   comp.dirty = true
+  reevaluateargs!(comp, [key])
 end
 
 struct ComponentParameter
@@ -31,17 +32,19 @@ mutable struct Component <: AbstractComponent
   children::Vector{AbstractComponent}
   mount::Union{Nothing,AbstractMount}
   dirty::Bool
-  aliasses::Vector{Symbol}
+  aliases::Vector{Symbol}
+  observer::EObserver
   Component(template::AbstractTemplate,
     params::Dict{Symbol,ComponentParameter},
     args::Dict{Symbol,Any},
     namespace::AbstractNamespace,
     parent::Union{AbstractComponent,Nothing},
-  ) = new(template, params, args, namespace, parent, AbstractComponent[], nothing, false, Symbol[])
+  ) = new(template, params, args, namespace, parent, AbstractComponent[], nothing, false, Symbol[], EObserver())
 end
-getnamespace(comp::Component) = comp.namespace
-templatename(comp::Component)::Symbol = gettemplate(comp).name
-gettemplate(comp::Component)::AbstractTemplate = comp.template
+getparam(comp::AbstractComponent, name::Symbol)::Union{ComponentParameter,Nothing} = get(comp.params, name, nothing)
+getnamespace(comp::AbstractComponent) = comp.namespace
+templatename(comp::AbstractComponent)::Symbol = gettemplate(comp).name
+gettemplate(comp::AbstractComponent)::AbstractTemplate = comp.template
 getargs(comp::AbstractComponent) = comp.args
 getparams(comp::AbstractComponent) = comp.params
 isdirty(comp::AbstractComponent) = comp.dirty
@@ -113,9 +116,12 @@ function (template::Template)(arguments::Vector, namespace::AbstractNamespace, p
   parent === nothing || iserror(parent) || push!(parent, comp)
   comp
 end
-function evaluateargs(comp::AbstractComponent)::Union{Dict,AbstractError}
+function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Symbol}}=nothing)::Union{Dict,AbstractError}
   args = Dict{Symbol,Any}()
   for param in values(comp.params)
+    if !isnothing(argnames) && param.name ∉ argnames
+      continue
+    end
     name = param.name
     if param.evaluated
       args[name] = param.value
@@ -123,11 +129,14 @@ function evaluateargs(comp::AbstractComponent)::Union{Dict,AbstractError}
       args[name] = eval(param.value, comp.namespace)
       iserror(args[name]) && return args[name]
     end
-    if !isa(args[name], param.param.type) && args[name] !== param.param.default
-      println(param.param.type <: AbstractReactant, args[name] isa AbstractReactant)
+    if !isa(args[name], param.param.type) && (param.param.required || args[name] !== param.param.default)
       if !(param.param.type <: AbstractReactant) && args[name] isa AbstractReactant
+        reactant = args[name]
+        subscribe!(reactant, comp.observer) do _, value
+          comp[param.param.name] = value
+        end
         args[name] = getvalue(args[name])
-        if !isa(args[name], param.param.type) && args[name] !== param.param.default
+        if !isa(args[name], param.param.type) && (param.param.required || args[name] !== param.param.default)
           return ETypeError("value of evaluated reactant argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
         end
       else
@@ -142,7 +151,18 @@ function evaluateargs!(comp::AbstractComponent)::Union{Dict,AbstractError}
   iserror(err) && return err
   comp.args = err
 end
+function reevaluateargs!(comp::AbstractComponent, args::Vector{Symbol})::Union{Dict{Symbol,Any},AbstractError}
+  newargs = evaluateargs(comp; argnames=args)
+  iserror(newargs) && return newargs
+  merge!(comp.args, newargs)
+end
 
+function updateargs!(comp::AbstractComponent, args::Vector{Symbol})::Union{Dict{Symbol,Any},AbstractError}
+  err = reevaluateargs!(comp, args)
+  iserror(err) && return err
+  append!(comp.dirty, args)
+  err
+end
 
 
 

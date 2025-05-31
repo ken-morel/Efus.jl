@@ -1,6 +1,7 @@
 function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,AbstractError}
   resetiferror(parser) do
     indent = skipspaces!(parser)
+    aliases = Symbol[]
     stack = ParserStack(
       parser.filename,
       LocatedArround(AFTER, line(parser), col(parser)),
@@ -16,23 +17,21 @@ function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,Abstract
       templatename = parsesymbol!(parser)
       templatename === nothing && return SyntaxError("Expected module template name", ParserStack(parser, AT, "in template name"))
     end
-    alias = if char(parser) === '&'
+    while char(parser) == '&'
       parser.index += 1
-      symbol = parsesymbol!(parser)
-      symbol === nothing && return SyntaxError(
+      alias = parsesymbol!(parser)
+      alias === nothing && return SyntaxError(
         "Missing component call alias after '&'",
         combinencloneexceptlocation(stack, LocatedArround(AT, location(parser)...)),
       )
-      symbol
-    else
-      nothing
+      push!(aliases, Symbol(alias))
     end
     skipspaces!(parser)
     parse = parsetemplatecallarguments!(parser)
     if iserror(parse)
       prependstack!(parse, stack)
     else
-      TemplateCall(modname, Symbol(templatename), Symbol(alias), parse, indent === nothing ? 0 : indent, stack)
+      TemplateCall(modname, Symbol(templatename), aliases, parse, indent === nothing ? 0 : indent, stack)
     end
   end
 end

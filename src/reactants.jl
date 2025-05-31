@@ -10,7 +10,7 @@ function unsubscribe!(
   unsubscribe!(reactant.observable, observer, fn)
 end
 function notify!(reactant::AbstractReactant, value::T) where T
-  setvalue(reactant, value)
+  setvalue!(reactant, value)
   notify(getobservable(reactant), value)
 end
 function notify(reactant::AbstractReactant)
@@ -36,7 +36,7 @@ getvalue(reactant::EReactant) = reactant.value
 getobservable(reactant::EReactant) = reactant.observable
 isdirty(reactant::EReactant) = reactant.dirty
 dirty!(reactant::EReactant, dirt::Bool) = (reactant.dirty = dirt)
-function setvalue(reactant::AbstractReactant{T}, value::T) where T
+function setvalue!(reactant::AbstractReactant{T}, value::T) where T
   reactant.value = value
   dirty!(reactant, true)
 end
