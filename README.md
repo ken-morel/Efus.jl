@@ -62,7 +62,7 @@ well as if statements, ~loops, and other control flow structures~.
 Extract from Gtak examples
 
 ```julia
-using .Gtak
+using Gtak
 
 function clicked(comp)
   comp[:text] *= ">>"
