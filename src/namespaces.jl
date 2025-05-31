@@ -4,7 +4,7 @@ include("namespaces/dictnamespaces.jl")
 include("namespaces/reactants.jl")
 
 
-function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, templatename::Symbol)::Union{AbstractTemplate,Nothing}
+function gettemplate(namespace::ENamespace, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   t = get(namespace.templates, templatename, nothing)
   templ = if t === nothing && namespace.parent !== nothing
     gettemplate(namespace.parent, templatename)
@@ -18,7 +18,7 @@ function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, templatena
   templ
 end
 
-function getmodule(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol)::Union{TemplateModule,Nothing}
+function getmodule(namespace::ENamespace, mod::Symbol)::Union{TemplateModule,Nothing}
   m = get(namespace.modules, mod, nothing)
   if m === nothing && namespace.parent !== nothing
   else
@@ -26,16 +26,16 @@ function getmodule(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol)
     m
   end
 end
-function gettemplate(namespace::Union{DictNamespace,ModuleNamespace}, mod::Symbol, templatename::Symbol)::Union{AbstractTemplate,Nothing}
+function gettemplate(namespace::ENamespace, mod::Symbol, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   mod = getmodule(namespace, mod)
   mod === nothing && return nothing
   gettemplate(mod, templatename)
 end
-function addtemplate!(namespace::Union{DictNamespace,ModuleNamespace}, template::AbstractTemplate)::AbstractTemplate
+function addtemplate!(namespace::ENamespace, template::AbstractTemplate)::AbstractTemplate
   namespace.templates[template.name] = template
 end
 
-function importmodule!(namespace::Union{DictNamespace,ModuleNamespace}, modname::Symbol, names::Union{Nothing,Vector{Symbol}}=nothing)
+function importmodule!(namespace::ENamespace, modname::Symbol, names::Union{Nothing,Vector{Symbol}}=nothing)
   mod = getmodule(modname)
   mod === nothing && return ImportError("Could not import module $(modname), it was not registered", ParserStack[])
   if names === nothing
@@ -53,6 +53,5 @@ end
 ## subscribe and unsubscribe functions
 
 
-getcompclasses(names::Union{DictNamespace,ModuleNamespace}) = names.componentclasses
-getsubscriptions(names::Union{DictNamespace,ModuleNamespace}) = names.subscriptions
-getdirty(names::Union{DictNamespace,ModuleNamespace}) = names.dirty
+getsubscriptions(names::ENamespace) = names.subscriptions
+getdirty(names::ENamespace) = names.dirty

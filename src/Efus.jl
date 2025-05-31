@@ -12,6 +12,7 @@ include("namespaces.jl")
 include("statement.jl")
 include("parser.jl")
 include("customtemplates.jl")
+include("componentquery.jl")
 const TEMPLATE_MODULES = TemplateModule[]
 function getmodule(mod::Symbol)::Union{TemplateModule,Nothing}
   modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)

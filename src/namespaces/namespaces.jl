@@ -30,7 +30,7 @@ function notify(
   empty!(names.dirty)
 end
 function subscribe!(
-  names::AbstractNamespace, observer::AbstractObserver, fn::Function, vars::Vector{Symbol},
+  fn::Function, names::AbstractNamespace, observer::AbstractObserver, vars::Vector{Symbol},
 )
   addsubscription!(names, observer, fn, vars)
 end
@@ -42,9 +42,15 @@ function unsubscribe!(
 )
   dropsubscriptions!(names, observer, fn, vars)
 end
-function getreactant(namespace::DictNamespace, name::Symbol)
-  #TODO
-end
+subscribe!(
+  names::AbstractNamespace,
+  observer::AbstractObserver,
+  fn::Function,
+  vars::Vector{Symbol}
+) = subscribe!(
+  names, observer, fn, vars,
+)
+
 function dirty!(namespace::ENamespace, name::Symbol, dirt::Bool=true)
   if dirt && name ∉ namespace.dirty
     push!(namespace.dirty, name)

@@ -18,7 +18,7 @@ abstract type AbstractObservable end
 
 A concrete observer that can subscribe to observables and receive notifications.
 """
-struct EObserver
+struct EObserver <: AbstractObserver
   subscriptions::Vector{Tuple{Union{AbstractObservable,Nothing},Function}}
   EObserver() = new(Vector())
 end
@@ -42,7 +42,7 @@ end
 
 Add a subscription to the observer for the given observable and callback function.
 """
-function addsubscription!(observer::EObserver, observable::EObservable, fn::Function)
+function addsubscription!(observer::EObserver, observable::AbstractObservable, fn::Function)
   push!(observer.subscriptions, (observable, fn))
 end
 """
@@ -66,11 +66,11 @@ unsubscribe!(fn::Function, obsr::AbstractObserver, obsbl::Union{AbstractObservab
 
 
 """
-    EObservable()
 
+    EObservable()
 A concrete observable that can be observed by observers and notify them of changes.
 """
-struct EObservable
+struct EObservable <: AbstractObservable
   subscriptions::Vector{Tuple{Union{AbstractObserver,Nothing},Function}}
   EObservable() = new(Vector())
 end
@@ -126,7 +126,7 @@ end
 Subscribe the observer to the observable with the given callback function.
 Adds the subscription to both observer and observable.
 """
-function subscribe!(observable::AbstractObservable, observer::Union{AbstractObserver,nothing}, fn::Function)
+function subscribe!(observable::AbstractObservable, observer::Union{AbstractObserver,Nothing}, fn::Function)
   addsubscription!(observable, observer, fn)
   addsubscription!(observer, observable, fn)
 end

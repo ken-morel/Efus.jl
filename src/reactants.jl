@@ -29,8 +29,8 @@ mutable struct EReactant{T} <: AbstractReactant{T}
   value::T
   dirty::Bool
   observable::AbstractObservable
-  EReactant(value::T) = new(value, false, EObservable())
-  EReactant(value::T, observable::AbstractObservable) = new(value, false, observable)
+  EReactant(value::T) where T = new{T}(value, false, EObservable())
+  EReactant(value::T, observable::AbstractObservable) where T = new{T}(value, false, observable)
 end
 getvalue(reactant::EReactant) = reactant.value
 getobservable(reactant::EReactant) = reactant.observable

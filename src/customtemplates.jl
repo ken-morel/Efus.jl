@@ -15,6 +15,7 @@ struct CustomTemplate <: AbstractTemplate
     code::ECode,
   ) = new(initializer, name, parameters, code)
 end
+
 struct ERender
   render::Union{AbstractComponent,Nothing}
   context::EvalContext
@@ -43,6 +44,7 @@ mutable struct CustomComponent <: AbstractComponent
     code::ECode,
   ) = new(template, params, args, namespace, parent, AbstractComponent[], false, nothing, nothing, code, nothing, nothing, CustomComponentHandlers(nothing, nothing))
 end
+getnamespace(comp::CustomComponent) = comp.namespace
 getmount(::CustomComponent) = nothing
 parent(comp::CustomComponent) = comp.parent #TODO: Chech this works
 onmount(fn::Function, comp::CustomComponent) = (comp.handlers.onmount = fn)
@@ -51,6 +53,7 @@ function render(comp::CustomComponent)::Union{AbstractError,ERender}
   namespace = DictNamespace(comp.namespace)
   ctx = EvalContext(namespace)
   renderred = eval!(ctx, comp.code)
+  iserror(renderred) && return renderred
   if inlet(renderred) !== nothing
     child = inlet(renderred)
     if comp.parent !== nothing
@@ -58,14 +61,15 @@ function render(comp::CustomComponent)::Union{AbstractError,ERender}
       child.parent = parent
     end
   end
-  iserror(renderred) && return renderred
   comp.outlet = renderred
   render = ERender(renderred, ctx)
   comp.handlers.onrender !== nothing && comp.handlers.onrender(render)
   render
 end
 function render!(comp::CustomComponent)::Union{AbstractError,ERender}
-  comp.render = render(comp)
+  renderred = render(comp)
+  iserror(renderred) && return renderred
+  comp.render = renderred
 end
 function rerender!(comp::CustomComponent)::Union{AbstractError,ERender}
   comp.render === nothing || unrender!(comp)
@@ -79,13 +83,19 @@ end
 renderred(comp::CustomComponent) = comp.render !== nothing
 
 
-function mount!(comp::CustomComponent)
+function mount!(comp::CustomComponent)::Union{AbstractError,AbstractMount,Nothing}
+  println("rendering")
   if !renderred(comp)
-    render!(comp)
+    render = render!(comp)
+    iserror(render) && println("oops", render)
+    iserror(render) && return render
   end
   comp.render !== nothing || comp.render.render !== nothing || return nothing
-  comp.mount = mount!(outlet(comp.render.render))
+  mounted = mount!(outlet(comp.render.render))
+  iserror(mounted) && return mounted
+  comp.mount = mounted
   comp.handlers.onmount !== nothing && comp.handlers.onmount(comp.mount)
+  println("  no error")
   comp.mount
 end
 function rerender!(comp::CustomComponent)

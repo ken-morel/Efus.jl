@@ -135,13 +135,16 @@ function parsernamebinding!(parser::Parser)::Union{ENameBinding,Nothing,Abstract
     parser.index = start
     return nothing
   end
-  ENameBinding(name, value, ParserStack(parser, col(parser, start):col(parser), "in name binding"))
+  ENameBinding(
+    Symbol(name),
+    ParserStack(parser, col(parser, start):col(parser), "in name binding"),
+  )
 end
 
 
 
 function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractError}
-  tests = [parsernamebinding!,parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
+  tests = [parsernamebinding!, parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
   for test! in tests
     value = test!(parser)
     value === nothing || return value

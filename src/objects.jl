@@ -50,10 +50,10 @@ unit(s::ESize)::Union{Symbol,Nothing} = typeof(s.unit).parameters[2] #TODO: Impr
 
 struct ENameBinding <: EObject
   name::Symbol
-  stack::ParserStack
-  EVarBinding(name::Symbol,stack::ParserStack=ParserStack[]) = new(name, stack)
+  stack
+  ENameBinding(name::Symbol, stack=[]) = new(name, stack)
 end
-function eval(binding::ENameBinding, namepace::AbstractNamespace)::AbstractReactant
+function eval(binding::ENameBinding, namespace::AbstractNamespace)::AbstractReactant
   getreactant(namespace, binding.name)
 end
 

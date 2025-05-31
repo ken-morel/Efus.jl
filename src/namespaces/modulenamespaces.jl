@@ -1,10 +1,9 @@
-struct ModuleNamespace <: AbstractNamespace
+struct ModuleNamespace <: ENamespace
   mod::Module
   parent::Union{Nothing,AbstractNamespace}
   templates::Dict{Symbol,AbstractTemplate}
   modules::Dict{Symbol,TemplateModule}
-  componentclasses::Dict{Symbol,Vector{Component}}
-  ModuleNamespace(mod::Module) = new(mod, nothing, Dict(), Dict(), Dict())
+  ModuleNamespace(mod::Module) = new(mod, nothing, Dict(), Dict())
 end
 function varstomodule!(mod::Module, namespace::ModuleNamespace)::Module
   for name in names(namespace.mod; all=true, imported=false)

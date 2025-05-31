@@ -7,7 +7,7 @@ end
 struct TemplateCall <: AbstractStatement
   templatemod::Union{Symbol,Nothing}
   templatename::Symbol
-  objectalias::Union{Symbol,Nothing}
+  aliases::Vector{Symbol}
   arguments::Vector{TemplateCallArgument}
   indent::Int
   stack::ParserStack
@@ -29,6 +29,7 @@ function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObjec
   parent = length(ctx.stack) > 0 ? last(ctx.stack)[2] : nothing
   comp = template(call.arguments, ctx.namespace, parent, call.stack)
   iserror(comp) && return comp
+  map(a -> addalias(comp, a), call.aliases)
   push!(ctx.stack, (call, comp))
   comp
 end

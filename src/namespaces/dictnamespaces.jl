@@ -1,30 +1,20 @@
-struct DictNamespace <: AbstractNamespace
+struct DictNamespace <: ENamespace
   variables::Dict{Symbol,EObject}
   templates::Dict{Symbol,AbstractTemplate}
   parent::Union{Nothing,AbstractNamespace}
   modules::Dict{Symbol,TemplateModule}
-  componentclasses::Dict{Symbol,Vector{Component}}
   reactants::Dict{Symbol,AbstractReactant}
   dirty::Vector{Symbol}
   subscriptions::Vector{
     Tuple{AbstractObserver,Function,Union{Vector{Symbol},Nothing}}
   }
-  DictNamespace() = new(
-    Dict(),
-    Dict(),
-    nothing,
-    Dict(),
-    Dict(),
-    Dict(),
-    Vector{Tuple{AbstractObserver,Function,Vector{Symbol}}}(),
-  )
-  DictNamespace(parent::Union{AbstractNamespace,Nothing}) = new(
+  DictNamespace(parent::Union{AbstractNamespace,Nothing}=nothing) = new(
     Dict(),
     Dict(),
     parent,
     Dict(),
     Dict(),
-    Dict(),
+    Symbol[],
     Vector{Tuple{AbstractObserver,Function,Vector{Symbol}}}(),
   )
 end

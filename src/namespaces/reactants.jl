@@ -1,10 +1,10 @@
-mutable struct ENamespaceReactant{T} <: AbstractReactant{T}
+mutable struct ENamespaceReactant <: AbstractReactant{Any}
   observable::EObservable
   observer::EObserver
   name::Symbol
   namespace::AbstractNamespace
 end
-getvalue(nreact::ENamespaceReactant{T}, default::Any=nothing) where T = getname(
+getvalue(nreact::ENamespaceReactant, default::Any=nothing) = getname(
   nreact.namespace, nreact.name, default
 )
 getobservable(nreact::ENamespaceReactant) = nreact.observable
@@ -12,7 +12,7 @@ isdirty(nreact::ENamespaceReactant) = nreact.name in getdirty(nreact.namespace)
 dirty!(reactant::ENamespaceReactant, dirt::Bool) = dirty!(
   reactant.namespace, reactant.name, dirt
 )
-function setvalue(nreact::ENamespaceReactant{T}, value::T) where T
+function setvalue(nreact::ENamespaceReactant, value)
   setindex!(nreact.namespace, value, nreact.name)
   dirty!(nreact, true)
 end
@@ -40,4 +40,21 @@ function notify(nreact::ENamespaceReactant)
   end
 end
 
+function subscribe!(reactant::ENamespaceReactant)
+  subscribe!(reactant.namespace, reactant.observer, [reactant.name]) do
+    notify(reactant)
+  end
+end
 
+
+function getreactant(namespace::ENamespace, name::Symbol)::ENamespaceReactant
+  if haskey(namespace.reactants, name)
+    existing_reactant = namespace.reactants[name]
+    return existing_reactant
+  else
+    reactant = ENamespaceReactant(EObservable(), EObserver(), name, namespace)
+    subscribe!(reactant)
+    namespace.reactants[name] = reactant
+    return reactant
+  end
+end

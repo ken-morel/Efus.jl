@@ -31,13 +31,17 @@ mutable struct Component <: AbstractComponent
   children::Vector{AbstractComponent}
   mount::Union{Nothing,AbstractMount}
   dirty::Bool
+  aliasses::Vector{Symbol}
   Component(template::AbstractTemplate,
     params::Dict{Symbol,ComponentParameter},
     args::Dict{Symbol,Any},
     namespace::AbstractNamespace,
     parent::Union{AbstractComponent,Nothing},
-  ) = new(template, params, args, namespace, parent, AbstractComponent[], nothing, false)
+  ) = new(template, params, args, namespace, parent, AbstractComponent[], nothing, false, Symbol[])
 end
+getnamespace(comp::Component) = comp.namespace
+templatename(comp::Component)::Symbol = gettemplate(comp).name
+gettemplate(comp::Component)::AbstractTemplate = comp.template
 getargs(comp::AbstractComponent) = comp.args
 getparams(comp::AbstractComponent) = comp.params
 isdirty(comp::AbstractComponent) = comp.dirty
@@ -52,7 +56,13 @@ update!(component::Component) = update!(component.template.backend, component)
 parent(comp::Component) = comp.parent
 inlet(comp::Component)::Component = comp
 outlet(comp::Component)::Component = comp
+getchildren(comp::AbstractComponent) = comp.children
 
+
+getaliases(comp::AbstractComponent) = comp.aliases
+addalias(comp::AbstractComponent, alias::Symbol) = push!(comp.aliases, alias)
+removealias(comp::AbstractComponent, alias::Symbol) = pop!(comp.aliases, alias)
+hasalias(comp::AbstractComponent, alias::Symbol) = alias ∈ getaliases(comp)
 
 
 Base.push!(parent::AbstractComponent, child::AbstractComponent) = push!(parent.children, child)
@@ -114,7 +124,15 @@ function evaluateargs(comp::AbstractComponent)::Union{Dict,AbstractError}
       iserror(args[name]) && return args[name]
     end
     if !isa(args[name], param.param.type) && args[name] !== param.param.default
-      return ETypeError("argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
+      println(param.param.type <: AbstractReactant, args[name] isa AbstractReactant)
+      if !(param.param.type <: AbstractReactant) && args[name] isa AbstractReactant
+        args[name] = getvalue(args[name])
+        if !isa(args[name], param.param.type) && args[name] !== param.param.default
+          return ETypeError("value of evaluated reactant argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
+        end
+      else
+        return ETypeError("argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
+      end
     end
   end
   args
@@ -125,13 +143,6 @@ function evaluateargs!(comp::AbstractComponent)::Union{Dict,AbstractError}
   comp.args = err
 end
 
-function query(::AbstractComponent; alias::Symbol)::Vector{AbstractComponent}
-  options = AbstractComponent[]
-  if alias !== nothing
-    append!(options, get(getcompclasses(names), alias, []))
-  end
-  options
-end
-function queryone(comp::AbstractComponent; alias::Symbol)::Union{AbstractComponent,Nothing}
-  get(query(comp; alias=alias), 1, nothing)
-end
+
+
+
