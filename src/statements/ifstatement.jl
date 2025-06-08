@@ -19,5 +19,5 @@ function eval!(ctx::EvalContext, statement::EIfStatement)::Union{EObject,Nothing
 end
 
 function testbranch(ctx::EvalContext, branch::EIfStatementBranch)::Union{Bool,AbstractError}
-  branch.condition === nothing || eval(branch.condition, ctx.namespace)
+  branch.condition === nothing || Base.eval(branch.condition, ctx.namespace)
 end

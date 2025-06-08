@@ -40,6 +40,9 @@ function parsetemplatecallarguments!(parser::Parser)::Union{Vector{TemplateCallA
   resetiferror(parser) do
     arguments = TemplateCallArgument[]
     while parser.index <= length(parser.text) && char(parser) != '\n'
+      if !isnothing(parsecomment!(parser))
+        break
+      end
       next = parsetemplatecallargument!(parser)
       next === nothing && return SyntaxError("Unexpected token in template call arguments", ParserStack(parser, AFTER, "in template call arguments"))
       iserror(next) && return next

@@ -5,7 +5,7 @@ abstract type AbstractNamespace <: EObject end
 resolve(obj::EObject, _::Union{AbstractNamespace,Nothing}=nothing) = obj
 abstract type EMirrorObject{T} <: EObject end
 resolve(obj::EMirrorObject{T} where T, _::Union{AbstractNamespace,Nothing}=nothing)::T where T = obj.value
-eval(obj::EObject, _::AbstractNamespace) = resolve(obj)
+Base.eval(obj::EObject, _::AbstractNamespace) = resolve(obj)
 
 struct EInt <: EMirrorObject{Int}
   value::Int
@@ -35,7 +35,7 @@ struct EExpr <: EObject
   expr::Union{Expr,Symbol}
   stack
 end
-function eval(expr::EExpr, names::AbstractNamespace)
+function Base.eval(expr::EExpr, names::AbstractNamespace)
   if expr.expr isa Symbol
     n = getname(names, expr.expr, missing)
     n === missing && return NameError("Name $(expr.expr) is not defined in namespace", expr.expr, names, expr.stack === nothing ? ParserStack[] : expr.stack)
@@ -53,8 +53,6 @@ struct ENameBinding <: EObject
   stack
   ENameBinding(name::Symbol, stack=[]) = new(name, stack)
 end
-function eval(binding::ENameBinding, namespace::AbstractNamespace)::AbstractReactant
+function Base.eval(binding::ENameBinding, namespace::AbstractNamespace)::AbstractReactant
   getreactant(namespace, binding.name)
 end
-
-

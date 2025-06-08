@@ -40,5 +40,6 @@ include("statements/using.jl")
 
 include("statements/ifstatement.jl")
 
+include("statements/comments.jl")
 
 include("statements/errors.jl")

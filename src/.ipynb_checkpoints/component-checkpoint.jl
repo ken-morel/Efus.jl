@@ -69,7 +69,7 @@ hasalias(comp::AbstractComponent, alias::Symbol) = alias ∈ getaliases(comp)
 
 
 Base.push!(parent::AbstractComponent, child::AbstractComponent) = push!(parent.children, child)
-function matchparams(template::AbstractTemplate, arguments::Vector, stack::Union{ParserStack,Nothing}=nothing)::Union{AbstractError,Dict{Symbol,ComponentParameter}}
+function matchparams(template::AbstractTemplate, arguments::Vector)::Union{AbstractError,Dict{Symbol,ComponentParameter}}
   params::Dict{Symbol,ComponentParameter} = Dict()
   arguments = arguments[:]
   for parameter ∈ template.parameters
@@ -126,7 +126,7 @@ function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Sy
     if param.evaluated
       args[name] = param.value
     else
-      args[name] = Base.eval(param.value, comp.namespace)
+      args[name] = eval(param.value, comp.namespace)
       iserror(args[name]) && return args[name]
     end
     if !isa(args[name], param.param.type) && (param.param.required || args[name] !== param.param.default)

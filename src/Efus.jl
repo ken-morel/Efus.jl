@@ -14,13 +14,13 @@ include("parser.jl")
 include("customtemplates.jl")
 include("componentquery.jl")
 const TEMPLATE_MODULES = TemplateModule[]
-function getmodule(mod::Symbol)::Union{TemplateModule,Nothing}
+function gettemplatemodule(mod::Symbol)::Union{TemplateModule,Nothing}
   modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
   modindex === nothing && return nothing
   TEMPLATE_MODULES[modindex]
 end
 function gettemplate(mod::Symbol, name::Symbol)::Union{Template,Nothing}
-  mod = getmodule(mod)
+  mod = gettemplatemodule(mod)
   mod === nothing && return nothing
   gettemplate(mod, name)
 end
@@ -34,6 +34,4 @@ function registertemplatemodule(name::Symbol, templates::Vector{<:AbstractTempla
 end
 registertemplatemodule(name::Symbol) = registertemplatemodule(name, Template[])
 registertemplate(mod::Symbol, tmpl::Template) = registertemplatemodule(mod, Template[tmpl])
-
-
 end

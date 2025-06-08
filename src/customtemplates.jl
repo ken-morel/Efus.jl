@@ -74,7 +74,7 @@ function render!(comp::CustomComponent)::Union{AbstractError,ERender}
 end
 function rerender!(comp::CustomComponent)::Union{AbstractError,ERender}
   comp.render === nothing || unrender!(comp)
-  render!(comp.render.render)
+  render!(comp)
 end
 function unrender!(comp::CustomComponent)
   if comp.render !== nothing && comp.render.render !== nothing
@@ -99,13 +99,7 @@ function mount!(comp::CustomComponent)::Union{AbstractError,AbstractMount,Nothin
   println("  no error")
   comp.mount
 end
-function rerender!(comp::CustomComponent)
-  println("unrendering")
-  unrender!(comp)
-  println("rendering")
-  render!(comp)
-  println("rendered again")
-end
+
 function unmount!(comp::CustomComponent)
   !renderred(comp) && return
   render === nothing && return nothing
@@ -129,8 +123,8 @@ outlet(comp::CustomComponent)::AbstractComponent = comp.outlet === nothing ? not
 
 
 
-function (template::CustomTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing}, ::Union{ParserStack,Nothing}=nothing)::Union{CustomComponent,AbstractError}
-  params = matchparams(template, arguments)
+function (template::CustomTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{CustomComponent,AbstractError}
+  params = matchparams(template, arguments, stack)
   iserror(params) && return params
   comp = CustomComponent(template, params, Dict{Symbol,Any}(), namespace, parent, template.code)
   comp.namespace[:self] = comp

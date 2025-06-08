@@ -11,7 +11,7 @@ function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractError}
   end
   ESize(vals..., m[3] === nothing ? nothing : Symbol(m[3]))
 end
-function parseeint!(parser::Parser)::Union{EInt,Nothing,AbstractError}
+function parseeint!(parser::Parser; checkafter::Bool=true)::Union{EInt,Nothing,AbstractError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing
   resetiferror(parser) do
     start = parser.index
@@ -23,14 +23,15 @@ function parseeint!(parser::Parser)::Union{EInt,Nothing,AbstractError}
       if char(parser) == ' '
         break
       elseif !isdigit(char(parser))
-        return SyntaxError("Unexpected symbols in integer literal", ParserStack(parser, AT, "in integer literal"))
+        checkafter && return SyntaxError("Unexpected symbols in integer literal", ParserStack(parser, AT, "in integer literal"))
+        break
       end
       if iserror(nextinline!(parser))
         parser.index += 1
         break
       end
     end
-    EInt(parse(Int, beforecursor(parser)[start:end]))
+    EInt(parse(Int, beforecursor(parser)[start:end-1]))
   end
 end
 function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractError}

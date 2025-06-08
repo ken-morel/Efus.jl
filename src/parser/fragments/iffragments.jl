@@ -1,5 +1,6 @@
-
 @enum EIfFragmentType EIfFragmentIf EIfFragmentElseIf EIfFragmentElse
+
+
 struct EIfFragment <: AbstractStatementFragment
   type::EIfFragmentType
   expression::Union{EExpr,Nothing}
@@ -45,13 +46,10 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
     condition = iffragment.expression
     statement = nothing
     while !endofif # loop over one branch
-      println("In if branch")
       statement = nothing
       branchstatements = AbstractStatement[]
       while true
-        println("parsing next...")
         statement = parsenextstatementorfragment!(parser) #TODO: Add recursive combining
-        println("got: $statement")
         if statement === nothing # end of file
           endofif = true
           break
@@ -60,7 +58,6 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
         if statement.indent > iffragment.indent
           push!(branchstatements, statement)
         else
-          println("indent higher, breaking")
           break
         end
       end
@@ -87,7 +84,6 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
         return SyntaxError("Unexpected unindent without closing if block", statement.stack)
       end
     end
-    println("Bye")
     EIfStatement(branches, iffragment.indent, ParserStack(parser, BEFORE, "Lines before here"; add=-5))
   end
 end

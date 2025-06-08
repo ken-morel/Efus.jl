@@ -7,6 +7,8 @@ mutable struct Parser
   end
 end
 
+inbounds(parser::Parser) = parser.index <= length(parser.text)
+
 beforecursor(parser::Parser)::String = parser.text[begin:min(parser.index, length(parser.text))]
 beforecursor(parser::Parser, idx::Integer)::String = parser.text[begin:min(idx, length(parser.text))]
 aftercursor(parser::Parser)::String = parser.text[min(parser.index, length(parser.text)):end]

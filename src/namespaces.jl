@@ -13,6 +13,8 @@ function gettemplate(namespace::ENamespace, templatename::Symbol)::Union{Abstrac
   end
   if templ === nothing && namespace isa ModuleNamespace
     template = getname(namespace, templatename, nothing)
+    @warn "variable $templatename::$(typeof(template)) found in $(namespace.mod) but was not of Template type"
+    #TODO say only if it is the case
     template isa AbstractTemplate && return template
   end
   templ
@@ -36,7 +38,7 @@ function addtemplate!(namespace::ENamespace, template::AbstractTemplate)::Abstra
 end
 
 function importmodule!(namespace::ENamespace, modname::Symbol, names::Union{Nothing,Vector{Symbol}}=nothing)
-  mod = getmodule(modname)
+  mod = gettemplatemodule(modname)
   mod === nothing && return ImportError("Could not import module $(modname), it was not registered", ParserStack[])
   if names === nothing
     for tmpl ∈ mod.templates
