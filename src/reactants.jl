@@ -1,8 +1,10 @@
 abstract type AbstractReactant{T} <: EObject end
 function subscribe!(
-  fn::Function, reactant::AbstractReactant, observer::AbstractObserver,
+  fn::Function,
+  reactant::AbstractReactant,
+  observer::Union{AbstractObserver,Nothing},
 )
-  subscribe!(reactant.observable, observer, fn)
+  subscribe!(fn, reactant.observable, observer)
 end
 function unsubscribe!(
   fn::Function, reactant::AbstractReactant, observer::AbstractObserver,
@@ -12,6 +14,7 @@ end
 function notify!(reactant::AbstractReactant, value::T) where T
   setvalue!(reactant, value)
   notify(getobservable(reactant), value)
+  dirty!(reactant, false)
 end
 function notify(reactant::AbstractReactant)
   for (_, fn) in getsubscriptions(getobservable(reactant))
@@ -21,6 +24,7 @@ function notify(reactant::AbstractReactant)
       @warn "Error in reactant subscription callback: " e
     end
   end
+  dirty!(reactant, false)
 end
 
 

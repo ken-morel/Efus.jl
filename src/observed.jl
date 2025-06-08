@@ -42,7 +42,7 @@ end
 
 Add a subscription to the observer for the given observable and callback function.
 """
-function addsubscription!(observer::EObserver, observable::AbstractObservable, fn::Function)
+function addsubscription!(observer::EObserver, observable::Union{AbstractObservable,Nothing}, fn::Function)
   push!(observer.subscriptions, (observable, fn))
 end
 """
@@ -128,13 +128,13 @@ Adds the subscription to both observer and observable.
 """
 function subscribe!(observable::AbstractObservable, observer::Union{AbstractObserver,Nothing}, fn::Function)
   addsubscription!(observable, observer, fn)
-  addsubscription!(observer, observable, fn)
+  isnothing(observer) || addsubscription!(observer, observable, fn)
 end
 """
     subscribe!(fn::Function, obsbl::AbstractObservable, obsr::AbstractObserver)
 
 Alternate signature for `subscribe!` with argument order: function, observable, observer.
 """
-subscribe!(fn::Function, obsbl::AbstractObservable, obsr::AbstractObserver) = subscribe!(obsbl, obsr, fn)
+subscribe!(fn::Function, obsbl::AbstractObservable, obsr::Union{AbstractObserver,Nothing}) = subscribe!(obsbl, obsr, fn)
 
 
