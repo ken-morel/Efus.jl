@@ -3,5 +3,5 @@ struct EComment <: AbstractStatement
   stack::ParserStack
 end
 
-function eval!(::EvalContext, ::EComment)
+function eval!(::EfusEvalContext, ::EComment)
 end

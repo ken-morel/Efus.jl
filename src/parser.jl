@@ -11,21 +11,21 @@ end
 macro efuspreeval_str(text::String)
   code = parse!(Parser(; text=text))
   iserror(code) && return code
-  ctx = EvalContext()
+  ctx = EfusEvalContext()
   eval!(ctx, code)
 end
 macro efuseval_str(text::String)
   code = parse!(Parser(; text=text))
   iserror(code) && return code
   :(
-    eval!($(EvalContext()), $code)
+    eval!($(EfusEvalContext()), $code)
   )
 end
 macro efuspreeval_str(text::String, mod::String)
   namespace = ModuleNamespace(Base.eval(Symbol(mod)))
   code = parse!(Parser(; text=text))
   iserror(code) && return code
-  ctx = EvalContext(namespace)
+  ctx = EfusEvalContext(namespace)
   eval!(ctx, code)
 end
 macro efuseval_str(text::String, mod::String)
@@ -35,7 +35,7 @@ macro efuseval_str(text::String, mod::String)
   iserror(code) && return code
   :(
     println("Running after time");
-    eval!($(EvalContext(namespace)), $code)
+    eval!($(EfusEvalContext(namespace)), $code)
   )
 end
 

@@ -54,7 +54,7 @@ end
 function parsefile(path::String)::ECode
   parse!(Parser(; file=path))
 end
-function parse!(parser::Parser)::Union{ECode,AbstractError}
+function parse!(parser::Parser)::Union{ECode,AbstractEfusError}
   statements = AbstractStatement[]
   while true
     statement = parsenextstatement!(parser)

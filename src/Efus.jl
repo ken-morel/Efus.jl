@@ -1,6 +1,58 @@
 module Efus
+using Base: @kwdef
+
 
 export getmodule, gettemplate, registertemplatemodule, registertemplate
+## compoent.jl
+export AbstractComponent, ComponentParameter, Component, CustomComponent
+
+export mount!, unmount!, remount!
+export getmount, getparam, getnamespace
+export getargs, getnamespace
+
+export CustomTemplate, unrender!, render, render!
+export ERender
+
+export evaluateargs!, reevaluateargs!, updateargs!
+export evaluateargs
+export gettemplate, isdirty, dirty!
+export inlet, outlet, getchildren
+
+export getaliases, addalias, removealias, hasalias
+
+## componentquery.jl
+export query, queryone
+## errors.jl
+export iserror
+## namespaces
+export getmodule, importmodule!
+export gettemplate, addtemplate!
+
+export DictNamespace, ModuleNamespace
+
+export getname
+
+export AbstractNamespaceReactant, AbstractNamespace
+
+export varstomodule!, withmodule
+#objects
+export resolve
+export EObject, EMirrorObject
+export EInt, EDecimal, EString, ESize, unit, EBool, ESide, EOrient
+
+#observed
+export dropsubscriptions!, addsubscription!, subscribe!, unsubscribe!, getsubscriptions
+export EObserver, EObservable, notify
+#parser.jl does not export
+#reactants.jl
+export EReactant
+export getvalue, getobservable, setvalue!, notify!
+
+# statement.jl
+export EfusEvalContext, ECodeBlock, ECode, EfusTemplate
+export eval!
+
+
 include("objects.jl")
 include("observed.jl")
 include("reactants.jl")
@@ -19,7 +71,7 @@ function gettemplatemodule(mod::Symbol)::Union{TemplateModule,Nothing}
   modindex === nothing && return nothing
   TEMPLATE_MODULES[modindex]
 end
-function gettemplate(mod::Symbol, name::Symbol)::Union{Template,Nothing}
+function gettemplate(mod::Symbol, name::Symbol)::Union{EfusTemplate,Nothing}
   mod = gettemplatemodule(mod)
   mod === nothing && return nothing
   gettemplate(mod, name)
@@ -32,6 +84,6 @@ function registertemplatemodule(name::Symbol, templates::Vector{<:AbstractTempla
     append!(TEMPLATE_MODULES[exists].templates, templates)
   end
 end
-registertemplatemodule(name::Symbol) = registertemplatemodule(name, Template[])
-registertemplate(mod::Symbol, tmpl::Template) = registertemplatemodule(mod, Template[tmpl])
+registertemplatemodule(name::Symbol) = registertemplatemodule(name, EfusTemplate[])
+registertemplate(mod::Symbol, tmpl::EfusTemplate) = registertemplatemodule(mod, EfusTemplate[tmpl])
 end

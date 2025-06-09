@@ -1,4 +1,4 @@
-function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,AbstractError}
+function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,AbstractEfusError}
   resetiferror(parser) do
     indent = skipspaces!(parser)
     aliases = Symbol[]
@@ -36,7 +36,7 @@ function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,Abstract
   end
 end
 
-function parsetemplatecallarguments!(parser::Parser)::Union{Vector{TemplateCallArgument},Nothing,AbstractError}
+function parsetemplatecallarguments!(parser::Parser)::Union{Vector{TemplateCallArgument},Nothing,AbstractEfusError}
   resetiferror(parser) do
     arguments = TemplateCallArgument[]
     while parser.index <= length(parser.text) && char(parser) != '\n'
@@ -53,7 +53,7 @@ function parsetemplatecallarguments!(parser::Parser)::Union{Vector{TemplateCallA
   end
 end
 
-function parsetemplatecallargument!(parser::Parser)::Union{TemplateCallArgument,Nothing,AbstractError}
+function parsetemplatecallargument!(parser::Parser)::Union{TemplateCallArgument,Nothing,AbstractEfusError}
   resetiferror(parser) do
     start = parser.index
     name = parsesymbol!(parser)

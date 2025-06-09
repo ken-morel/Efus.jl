@@ -1,10 +1,10 @@
-struct SyntaxError <: AbstractError
+struct SyntaxError <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
   SyntaxError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
   SyntaxError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
 end
-struct EJuliaException <: AbstractError
+struct EJuliaException <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
   error::Exception

@@ -1,4 +1,4 @@
-struct NameError <: AbstractError
+struct NameError <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
   name::Symbol
@@ -7,7 +7,7 @@ struct NameError <: AbstractError
   NameError(msg::String, name::Symbol, namespace::AbstractNamespace, stack::ParserStack) = new(msg, ParserStack[stack], name, namespace)
 end
 
-struct ImportError <: AbstractError
+struct ImportError <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
   ImportError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)

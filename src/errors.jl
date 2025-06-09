@@ -1,10 +1,9 @@
-export iserror
 
-abstract type AbstractError <: EObject end
-Base.display(error::AbstractError) = println(format(error))
-getstacks(e::AbstractError) = e.stacks
+abstract type AbstractEfusError <: EObject end
+Base.display(error::AbstractEfusError) = println(format(error))
+getstacks(e::AbstractEfusError) = e.stacks
 
-function format(error::AbstractError)::String
+function format(error::AbstractEfusError)::String
   stacktrace = join(format.(getstacks(error)) .* "\n")
   message = String(nameof(typeof(error))) * ": " * error.message
   stacktrace * message
@@ -14,7 +13,7 @@ abstract type AbstractFileLocation end
 @enum LocatedArroundSide BEFORE AFTER AT
 
 
-iserror(e::Any) = isa(e, AbstractError)
+iserror(e::Any) = isa(e, AbstractEfusError)
 struct ParserStack
   file::String
   location::AbstractFileLocation
@@ -28,7 +27,7 @@ function format(stack::ParserStack)::String
   sample = styleunderline(stack.location, stack.line)
   location * ":\n" * sample
 end
-function prependstack!(e::T, stack::ParserStack)::T where T<:AbstractError
+function prependstack!(e::T, stack::ParserStack)::T where T<:AbstractEfusError
   pushfirst!(e.stacks, stack)
   e
 end

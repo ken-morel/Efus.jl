@@ -1,4 +1,3 @@
-export CustomTemplate, ERender, CustomComponent, inlet, outlet
 mutable struct CustomComponentHandlers
   onrender::Union{Function,Nothing}
   onmount::Union{Function,Nothing}
@@ -18,7 +17,7 @@ end
 
 struct ERender
   render::Union{AbstractComponent,Nothing}
-  context::EvalContext
+  context::EfusEvalContext
 end
 
 mutable struct CustomComponent <: AbstractComponent
@@ -50,9 +49,9 @@ getmount(::CustomComponent) = nothing
 parent(comp::CustomComponent) = comp.parent #TODO: Chech this works
 onmount(fn::Function, comp::CustomComponent) = (comp.handlers.onmount = fn)
 onrender(fn::Function, comp::CustomComponent) = (comp.handlers.onrender = fn)
-function render(comp::CustomComponent)::Union{AbstractError,ERender}
+function render(comp::CustomComponent)::Union{AbstractEfusError,ERender}
   namespace = DictNamespace(comp.namespace)
-  ctx = EvalContext(namespace)
+  ctx = EfusEvalContext(namespace)
   renderred = eval!(ctx, comp.code)
   iserror(renderred) && return renderred
   if inlet(renderred) !== nothing
@@ -67,12 +66,12 @@ function render(comp::CustomComponent)::Union{AbstractError,ERender}
   comp.handlers.onrender !== nothing && comp.handlers.onrender(render)
   render
 end
-function render!(comp::CustomComponent)::Union{AbstractError,ERender}
+function render!(comp::CustomComponent)::Union{AbstractEfusError,ERender}
   renderred = render(comp)
   iserror(renderred) && return renderred
   comp.render = renderred
 end
-function rerender!(comp::CustomComponent)::Union{AbstractError,ERender}
+function rerender!(comp::CustomComponent)::Union{AbstractEfusError,ERender}
   comp.render === nothing || unrender!(comp)
   render!(comp)
 end
@@ -84,7 +83,7 @@ end
 renderred(comp::CustomComponent) = comp.render !== nothing
 
 
-function mount!(comp::CustomComponent)::Union{AbstractError,AbstractMount,Nothing}
+function mount!(comp::CustomComponent)::Union{AbstractEfusError,AbstractMount,Nothing}
   println("rendering")
   if !renderred(comp)
     render = render!(comp)
@@ -123,7 +122,7 @@ outlet(comp::CustomComponent)::AbstractComponent = comp.outlet === nothing ? not
 
 
 
-function (template::CustomTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{CustomComponent,AbstractError}
+function (template::CustomTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{Component,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{CustomComponent,AbstractEfusError}
   params = matchparams(template, arguments, stack)
   iserror(params) && return params
   comp = CustomComponent(template, params, Dict{Symbol,Any}(), namespace, parent, template.code)

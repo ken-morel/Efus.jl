@@ -1,4 +1,4 @@
-function nextinline!(parser::Parser, inside::String="<here>")::Union{Nothing,AbstractError}
+function nextinline!(parser::Parser, inside::String="<here>")::Union{Nothing,AbstractEfusError}
   resetiferror(parser) do
     if parser.index + 1 > length(parser.text)
       SyntaxError("Unexpected end of file", ParserStack(parser, AFTER, inside))

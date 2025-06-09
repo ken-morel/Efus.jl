@@ -1,4 +1,4 @@
-function parsenextstatementorfragment!(parser)::Union{AbstractStatementFragment,AbstractStatement,Nothing,AbstractError}
+function parsenextstatementorfragment!(parser)::Union{AbstractStatementFragment,AbstractStatement,Nothing,AbstractEfusError}
   skipemptylines!(parser)
   parser.index > length(parser.text) && return nothing
   parser.text[parser.index:end] ⊆ (SPACES * '\n') && return nothing
@@ -8,7 +8,7 @@ function parsenextstatementorfragment!(parser)::Union{AbstractStatementFragment,
   statement
 end
 
-function parsestatementorfragment!(parser::Parser)::Union{AbstractStatement,AbstractStatementFragment,Nothing,AbstractError}
+function parsestatementorfragment!(parser::Parser)::Union{AbstractStatement,AbstractStatementFragment,Nothing,AbstractEfusError}
   resetiferror(parser) do
     tests = [parsecomment!, parseendfragment!, parseeiffragment!, parseusing!, parsetemplatecall!]
     for test! in tests
@@ -30,7 +30,7 @@ function parseendfragment!(parser::Parser)::Union{EndStatement,Nothing}
     nothing
   end
 end
-function parsenextstatement!(parser::Parser)::Union{AbstractStatement,AbstractStatementFragment,Nothing,AbstractError}
+function parsenextstatement!(parser::Parser)::Union{AbstractStatement,AbstractStatementFragment,Nothing,AbstractEfusError}
   statement = parsenextstatementorfragment!(parser)
   iserror(statement) && return statement
   statement === nothing && return nothing
@@ -41,7 +41,7 @@ function parsenextstatement!(parser::Parser)::Union{AbstractStatement,AbstractSt
   end
 end
 
-function parseusing!(parser::Parser)::Union{EUsing,Nothing,AbstractError}
+function parseusing!(parser::Parser)::Union{EUsing,Nothing,AbstractEfusError}
   resetiferror(parser) do
     start = parser.index
     indent = skipspaces!(parser, false)

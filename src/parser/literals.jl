@@ -1,4 +1,4 @@
-function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractError}
+function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractEfusError}
   m = match(ESIZE, parser.text, parser.index)
   if m === nothing || m.offset != parser.index
     return nothing
@@ -11,7 +11,7 @@ function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractError}
   end
   ESize(vals..., m[3] === nothing ? nothing : Symbol(m[3]))
 end
-function parseeint!(parser::Parser; checkafter::Bool=true)::Union{EInt,Nothing,AbstractError}
+function parseeint!(parser::Parser; checkafter::Bool=true)::Union{EInt,Nothing,AbstractEfusError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing
   resetiferror(parser) do
     start = parser.index
@@ -34,7 +34,7 @@ function parseeint!(parser::Parser; checkafter::Bool=true)::Union{EInt,Nothing,A
     EInt(parse(Int, beforecursor(parser)[start:end-1]))
   end
 end
-function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractError}
+function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractEfusError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing
   resetiferror(parser) do
     start = parser.index
@@ -60,7 +60,7 @@ function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractError}
     EDecimal(parse(Float32, beforecursor(parser)[start:end]))
   end
 end
-function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractError}
+function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractEfusError}
   char(parser) != '"' && return nothing
   start = parser.index
   while true
@@ -95,7 +95,7 @@ function parsekwconstant!(parser::Parser)::Union{EObject,Nothing}
   end
   value
 end
-function parseeexpr!(parser::Parser, endtoken::Union{String,Nothing}=nothing)::Union{AbstractError,EExpr,Nothing}
+function parseeexpr!(parser::Parser, endtoken::Union{String,Nothing}=nothing)::Union{AbstractEfusError,EExpr,Nothing}
   bracketed = endtoken === nothing
   bracketed && char(parser) != '(' && return nothing
   resetiferror(parser) do
@@ -127,7 +127,7 @@ function parseeexpr!(parser::Parser, endtoken::Union{String,Nothing}=nothing)::U
 end
 
 
-function parsernamebinding!(parser::Parser)::Union{ENameBinding,Nothing,AbstractError}
+function parsernamebinding!(parser::Parser)::Union{ENameBinding,Nothing,AbstractEfusError}
   char(parser) == '&' || return nothing
   start = parser.index
   parser.index += 1 #skip '&'
@@ -144,7 +144,7 @@ end
 
 
 
-function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractError}
+function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractEfusError}
   tests = [parsernamebinding!, parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
   for test! in tests
     value = test!(parser)

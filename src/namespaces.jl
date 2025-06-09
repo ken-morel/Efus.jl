@@ -3,7 +3,6 @@ include("namespaces/modulenamespaces.jl")
 include("namespaces/dictnamespaces.jl")
 include("namespaces/reactants.jl")
 
-
 function gettemplate(namespace::ENamespace, templatename::Symbol)::Union{AbstractTemplate,Nothing}
   t = get(namespace.templates, templatename, nothing)
   templ = if t === nothing && namespace.parent !== nothing

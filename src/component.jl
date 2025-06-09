@@ -69,7 +69,7 @@ hasalias(comp::AbstractComponent, alias::Symbol) = alias ∈ getaliases(comp)
 
 
 Base.push!(parent::AbstractComponent, child::AbstractComponent) = push!(parent.children, child)
-function matchparams(template::AbstractTemplate, arguments::Vector, stack::Union{ParserStack,Nothing}=nothing)::Union{AbstractError,Dict{Symbol,ComponentParameter}}
+function matchparams(template::AbstractTemplate, arguments::Vector, stack::Union{ParserStack,Nothing}=nothing)::Union{AbstractEfusError,Dict{Symbol,ComponentParameter}}
   params::Dict{Symbol,ComponentParameter} = Dict()
   arguments = arguments[:]
   for parameter ∈ template.parameters
@@ -107,7 +107,7 @@ end
 
 TBW
 """
-function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractError}
+function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractEfusError}
   params = matchparams(template, arguments)
   iserror(params) && return params
   comp = Component(template, params, Dict{Symbol,Any}(), namespace, parent)
@@ -116,7 +116,7 @@ function (template::Template)(arguments::Vector, namespace::AbstractNamespace, p
   parent === nothing || iserror(parent) || push!(parent, comp)
   comp
 end
-function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Symbol}}=nothing)::Union{Dict,AbstractError}
+function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Symbol}}=nothing)::Union{Dict,AbstractEfusError}
   args = Dict{Symbol,Any}()
   for param in values(comp.params)
     if !isnothing(argnames) && param.name ∉ argnames
@@ -146,18 +146,18 @@ function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Sy
   end
   args
 end
-function evaluateargs!(comp::AbstractComponent)::Union{Dict,AbstractError}
+function evaluateargs!(comp::AbstractComponent)::Union{Dict,AbstractEfusError}
   err = evaluateargs(comp)
   iserror(err) && return err
   comp.args = err
 end
-function reevaluateargs!(comp::AbstractComponent, args::Vector{Symbol})::Union{Dict{Symbol,Any},AbstractError}
+function reevaluateargs!(comp::AbstractComponent, args::Vector{Symbol})::Union{Dict{Symbol,Any},AbstractEfusError}
   newargs = evaluateargs(comp; argnames=args)
   iserror(newargs) && return newargs
   merge!(comp.args, newargs)
 end
 
-function updateargs!(comp::AbstractComponent, args::Vector{Symbol})::Union{Dict{Symbol,Any},AbstractError}
+function updateargs!(comp::AbstractComponent, args::Vector{Symbol})::Union{Dict{Symbol,Any},AbstractEfusError}
   err = reevaluateargs!(comp, args)
   iserror(err) && return err
   append!(comp.dirty, args)

@@ -1,5 +1,3 @@
-using Base: @kwdef
-
 @kwdef struct ComponentSearchSpec
   maxdepth::Union{UInt,Nothing} = nothing
   limit::Union{UInt,Nothing} = nothing

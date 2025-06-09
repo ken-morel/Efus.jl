@@ -8,7 +8,7 @@ struct EIfFragment <: AbstractStatementFragment
   stack::ParserStack
 end
 
-function parseeiffragment!(parser::Parser)::Union{EIfFragment,Nothing,AbstractError}
+function parseeiffragment!(parser::Parser)::Union{EIfFragment,Nothing,AbstractEfusError}
   start = parser.index
   indent = skipspaces!(parser)
   nextend = findfirst('\n', aftercursor(parser)) #TODO
@@ -36,7 +36,7 @@ function parseeiffragment!(parser::Parser)::Union{EIfFragment,Nothing,AbstractEr
   end
 end
 
-function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{AbstractStatement,Nothing,AbstractError}
+function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{AbstractStatement,Nothing,AbstractEfusError}
   if iffragment.type != EIfFragmentIf
     return SyntaxError("Unexpected else or elseif", iffragment.stack)
   end

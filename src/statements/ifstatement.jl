@@ -8,7 +8,7 @@ struct EIfStatement <: AbstractStatement
   stack::ParserStack
 end
 
-function eval!(ctx::EvalContext, statement::EIfStatement)::Union{EObject,Nothing,AbstractError}
+function eval!(ctx::EfusEvalContext, statement::EIfStatement)::Union{EObject,Nothing,AbstractEfusError}
   for branch ∈ statement.branches
     test = testbranch(ctx, branch)
     iserror(test) && return test
@@ -18,6 +18,6 @@ function eval!(ctx::EvalContext, statement::EIfStatement)::Union{EObject,Nothing
   end
 end
 
-function testbranch(ctx::EvalContext, branch::EIfStatementBranch)::Union{Bool,AbstractError}
+function testbranch(ctx::EfusEvalContext, branch::EIfStatementBranch)::Union{Bool,AbstractEfusError}
   branch.condition === nothing || Base.eval(branch.condition, ctx.namespace)
 end

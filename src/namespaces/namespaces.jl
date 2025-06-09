@@ -1,5 +1,3 @@
-export DictNamespace, gettemplate, getmodule, addtemplate!, importmodule!
-
 abstract type AbstractNamespaceReactant{T} <: AbstractReactant{T} end
 abstract type ENamespace <: AbstractNamespace end
 

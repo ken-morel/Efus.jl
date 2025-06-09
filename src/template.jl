@@ -31,6 +31,8 @@ function Base.convert(::Type{TemplateParameter}, pair::Pair)::TemplateParameter
   end
   TemplateParameter(name, typespec, def, required)
 end
+Base.convert(::Type{Vector{TemplateParameter}}, items::Vector{Pair}) =
+  convert.((TemplateParameter,), items)
 struct Template <: AbstractTemplate
   name::Symbol
   backend::TemplateBackend
@@ -51,14 +53,14 @@ end
 
 
 
-struct TemplateCallError <: AbstractError
+struct TemplateCallError <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
   template::AbstractTemplate
   TemplateCallError(msg::String, template::AbstractTemplate, stacks::Vector{ParserStack}) = new(msg, stacks, template)
   TemplateCallError(msg::String, template::AbstractTemplate, stack::ParserStack) = new(msg, ParserStack[stack], template)
 end
-struct ETypeError <: AbstractError
+struct ETypeError <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
   ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)

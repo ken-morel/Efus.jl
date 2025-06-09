@@ -4,7 +4,7 @@ struct EUsing <: AbstractStatement
   stack::ParserStack
   indent::Int
 end
-function eval!(ctx::EvalContext, eusing::EUsing)::Union{AbstractError,Nothing}
+function eval!(ctx::EfusEvalContext, eusing::EUsing)::Union{AbstractEfusError,Nothing}
   imp = importmodule!(ctx.namespace, eusing.mod, eusing.imports)
   iserror(imp) && prependstack!(imp, eusing.stack)
   imp

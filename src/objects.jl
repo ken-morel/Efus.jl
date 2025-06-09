@@ -1,4 +1,3 @@
-export EObject, AbstractNamespace, resolve, EMirrorObject, EInt, EDecimal, EString, ESize, unit, EBool, ESide, EOrient
 
 abstract type EObject end
 abstract type AbstractNamespace <: EObject end

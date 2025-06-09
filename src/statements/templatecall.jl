@@ -12,7 +12,7 @@ struct TemplateCall <: AbstractStatement
   indent::Int
   stack::ParserStack
 end
-function eval!(ctx::EvalContext, call::TemplateCall)::Union{AbstractError,EObject}
+function eval!(ctx::EfusEvalContext, call::TemplateCall)::Union{AbstractEfusError,EObject}
   template = if call.templatemod === nothing
     gettemplate(ctx.namespace, call.templatename)
   else
