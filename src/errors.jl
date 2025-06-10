@@ -50,7 +50,6 @@ function format(loc::LocatedArround)::String
   where_ * " " * pos
 end
 
-
 struct LocatedBetween <: AbstractFileLocation
   line::Int
   from::Int

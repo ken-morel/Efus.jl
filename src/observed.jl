@@ -138,3 +138,12 @@ Alternate signature for `subscribe!` with argument order: function, observable, 
 subscribe!(fn::Function, obsbl::AbstractObservable, obsr::Union{AbstractObserver,Nothing}) = subscribe!(obsbl, obsr, fn)
 
 
+
+macro redirectobservablemethods(spec::Expr, getter::Expr)
+  quote
+    subscribe!($(esc(spec)), observer::Union{AbstractObserver,Nothing}, fn::Function) =
+      subscribe!($(esc(getter)), observer, fn)
+    notify($(esc(spec)), args...; kwargs...) =
+      notify($(esc(getter)), args...; kwargs...)
+  end
+end

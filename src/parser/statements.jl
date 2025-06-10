@@ -72,9 +72,6 @@ function parseusing!(parser::Parser)::Union{EUsing,Nothing,AbstractEfusError}
       else
         EUsing(Symbol(mod), nothing, stack, indent)
       end
-    else
-      parser.index = start
-      nothing
     end
   end
 end

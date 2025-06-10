@@ -1,4 +1,4 @@
-export Template, Component, getmount, mount!, unmount!, update!, query, queryone
+export EfusTemplate, Component, getmount, mount!, unmount!, update!, query, queryone
 
 abstract type AbstractTemplate <: EObject end
 
@@ -33,7 +33,8 @@ function Base.convert(::Type{TemplateParameter}, pair::Pair)::TemplateParameter
 end
 Base.convert(::Type{Vector{TemplateParameter}}, items::Vector{Pair}) =
   convert.((TemplateParameter,), items)
-struct Template <: AbstractTemplate
+
+struct EfusTemplate <: AbstractTemplate
   name::Symbol
   backend::TemplateBackend
   parameters::Vector{TemplateParameter}
@@ -62,8 +63,18 @@ struct TemplateCallError <: AbstractEfusError
 end
 struct ETypeError <: AbstractEfusError
   message::String
+  exception::Union{Nothing, Exception}
   stacks::Vector{ParserStack}
-  ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, stacks)
-  ETypeError(msg::String, stack::ParserStack) = new(msg, ParserStack[stack])
+  ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, nothing, stacks)
+  ETypeError(msg::String, stack::ParserStack) = new(msg, nothing, ParserStack[stack])
+  ETypeError(msg::String, exception::Exception, stack::ParserStack) = new(
+                  msg, exception, ParserStack[stack],
+                  )
 end
 
+function Base.display(error::ETypeError) 
+  println(format(error))
+  if error.exception != nothing
+    Base.display_error(error.exception)
+  end
+end

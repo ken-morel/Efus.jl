@@ -1,15 +1,75 @@
-function parseesize!(parser::Parser)::Union{ESize,Nothing,AbstractEfusError}
-  m = match(ESIZE, parser.text, parser.index)
-  if m === nothing || m.offset != parser.index
-    return nothing
+function parseegeometry!(
+  parser::Parser
+)::Union{EGeometry,EInt,EDecimal,Nothing,AbstractEfusError}
+  !isdigit(char(parser)) && char(parser) ∉ "-+" && return nothing
+  resetiferror(parser) do
+    ln = line(parser)
+    startcol = col(parser)
+    endcol = startcol
+    parts = Union{Missing,Vector{Union{Int,Float64}}}[]
+    signs = Char[]
+    units = Union{Nothing,Symbol}[]
+    while inbounds(parser)  # loop arrounds parts seperated by + or -
+      # take the sign
+      if char(parser) ∉ "+-"
+        if isdigit(char(parser))
+          sign = '+'
+        else
+          break
+        end
+      else
+        sign = char(parser)
+        nextinline!(parser)
+      end
+      # take the value(or missing)
+      value = if isdigit(char(parser))
+        args = Union{Float64,Int}[]
+        while true  # loop arround part items sep by x
+          number = parseedecimal!(parser; checkafter=false, allowint=true).value
+          iserror(number) && return number
+          push!(args, number)
+          if !inbounds(parser) || char(parser) != 'x'
+            break
+          else
+            nextinline!(parser)
+          end
+        end
+        args
+      else
+        missing
+      end
+      # take the unit
+      unit = if inbounds(parser)  # not another x of course /\
+        parsesymbol!(parser)
+      end
+      push!(parts, value)
+      push!(signs, sign)
+      push!(units, isnothing(unit) ? nothing : Symbol(unit))
+      if col(parser) > endcol
+        endcol = col(parser)
+      end
+    end
+    if length(parts) == 0  # not suppose to happen
+      nothing
+    elseif length(parts) == 1 && !ismissing(parts[1]) && parts[1][1] isa Number
+      # just a simple literal
+      value = parts[1][1]
+      value isa Int ? EInt(value) : EDecimal(value)
+    else
+      EGeometry(
+        parts,
+        signs,
+        units,
+        ParserStack(
+          parser.filename,
+          LocatedBetween(ln, startcol, endcol),
+          getline(parser),
+          "In geometry spec",
+        ),
+      )
+    end
+
   end
-  parser.index += length(m.match)
-  vals = if '.' in m[1] * m[2]
-    parse(Float32, m[1]), parse(Float32, m[2])
-  else
-    parse(Int, m[1]), parse(Int, m[2])
-  end
-  ESize(vals..., m[3] === nothing ? nothing : Symbol(m[3]))
 end
 function parseeint!(parser::Parser; checkafter::Bool=true)::Union{EInt,Nothing,AbstractEfusError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing
@@ -34,7 +94,10 @@ function parseeint!(parser::Parser; checkafter::Bool=true)::Union{EInt,Nothing,A
     EInt(parse(Int, beforecursor(parser)[start:end-1]))
   end
 end
-function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractEfusError}
+function parseedecimal!(
+  parser::Parser;
+  allowint::Bool=false, checkafter::Bool=true,
+)::Union{EDecimal,EInt,Nothing,AbstractEfusError}
   char(parser) in "+-" || isdigit(char(parser)) || return nothing
   resetiferror(parser) do
     start = parser.index
@@ -50,6 +113,7 @@ function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractEfusErro
       elseif char(parser) == ' '
         break
       elseif !isdigit(char(parser))
+        checkafter || break
         return SyntaxError("Unexpected charater in decimal literal", ParserStack(parser, AT, "in integer literal"))
       end
       if iserror(nextinline!(parser))
@@ -57,7 +121,12 @@ function parseedecimal!(parser::Parser)::Union{EDecimal,Nothing,AbstractEfusErro
         break
       end
     end
-    EDecimal(parse(Float32, beforecursor(parser)[start:end]))
+    literal = parser.text[start:parser.index-1]
+    if allowint && '.' ∉ literal
+      EInt(parse(Int, literal))
+    else
+      EDecimal(parse(Float32, literal))
+    end
   end
 end
 function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractEfusError}
@@ -76,26 +145,16 @@ function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractEfusError}
   end
   EString(parser.text[start+1:parser.index-2])
 end
-function parsekwconstant!(parser::Parser)::Union{EObject,Nothing}
-  start = parser.index
+function parsefusesymbol!(parser::Parser)::Union{ESymbol,Nothing}
+  !isletter(char(parser)) && return nothing
   word = parsesymbol!(parser)
-  value = if word == "true"
-    EBool(true)
-  elseif word == "false"
-    EBool(false)
-  elseif word in ["left", "right", "top", "bottom", "center"]
-    ESide(Symbol(word))
-  elseif word in ["vertical", "horizontal"]
-    EOrient(Symbol(word))
-  else
-    nothing
-  end
-  if value === nothing
-    parser.index = start
-  end
-  value
+  isnothing(word) && return nothing
+  ESymbol(Symbol(word))
 end
-function parseeexpr!(parser::Parser, endtoken::Union{String,Nothing}=nothing)::Union{AbstractEfusError,EExpr,Nothing}
+function parseeexpr!(
+  parser::Parser,
+  endtoken::Union{String,Nothing}=nothing,
+)::Union{AbstractEfusError,EExpr,Nothing}
   bracketed = endtoken === nothing
   bracketed && char(parser) != '(' && return nothing
   resetiferror(parser) do
@@ -145,7 +204,9 @@ end
 
 
 function parsevalue!(parser::Parser)::Union{EObject,Nothing,AbstractEfusError}
-  tests = [parsernamebinding!, parseeexpr!, parsekwconstant!, parseesize!, parseedecimal!, parseeint!, parseestring!]
+  tests = [
+    parseestring!, parsernamebinding!, parseeexpr!, parsefusesymbol!, parseegeometry!
+  ]
   for test! in tests
     value = test!(parser)
     value === nothing || return value

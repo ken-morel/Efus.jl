@@ -24,7 +24,7 @@ struct ComponentParameter
 end
 
 mutable struct Component <: AbstractComponent
-  template::Template
+  template::EfusTemplate
   params::Dict{Symbol,ComponentParameter}
   args::Dict{Symbol,Any}
   namespace::AbstractNamespace
@@ -107,7 +107,7 @@ end
 
 TBW
 """
-function (template::Template)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractEfusError}
+function (template::EfusTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractEfusError}
   params = matchparams(template, arguments)
   iserror(params) && return params
   comp = Component(template, params, Dict{Symbol,Any}(), namespace, parent)
@@ -129,18 +129,24 @@ function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Sy
       args[name] = Base.eval(param.value, comp.namespace)
       iserror(args[name]) && return args[name]
     end
-    if !isa(args[name], param.param.type) && (param.param.required || args[name] !== param.param.default)
-      if !(param.param.type <: AbstractReactant) && args[name] isa AbstractReactant
+    if !isa(args[name], param.param.type) && args[name] != param.param.default
+      if args[name] isa AbstractReactant
         reactant = args[name]
-        subscribe!(reactant, comp.observer) do _, value
-          comp[param.param.name] = value
-        end
         args[name] = getvalue(args[name])
         if !isa(args[name], param.param.type) && (param.param.required || args[name] !== param.param.default)
           return ETypeError("value of evaluated reactant argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
+        else
+          subscribe!(reactant, comp.observer) do _, value
+            comp[param.param.name] = value
+          end
         end
       else
-        return ETypeError("argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
+        try
+          args[name] = Base.convert(param.param.type, args[name])
+        catch e
+          Base.display_error(e)
+          return ETypeError("argument of type $(typeof(args[name])) could not be converted to $(name)::$(param.param.type) $e", param.stack !== nothing ? param.stack : ParserStack[])
+        end
       end
     end
   end

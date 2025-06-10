@@ -1,4 +1,4 @@
-function nextinline!(parser::Parser, inside::String="<here>")::Union{Nothing,AbstractEfusError}
+function nextinline!(parser::Parser, inside::String="<here>")::Union{UInt,AbstractEfusError}
   resetiferror(parser) do
     if parser.index + 1 > length(parser.text)
       SyntaxError("Unexpected end of file", ParserStack(parser, AFTER, inside))
@@ -6,7 +6,6 @@ function nextinline!(parser::Parser, inside::String="<here>")::Union{Nothing,Abs
       SyntaxError("Unexpected end of line", ParserStack(parser, AFTER, inside))
     else
       parser.index += 1
-      nothing
     end
   end
 end
@@ -45,7 +44,7 @@ end
 function resetiferror(func::Function, parser::Parser)
   start::Int = parser.index
   value = func()
-  if iserror(value)
+  if iserror(value) || isnothing(value)
     parser.index = start
   end
   value

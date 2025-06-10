@@ -1,5 +1,6 @@
 module Efus
 using Base: @kwdef
+using MacroTools
 
 
 export getmodule, gettemplate, registertemplatemodule, registertemplate
@@ -23,7 +24,7 @@ export getaliases, addalias, removealias, hasalias
 ## componentquery.jl
 export query, queryone
 ## errors.jl
-export iserror
+export iserror, format
 ## namespaces
 export getmodule, importmodule!
 export gettemplate, addtemplate!
@@ -38,12 +39,16 @@ export varstomodule!, withmodule
 #objects
 export resolve
 export EObject, EMirrorObject
-export EInt, EDecimal, EString, ESize, unit, EBool, ESide, EOrient
+export EInt, EDecimal, EString, ESize, unit, ESide, EOrient
+export EHAlign, EVAlign, EGeometry, EEdgeInsets, ESquareGeometry
 
 #observed
 export dropsubscriptions!, addsubscription!, subscribe!, unsubscribe!, getsubscriptions
 export EObserver, EObservable, notify
+export @redirectobservablemethods
 #parser.jl does not export
+export @efuseval_str, @efus_str, @efusthrow_str
+export @efuspreeval_str
 #reactants.jl
 export EReactant
 export getvalue, getobservable, setvalue!, notify!

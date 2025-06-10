@@ -12,10 +12,10 @@ function gettemplate(namespace::ENamespace, templatename::Symbol)::Union{Abstrac
   end
   if templ === nothing && namespace isa ModuleNamespace
     template = getname(namespace, templatename, nothing)
-    if !isa(template, AbstractTemplate)
-      @warn "variable $templatename::$(typeof(template)) found in $(namespace.mod) but was not of Template type"
-    else
+    if isa(template, AbstractTemplate)
       return template
+    elseif !isnothing(template)
+      @warn "variable $templatename::$(typeof(template)) found in $(namespace.mod) but was not of Template type"
     end
   end
   templ

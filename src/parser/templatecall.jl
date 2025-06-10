@@ -36,7 +36,7 @@ function parsetemplatecall!(parser::Parser)::Union{TemplateCall,Nothing,Abstract
   end
 end
 
-function parsetemplatecallarguments!(parser::Parser)::Union{Vector{TemplateCallArgument},Nothing,AbstractEfusError}
+function parsetemplatecallarguments!(parser::Parser)::Union{Vector{TemplateCallArgument},AbstractEfusError}
   resetiferror(parser) do
     arguments = TemplateCallArgument[]
     while parser.index <= length(parser.text) && char(parser) != '\n'

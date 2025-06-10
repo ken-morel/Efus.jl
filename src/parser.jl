@@ -8,6 +8,14 @@ const ESIZE = r"(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)(\w+)?"
 macro efus_str(text::String)
   parse!(Parser(; text=text))
 end
+macro efusthrow_str(text::String)
+  val = parse!(Parser(; text=text))
+  if iserror(val)
+    display(val)
+    throw("error $val")
+  end
+  val
+end
 macro efuspreeval_str(text::String)
   code = parse!(Parser(; text=text))
   iserror(code) && return code
