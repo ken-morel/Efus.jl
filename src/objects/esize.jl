@@ -15,6 +15,7 @@ end
 unit(s::ESize)::Union{Symbol,Nothing} = typeof(s.unit).parameters[2] #TODO: Improve this
 Base.convert(::Type{Tuple}, val::ESize) =
   (val.width, val.height)
+
 function Base.convert(::Type{ESize}, val::EGeometry)
   try
     if length(val.parts) == 1

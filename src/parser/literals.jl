@@ -51,7 +51,7 @@ function parseegeometry!(
     end
     if length(parts) == 0  # not suppose to happen
       nothing
-    elseif length(parts) == 1 && !ismissing(parts[1]) && parts[1][1] isa Number
+    elseif length(parts) == 1 && !ismissing(parts[1]) && length(parts[1]) == 1
       # just a simple literal
       value = parts[1][1]
       value isa Int ? EInt(value) : EDecimal(value)

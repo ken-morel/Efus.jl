@@ -1,10 +1,10 @@
 struct EOrient <: EObject
   orient::Symbol
 end
-function Base.convert(::Type{EOrient}, val::ESymbol)
-  if val.value ∈ [:v, :vertical]
+function Base.convert(::Type{EOrient}, val::Symbol)
+  if val ∈ [:v, :vertical]
     EOrient(:vertical)
-  elseif val.value ∈ [:h, :horizontal]
+  elseif val ∈ [:h, :horizontal]
     EOrient(:horizontal)
   else
     throw("$val is not a valid orientation")

@@ -1,5 +1,5 @@
 struct DictNamespace <: ENamespace
-  variables::Dict{Symbol,EObject}
+  variables::Dict{Symbol,Any}
   templates::Dict{Symbol,AbstractTemplate}
   parent::Union{Nothing,AbstractNamespace}
   modules::Dict{Symbol,TemplateModule}

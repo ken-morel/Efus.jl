@@ -141,9 +141,11 @@ subscribe!(fn::Function, obsbl::AbstractObservable, obsr::Union{AbstractObserver
 
 macro redirectobservablemethods(spec::Expr, getter::Expr)
   quote
-    subscribe!($(esc(spec)), observer::Union{AbstractObserver,Nothing}, fn::Function) =
+    Efus.subscribe!($(esc(spec)), observer::Union{AbstractObserver,Nothing}, fn::Function) =
       subscribe!($(esc(getter)), observer, fn)
-    notify($(esc(spec)), args...; kwargs...) =
+    Efus.subscribe!(fn::Function, $(esc(spec)), observer::Union{AbstractObserver,Nothing}) =
+      subscribe!($(esc(getter)), observer, fn)
+    Efus.notify($(esc(spec)), args...; kwargs...) =
       notify($(esc(getter)), args...; kwargs...)
   end
 end

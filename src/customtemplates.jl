@@ -146,6 +146,3 @@ function (template::CustomTemplate)(
   parent === nothing || iserror(parent) || push!(parent, comp)
   comp
 end
-function (template::CustomTemplate)()
-  template()
-end
