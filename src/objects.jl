@@ -14,5 +14,4 @@ include("objects/ealign.jl")
 include("objects/esize.jl")
 include("objects/eedgeinsets.jl")
 
-
 include("objects/esquaregeometry.jl")

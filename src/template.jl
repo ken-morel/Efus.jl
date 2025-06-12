@@ -50,10 +50,6 @@ function gettemplate(mod::TemplateModule, templatename::Symbol)::Union{AbstractT
 end
 
 
-
-
-
-
 struct TemplateCallError <: AbstractEfusError
   message::String
   stacks::Vector{ParserStack}
@@ -63,18 +59,18 @@ struct TemplateCallError <: AbstractEfusError
 end
 struct ETypeError <: AbstractEfusError
   message::String
-  exception::Union{Nothing, Exception}
+  exception::Union{Nothing,Exception}
   stacks::Vector{ParserStack}
   ETypeError(msg::String, stacks::Vector{ParserStack}) = new(msg, nothing, stacks)
   ETypeError(msg::String, stack::ParserStack) = new(msg, nothing, ParserStack[stack])
   ETypeError(msg::String, exception::Exception, stack::ParserStack) = new(
-                  msg, exception, ParserStack[stack],
-                  )
+    msg, exception, ParserStack[stack],
+  )
 end
 
-function Base.display(error::ETypeError) 
+function Base.display(error::ETypeError)
   println(format(error))
-  if error.exception != nothing
+  if !isnothing(error.exception)
     Base.display_error(error.exception)
   end
 end

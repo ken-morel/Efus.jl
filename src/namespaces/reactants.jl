@@ -26,25 +26,14 @@ function unsubscribe!(
 )
   unsubscribe!(nreact.observable, observer, fn)
 end
-function notify!(nreact::ENamespaceReactant, value::T) where T
+function notify!(nreact::ENamespaceReactant, value)
   setvalue(nreact, value)
-  notify(nreact)
+  notify(nreact.observable, value)
 end
 function notify(nreact::ENamespaceReactant)
-  for (_, fn) in getsubscriptions(getobservable(nreact))
-    try
-      fn()
-    catch e
-      @warn "Error in namespace reactant $(nreact.name) subscription callback: " e
-    end
-  end
+  notify(nreact.observable, getvalue(nreact, nothing))
 end
 
-function subscribe!(reactant::ENamespaceReactant)
-  subscribe!(reactant.namespace, reactant.observer, [reactant.name]) do
-    notify(reactant)
-  end
-end
 
 
 function getreactant(namespace::ENamespace, name::Symbol)::ENamespaceReactant
@@ -53,7 +42,9 @@ function getreactant(namespace::ENamespace, name::Symbol)::ENamespaceReactant
     return existing_reactant
   else
     reactant = ENamespaceReactant(EObservable(), EObserver(), name, namespace)
-    subscribe!(reactant)
+    subscribe!(reactant.namespace, reactant.observer, [reactant.name]) do
+      notify(reactant)
+    end
     namespace.reactants[name] = reactant
     return reactant
   end
