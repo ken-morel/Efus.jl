@@ -10,3 +10,4 @@ function Base.convert(::Type{EOrient}, val::Symbol)
     throw("$val is not a valid orientation")
   end
 end
+Base.convert(::Type{EOrient}, val::ESymbol) = convert(EOrient, val.value)

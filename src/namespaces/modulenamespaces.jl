@@ -11,7 +11,6 @@ function varstomodule!(mod::Module, namespace::ModuleNamespace)::Module
       Core.eval(mod, :($name = $(namespace.mod).$name))
     end
   end
-
   mod
 end
 withmodule(fn::Function, names::ModuleNamespace) = fn(names.mod)

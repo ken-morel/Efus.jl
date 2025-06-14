@@ -22,15 +22,15 @@ function parseeiffragment!(parser::Parser)::Union{EIfFragment,Nothing,AbstractEf
 
   resetiferror(parser) do
     if symb == "else"
-      parser.index += 2 # skip ":\n"
+      parser.index += 1 # skip "\n"
       EIfFragment(EIfFragmentElse, nothing, indent, linestack)
     else
-      expr = parseeexpr!(parser, ":\n")
+      expr = parseeexpr!(parser, "\n")
       iserror(expr) && return expr
       if expr === nothing
-        return SyntaxError("Expected ':' after 'if' statement", ParserStack(parser, AFTER, "in if expression"))
+        return SyntaxError("Expected expression after 'if' statement", ParserStack(parser, AFTER, "in if expression"))
       end
-      parser.index += 2 # skip ":\n"
+      parser.index += 1 # skip "\n"
       EIfFragment(EIfFragmentIf, expr, indent, linestack)
     end
   end
@@ -50,12 +50,15 @@ function constructstatement!(parser::Parser, iffragment::EIfFragment)::Union{Abs
       branchstatements = AbstractStatement[]
       while true
         statement = parsenextstatementorfragment!(parser) #TODO: Add recursive combining
+        if statement isa AbstractStatementFragment && !(statement isa EIfFragment) && !(statement isa EndStatement)
+          statement = constructstatement!(parser, statement)
+        end
         if statement === nothing # end of file
-          endofif = true
-          break
+          return SyntaxError("Expected end after if statement", iffragment.stack)
         end
         iserror(statement) && return statement
         if statement.indent > iffragment.indent
+
           push!(branchstatements, statement)
         else
           break

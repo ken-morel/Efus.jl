@@ -7,7 +7,7 @@ struct EVAlign <: EAlign
   end
 end
 Base.convert(::Type{EVAlign}, val::ESymbol) = EVAlign(val.value)
-Base.convert(::Type{EVAlign}, val::Symbol) = EVAlign(val)
+# Base.convert(::Type{EVAlign}, val::Symbol) = EVAlign(val)
 Base.convert(::Type{EVAlign}, val::ESide) = EVAlign(val.side)
 struct EHAlign <: EAlign
   side::Symbol
@@ -17,6 +17,6 @@ struct EHAlign <: EAlign
   end
 end
 Base.convert(::Type{EHAlign}, val::ESymbol) = EHAlign(val.value)
-Base.convert(::Type{EHAlign}, val::Symbol) = EHAlign(val)
+# Base.convert(::Type{EHAlign}, val::Symbol) = EHAlign(val)
 Base.convert(::Type{EHAlign}, val::ESide) = EHAlign(val.side)
 

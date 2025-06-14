@@ -1,4 +1,4 @@
-struct ESymbol <: EMirrorObject{Symbol}
+struct ESymbol <: EObject
   value::Symbol
 end
 struct EInt <: EMirrorObject{Int}
@@ -10,13 +10,15 @@ end
 struct EString <: EMirrorObject{String}
   value::String
 end
-Base.convert(::Type{String}, val::ESymbol) = string(val.value)
+Base.convert(::Type{T} where T, val::EMirrorObject{T} where T)::T where T = val.value
 Base.convert(::Type{Symbol}, val::ESymbol) = val.value
 
+
 function Base.convert(::Type{Bool}, val::ESymbol)
-  if val.value ∈ [:t, :true]
+  value = string(val.value)
+  if value ∈ ["t", "true"]
     true
-  elseif val.value ∈ [:f, :false]
+  elseif val.value ∈ ["f", "false"]
     false
   else
     throw("$val is not a valid boolean")

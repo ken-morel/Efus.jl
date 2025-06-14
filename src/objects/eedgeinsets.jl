@@ -1,4 +1,3 @@
-
 struct EEdgeInsets{T,U} <: EObject
   top::T
   right::T

@@ -161,8 +161,11 @@ function parseeexpr!(
     start = parser.index
     count = Int(bracketed)
     while true
-      e = nextinline!(parser)
-      iserror(e) && return SyntaxError("Unterminated expression", ParserStack(parser, AT, "in expression literal"))
+      parser.index += 1
+      inbounds(parser) || return SyntaxError(
+        "Unterminated expression",
+        ParserStack(parser, AT, "in expression literal"),
+      )
       if char(parser) == '('
         count += 1
       elseif char(parser) == ')'

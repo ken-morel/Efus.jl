@@ -1,4 +1,3 @@
-
 struct EGeometry <: EObject
   parts::Vector{Union{Vector{Int},Missing}}
   signs::Vector{Char}

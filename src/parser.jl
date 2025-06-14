@@ -64,3 +64,4 @@ include("parser/exceptions.jl")
 
 include("parser/comment.jl")
 
+include("parser/ejlblock.jl")

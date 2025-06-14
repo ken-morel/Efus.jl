@@ -10,7 +10,15 @@ end
 
 function parsestatementorfragment!(parser::Parser)::Union{AbstractStatement,AbstractStatementFragment,Nothing,AbstractEfusError}
   resetiferror(parser) do
-    tests = [parsecomment!, parseendfragment!, parseeiffragment!, parseusing!, parsetemplatecall!]
+    tests = [
+      parsecomment!,
+      parseendfragment!,
+      parseeiffragment!,
+      parseeforfragment!,
+      parseusing!,
+      parsetemplatecall!,
+      parseejlblock!,
+    ]
     for test! in tests
       value = test!(parser)
       value === nothing || return value

@@ -37,7 +37,7 @@ function varstomodule!(mod::Module, names::DictNamespace)::Module
   end
 end
 function withmodule(fn::Function, names::DictNamespace)
-  mod = Module(Symbol("Efus.Namespace$(rand(UInt64))"), false, false)
+  mod = Module(Symbol("Efus.Namespace$(rand(UInt64))"), true, true)
   fn(varstomodule!(mod, names))
 end
 function getname(names::DictNamespace, name::Symbol, default)

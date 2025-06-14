@@ -9,6 +9,9 @@ struct EIfStatement <: AbstractStatement
 end
 
 function eval!(ctx::EfusEvalContext, statement::EIfStatement)::Union{EObject,Nothing,AbstractEfusError}
+  while length(ctx.stack) > 0 && last(ctx.stack)[1].indent >= statement.indent
+    pop!(ctx.stack)
+  end
   for branch ∈ statement.branches
     test = testbranch(ctx, branch)
     iserror(test) && return test

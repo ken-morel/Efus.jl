@@ -6,3 +6,4 @@ struct EndStatement <: AbstractStatement
 end
 
 include("fragments/iffragments.jl")
+include("fragments/forfragment.jl")

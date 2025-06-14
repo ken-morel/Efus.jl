@@ -38,6 +38,11 @@ include("statements/using.jl")
 
 include("statements/ifstatement.jl")
 
+include("statements/forstatement.jl")
+
+include("statements/jlblock.jl")
+
 include("statements/comments.jl")
 
 include("statements/errors.jl")
+
