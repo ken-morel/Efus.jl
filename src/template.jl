@@ -34,10 +34,15 @@ end
 Base.convert(::Type{Vector{TemplateParameter}}, items::Vector{Pair}) =
   convert.((TemplateParameter,), items)
 
-struct EfusTemplate <: AbstractTemplate
+struct EfusTemplate{T<:TemplateBackend} <: AbstractTemplate
   name::Symbol
-  backend::TemplateBackend
+  backend::Type{T}
   parameters::Vector{TemplateParameter}
+  EfusTemplate(
+    name::Symbol,
+    backend::Type{T},
+    parameters::Vector{TemplateParameter},
+  ) where T = new{T}(name, backend, parameters)
 end
 struct TemplateModule
   name::Symbol

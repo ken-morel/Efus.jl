@@ -4,18 +4,16 @@ include("namespaces/dictnamespaces.jl")
 include("namespaces/reactants.jl")
 
 function gettemplate(namespace::ENamespace, templatename::Symbol)::Union{AbstractTemplate,Nothing}
-  t = get(namespace.templates, templatename, nothing)
-  templ = if t === nothing && namespace.parent !== nothing
-    gettemplate(namespace.parent, templatename)
-  else
-    t
+  templ = get(namespace.templates, templatename, nothing)
+  if templ === nothing && namespace.parent !== nothing
+    templ = gettemplate(namespace.parent, templatename)
   end
-  if templ === nothing && namespace isa ModuleNamespace
+  if templ === nothing
     template = getname(namespace, templatename, nothing)
     if isa(template, AbstractTemplate)
       return template
     elseif !isnothing(template)
-      @warn "variable $templatename::$(typeof(template)) found in $(namespace.mod) but was not of Template type"
+      @warn "variable $templatename::$(typeof(template)) found in Namespace but was not of Template type"
     end
   end
   templ

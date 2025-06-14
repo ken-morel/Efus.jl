@@ -23,8 +23,9 @@ struct ComponentParameter
   stack::Union{ParserStack,Nothing}
 end
 
-mutable struct Component <: AbstractComponent
-  template::EfusTemplate
+mutable struct Component{T<:TemplateBackend} <: AbstractComponent
+  template::EfusTemplate{T}
+  backend::T
   params::Dict{Symbol,ComponentParameter}
   args::Dict{Symbol,Any}
   namespace::AbstractNamespace
@@ -34,12 +35,14 @@ mutable struct Component <: AbstractComponent
   dirty::Bool
   aliases::Vector{Symbol}
   observer::EObserver
-  Component(template::AbstractTemplate,
+  Component(
+    template::EfusTemplate{T},
+    backend::T,
     params::Dict{Symbol,ComponentParameter},
     args::Dict{Symbol,Any},
     namespace::AbstractNamespace,
     parent::Union{AbstractComponent,Nothing},
-  ) = new(template, params, args, namespace, parent, AbstractComponent[], nothing, false, Symbol[], EObserver())
+  ) where T = new{T}(template, backend, params, args, namespace, parent, AbstractComponent[], nothing, false, Symbol[], EObserver())
 end
 getparam(comp::AbstractComponent, name::Symbol)::Union{ComponentParameter,Nothing} = get(comp.params, name, nothing)
 getnamespace(comp::AbstractComponent) = comp.namespace
@@ -50,12 +53,6 @@ getparams(comp::AbstractComponent) = comp.params
 isdirty(comp::AbstractComponent) = comp.dirty
 dirty!(comp::AbstractComponent, dirt::Bool) = (comp.dirty = dirt)
 getmount(comp::Component) = comp.mount
-mount!(_::TemplateBackend, _::Component) = throw("Mounting not supported by backend")
-unmount!(_::TemplateBackend, _::Component) = throw("Unmounting not supported by backend")
-update!(_::TemplateBackend, _::Component) = throw("Updating not supported by backend")
-mount!(component::Component)::Union{Nothing,AbstractMount} = mount!(component.template.backend, component)
-unmount!(component::Component) = unmount!(component.template.backend, component)
-update!(component::Component) = update!(component.template.backend, component)
 parent(comp::Component) = comp.parent
 inlet(comp::Component)::Component = comp
 outlet(comp::Component)::Component = comp
@@ -110,12 +107,13 @@ TBW
 function (template::EfusTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent,Nothing}, stack::Union{ParserStack,Nothing}=nothing)::Union{Component,AbstractEfusError}
   params = matchparams(template, arguments)
   iserror(params) && return params
-  comp = Component(template, params, Dict{Symbol,Any}(), namespace, parent)
+  comp = Component(template, template.backend(), params, Dict{Symbol,Any}(), namespace, parent)
   err = evaluateargs!(comp)
   iserror(err) && return err
   parent === nothing || iserror(parent) || push!(parent, comp)
   comp
 end
+init!(::Component) = nothing
 function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing,Vector{Symbol}}=nothing)::Union{Dict,AbstractEfusError}
   args = Dict{Symbol,Any}()
   for param in values(comp.params)

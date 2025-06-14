@@ -69,7 +69,7 @@ function render(comp::CustomComponent)::Union{AbstractEfusError,ERender}
   end
   comp.outlet = renderred
   render = ERender(renderred, ctx)
-  comp.handlers.onrender !== nothing && comp.handlers.onrender(render)
+  comp.handlers.onrender isa Function && comp.handlers.onrender(render)
   render
 end
 function render!(comp::CustomComponent)::Union{AbstractEfusError,ERender}
@@ -97,6 +97,8 @@ function mount!(comp::CustomComponent)::Union{AbstractEfusError,AbstractMount,No
   comp.render !== nothing || comp.render.render !== nothing || return nothing
   mounted = mount!(outlet(comp.render.render))
   iserror(mounted) && return mounted
+  err = init!(comp)
+  iserror(err) && return err
   comp.mount = mounted
   comp.handlers.onmount !== nothing && comp.handlers.onmount(comp.mount)
   comp.mount
@@ -117,10 +119,11 @@ function update!(comp::CustomComponent)
   comp.render.render === nothing && return nothing
   update!(comp.render.render)
 end
+init!(comp::CustomComponent) = comp.template.initializer(comp)
+
+
 inlet(comp::CustomComponent)::AbstractComponent = comp.inlet === nothing ? nothing : inlet(comp.inlet)
 outlet(comp::CustomComponent)::AbstractComponent = comp.outlet === nothing ? nothing : outlet(comp.outlet)
-
-
 
 function (template::CustomTemplate)(
   arguments::Vector,
@@ -138,10 +141,9 @@ function (template::CustomTemplate)(
     parent,
     template.code,
   )
-  comp.namespace[:self] = comp
   err = evaluateargs!(comp)
   iserror(err) && return err
-  err = template.initializer(comp, comp.namespace)
+  err = init!(comp)
   iserror(err) && return err
   parent === nothing || iserror(parent) || push!(parent, comp)
   comp

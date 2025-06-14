@@ -10,6 +10,7 @@ export AbstractComponent, ComponentParameter, Component, CustomComponent
 export mount!, unmount!, remount!
 export getmount, getparam, getnamespace
 export getargs, getnamespace
+export onrender, onmount
 
 export CustomTemplate, unrender!, render, render!
 export ERender
