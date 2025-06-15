@@ -131,19 +131,28 @@ function parseedecimal!(
 end
 function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractEfusError}
   char(parser) != '"' && return nothing
+  parser.index += 1
   start = parser.index
   while true
-    n = nextinline!(parser, "in string literal")
-    iserror(n) && return SyntaxError("Unterminated string literal", ParserStack(parser, col(parser, start):col(parser, parser.index), "in string literal"))
-    if char(parser) == '\\'
-      parser.index += 1
-      continue
-    elseif char(parser) == '"'
-      parser.index += 1
+    nextslash = findnext('\\', parser.text, parser.index)
+    nextquote = findnext('"', parser.text, parser.index)
+    if isnothing(nextquote)
+      return SyntaxError(
+        "Could not find closing '\"'",
+        ParserStack(
+          parser,
+          col(parser, start):col(parser, parser.index),
+          "in string literal",
+        ),
+      )
+    elseif !isnothing(nextslash) && nextslash == nextquote - 1
+      parser.index = nextquote + 1
+    else
+      parser.index = nextquote + 1
       break
     end
   end
-  EString(parser.text[start+1:parser.index-2])
+  EString(parser.text[start:parser.index-2])
 end
 function parsefusesymbol!(parser::Parser)::Union{ESymbol,Nothing}
   !isletter(char(parser)) && return nothing
