@@ -129,6 +129,7 @@ function parseedecimal!(
     end
   end
 end
+fixindex(text::String, index::UInt) = findlast(<=(index), collect(eachindex(text)))
 function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractEfusError}
   char(parser) != '"' && return nothing
   parser.index += 1
@@ -152,7 +153,11 @@ function parseestring!(parser::Parser)::Union{EString,Nothing,AbstractEfusError}
       break
     end
   end
-  EString(parser.text[start:parser.index-2])
+  EString(
+    parser.text[
+      fixindex(parser.text, start):fixindex(parser.text, parser.index - 2)
+    ]
+  )
 end
 function parsefusesymbol!(parser::Parser)::Union{ESymbol,Nothing}
   !isletter(char(parser)) && return nothing
