@@ -1,88 +1,46 @@
-# Efus
+# Efus.jl
 
-Efus comes from a word meaning component for that's the aim, efus provides
-templates and types for building backends and templates for components to design
-user interfaces.
+2 years ago, learning python, working with tkinter, I already started to look for an
+easier and more beautiful way to markup user interfaces, like html but less verbose.
+This is what it does, Efus is a language and set of associated tools to help you get on
+adding an easier, julia-compatible way to design reactive user interfaces with you
+ui toolkit. It has completely no dependency so as to ease packaging.
+Efus.jl works on a few basic concepts.
 
-To that effect efus provides a syntax called `efus` which is meant to help
-by providing a simple way to define templates, components and their properties.
-But efus does not provide them, efus just provides the syntax to define them.
+## Components
 
-```swift
-using Gtak
-# An example of usage with components from Gtak.jl
-Window title="Sample window with" box=vertical
-  Label text="Do you want to eat Ndole?"
-  Box orient=horizontal
-    Button text="Yes" action=(() -> println("Ndole is delicious!"))
-    Button text="No" action=(() -> println("You are missing out!"))
+A component is a manager or virtual interface to your actual widgets, a component may
+wrap arround or simply expose a simple widget. A component has the role of containing
+all the attributes and other properties of the widgets, so they can any time be mounted
+to generate an actual widget. The are in charge of the reactivity, hieharchy and state.
+
+There are all subclasses of the super `AbstractComponent` and Efus includes of two types:
+
+- `Component`
+- `CustomComponent`
+
+## Template
+
+A template object is simply defining a template to create components, they are in charge
+of defining parameters, backend and also managing arguments when used in efus source.
+
+```efus
+MyComponent arg1=val1 ...
 ```
 
-Efus code actualy translate to a list of instructions that are then executed one
-by one: efus does not define how a ui will look like but instead lists steps to
-create it. It also provides a set of ui related types for representing geometry,
-julia literals, ...
+### CustomTemplates
 
-## templates
+Custom templates are made as templates but differ in such that they rely themselves on
+other components, they are the basis of Pages and more complex interfaces.
 
-Efus provides means to create Templates each with their own properties, and
-backends can use these templates to create components.
-Templates are like classes which define the set of methods and attribute
-of their instances.
+## TemplateBackend
 
-```julia
-# Ectract from Gtak.jl
-GtakBox = Template(
-  :Box,
-  GtakBoxBackend(),
-  [
-    :orient! => EOrient,
-  ]
-)
-```
+The full signature of `Component` is actually `Component{<:AbstractTemplateBackend}`.
+The template backend is created at the same time with the component when the template is
+called, and it is the only thing differentiating between components. They may store
+toolkit and not widget specific data and may be any subclass of `AbstractTemplateBackend`.
 
-## components
+## EObject
 
-Templates can then be instantiate to create components, components are what the
-user uses to interact with the application, they hold information related to
-state, arguments.
-
-## mounts
-
-A mount is the way efus offers the backend to store the backend related data
-asscoiated with a widget, a component can be mounted and unmounted, which
-should not change the mount since the component are the one to hold the widget
-state.
-
-## efus code
-
-Just like said earlier, efus is a set of instructions for creating and
-affiliating components, the instructions may be template instantiations as
-well as if statements, ~loops, and other control flow structures~.
-Extract from Gtak examples
-
-```julia
-using Gtak
-
-function clicked(comp)
-  comp[:text] *= ">>"
-end
-
-page = efuseval"""
-using Gtak
-
-Window title="Hello world" box=vertical
-  Label&label text="Welcome to todo app!"
-  Box orient=horizontal
-    Label text="Enter your todo here"
-    Button text="I love A level" onclick=(clicked)
-  Box orient=vertical
-
-"""Main
-
-if iserror(page)
-  display(page)
-  exit(1)
-end
-window = mount!(page)
-```
+This is the parent of several efus object types generated when the code parser parses
+efus source code.
