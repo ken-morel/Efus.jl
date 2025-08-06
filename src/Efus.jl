@@ -40,7 +40,7 @@ export varstomodule!, withmodule
 #objects
 export resolve
 export EObject, EMirrorObject
-export EInt, EDecimal, EString, ESize, unit, ESide, EOrient
+export ESize, unit, ESide, EOrient
 export EHAlign, EVAlign, EGeometry, EEdgeInsets, ESquareGeometry
 
 #observed
@@ -72,23 +72,23 @@ include("parser.jl")
 include("customtemplates.jl")
 include("componentquery.jl")
 const TEMPLATE_MODULES = TemplateModule[]
-function gettemplatemodule(mod::Symbol)::Union{TemplateModule,Nothing}
-  modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
-  modindex === nothing && return nothing
-  TEMPLATE_MODULES[modindex]
+function gettemplatemodule(mod::Symbol)::Union{TemplateModule, Nothing}
+    modindex = findfirst(tmplmod -> tmplmod.name == mod, TEMPLATE_MODULES)
+    modindex === nothing && return nothing
+    return TEMPLATE_MODULES[modindex]
 end
-function gettemplate(mod::Symbol, name::Symbol)::Union{EfusTemplate,Nothing}
-  mod = gettemplatemodule(mod)
-  mod === nothing && return nothing
-  gettemplate(mod, name)
+function gettemplate(mod::Symbol, name::Symbol)::Union{EfusTemplate, Nothing}
+    mod = gettemplatemodule(mod)
+    mod === nothing && return nothing
+    return gettemplate(mod, name)
 end
 function registertemplatemodule(name::Symbol, templates::Vector{<:AbstractTemplate})
-  exists = findfirst(mod -> mod.name == name, TEMPLATE_MODULES)
-  if exists === nothing
-    push!(TEMPLATE_MODULES, TemplateModule(name, templates))
-  else
-    append!(TEMPLATE_MODULES[exists].templates, templates)
-  end
+    exists = findfirst(mod -> mod.name == name, TEMPLATE_MODULES)
+    return if exists === nothing
+        push!(TEMPLATE_MODULES, TemplateModule(name, templates))
+    else
+        append!(TEMPLATE_MODULES[exists].templates, templates)
+    end
 end
 registertemplatemodule(name::Symbol) = registertemplatemodule(name, EfusTemplate[])
 registertemplate(mod::Symbol, tmpl::EfusTemplate) = registertemplatemodule(mod, EfusTemplate[tmpl])

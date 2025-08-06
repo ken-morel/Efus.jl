@@ -1,123 +1,123 @@
 mutable struct CustomComponentHandlers
-  onrender::Union{Function,Nothing}
-  onmount::Union{Function,Nothing}
+    onrender::Union{Function, Nothing}
+    onmount::Union{Function, Nothing}
 end
 struct CustomTemplate <: AbstractTemplate
-  initializer::Function
-  name::Symbol
-  parameters::Vector{TemplateParameter}
-  code::ECode
-  CustomTemplate(
-    initializer::Function,
-    name::Symbol,
-    parameters::Vector{TemplateParameter},
-    code::ECode,
-  ) = new(initializer, name, parameters, code)
-  CustomTemplate(
-    initializer::Function,
-    name::Symbol,
-    parameters::Vector{Pair},
-    code::ECode,
-  ) = new(initializer, name, convert.((TemplateParameter,), parameters), code)
+    initializer::Function
+    name::Symbol
+    parameters::Vector{TemplateParameter}
+    code::ECode
+    CustomTemplate(
+        initializer::Function,
+        name::Symbol,
+        parameters::Vector{TemplateParameter},
+        code::ECode,
+    ) = new(initializer, name, parameters, code)
+    CustomTemplate(
+        initializer::Function,
+        name::Symbol,
+        parameters::Vector{Pair},
+        code::ECode,
+    ) = new(initializer, name, convert.((TemplateParameter,), parameters), code)
 
 end
 
 struct ERender
-  render::Union{AbstractComponent,Nothing}
-  context::EfusEvalContext
+    render::Union{AbstractComponent, Nothing}
+    context::EfusEvalContext
 end
 
 mutable struct CustomComponent <: AbstractComponent
-  template::CustomTemplate
-  params::Dict{Symbol,ComponentParameter}
-  args::Dict{Symbol,Any}
-  namespace::AbstractNamespace
-  parent::Union{AbstractComponent,Nothing}
-  children::Vector{AbstractComponent}
-  dirty::Bool
-  outlet::Union{AbstractComponent,Nothing}
-  inlet::Union{AbstractComponent,Nothing}
-  code::ECode
-  render::Union{ERender,Nothing}
-  mount::Union{AbstractMount,Nothing}
-  handlers::CustomComponentHandlers
-  aliases::Vector{Symbol}
-  CustomComponent(
-    template::CustomTemplate,
-    params::Dict{Symbol,ComponentParameter},
-    args::Dict{Symbol,Any},
-    namespace::AbstractNamespace,
-    parent::Union{AbstractComponent,Nothing},
-    code::ECode,
-  ) = new(template, params, args, namespace, parent, AbstractComponent[], false, nothing, nothing, code, nothing, nothing, CustomComponentHandlers(nothing, nothing), Symbol[])
+    template::CustomTemplate
+    params::Dict{Symbol, ComponentParameter}
+    args::Dict{Symbol, Any}
+    namespace::AbstractNamespace
+    parent::Union{AbstractComponent, Nothing}
+    children::Vector{AbstractComponent}
+    dirty::Bool
+    outlet::Union{AbstractComponent, Nothing}
+    inlet::Union{AbstractComponent, Nothing}
+    code::ECode
+    render::Union{ERender, Nothing}
+    mount::Union{AbstractMount, Nothing}
+    handlers::CustomComponentHandlers
+    aliases::Vector{Symbol}
+    CustomComponent(
+        template::CustomTemplate,
+        params::Dict{Symbol, ComponentParameter},
+        args::Dict{Symbol, Any},
+        namespace::AbstractNamespace,
+        parent::Union{AbstractComponent, Nothing},
+        code::ECode,
+    ) = new(template, params, args, namespace, parent, AbstractComponent[], false, nothing, nothing, code, nothing, nothing, CustomComponentHandlers(nothing, nothing), Symbol[])
 end
 getnamespace(comp::CustomComponent) = comp.namespace
 getmount(::CustomComponent) = nothing
 parent(comp::CustomComponent) = comp.parent #TODO: Chech this works
 onmount(fn::Function, comp::CustomComponent) = (comp.handlers.onmount = fn)
 onrender(fn::Function, comp::CustomComponent) = (comp.handlers.onrender = fn)
-function render(comp::CustomComponent)::Union{AbstractEfusError,ERender}
-  ctx = EfusEvalContext(comp.namespace)
-  renderred = eval!(ctx, comp.code)
-  iserror(renderred) && return renderred
-  if inlet(renderred) !== nothing
-    child = inlet(renderred)
-    if comp.parent !== nothing
-      parent = outlet(comp.parent)
-      child.parent = parent
+function render(comp::CustomComponent)::Union{AbstractEfusError, ERender}
+    ctx = EfusEvalContext(comp.namespace)
+    renderred = eval!(ctx, comp.code)
+    iserror(renderred) && return renderred
+    if inlet(renderred) !== nothing
+        child = inlet(renderred)
+        if comp.parent !== nothing
+            parent = outlet(comp.parent)
+            child.parent = parent
+        end
     end
-  end
-  comp.outlet = renderred
-  render = ERender(renderred, ctx)
-  comp.handlers.onrender isa Function && comp.handlers.onrender(render)
-  render
+    comp.outlet = renderred
+    render = ERender(renderred, ctx)
+    comp.handlers.onrender isa Function && comp.handlers.onrender(render)
+    return render
 end
-function render!(comp::CustomComponent)::Union{AbstractEfusError,ERender}
-  renderred = render(comp)
-  iserror(renderred) && return renderred
-  comp.render = renderred
+function render!(comp::CustomComponent)::Union{AbstractEfusError, ERender}
+    renderred = render(comp)
+    iserror(renderred) && return renderred
+    return comp.render = renderred
 end
-function rerender!(comp::CustomComponent)::Union{AbstractEfusError,ERender}
-  comp.render === nothing || unrender!(comp)
-  render!(comp)
+function rerender!(comp::CustomComponent)::Union{AbstractEfusError, ERender}
+    comp.render === nothing || unrender!(comp)
+    return render!(comp)
 end
 function unrender!(comp::CustomComponent)
-  if comp.render !== nothing && comp.render.render !== nothing
-    unmount!(outlet(comp.render.render))
-  end
+    return if comp.render !== nothing && comp.render.render !== nothing
+        unmount!(outlet(comp.render.render))
+    end
 end
 renderred(comp::CustomComponent) = comp.render !== nothing
 
 
-function mount!(comp::CustomComponent)::Union{AbstractEfusError,AbstractMount,Nothing}
-  if !renderred(comp)
-    render = render!(comp)
-    iserror(render) && return render
-  end
-  comp.render !== nothing || comp.render.render !== nothing || return nothing
-  mounted = mount!(outlet(comp.render.render))
-  iserror(mounted) && return mounted
-  err = init!(comp)
-  iserror(err) && return err
-  comp.mount = mounted
-  comp.handlers.onmount !== nothing && comp.handlers.onmount(comp.mount)
-  comp.mount
+function mount!(comp::CustomComponent)::Union{AbstractEfusError, AbstractMount, Nothing}
+    if !renderred(comp)
+        render = render!(comp)
+        iserror(render) && return render
+    end
+    comp.render !== nothing || comp.render.render !== nothing || return nothing
+    mounted = mount!(outlet(comp.render.render))
+    iserror(mounted) && return mounted
+    err = init!(comp)
+    iserror(err) && return err
+    comp.mount = mounted
+    comp.handlers.onmount !== nothing && comp.handlers.onmount(comp.mount)
+    return comp.mount
 end
 
 function unmount!(comp::CustomComponent)
-  !renderred(comp) && return
-  render === nothing && return nothing
-  unmount!(outlet(comp))
+    !renderred(comp) && return
+    render === nothing && return nothing
+    return unmount!(outlet(comp))
 end
 function remount!(comp::CustomComponent)
-  !renderred(comp) && return nothing
-  unmount!(comp)
-  mount!(comp)
+    !renderred(comp) && return nothing
+    unmount!(comp)
+    return mount!(comp)
 end
 function update!(comp::CustomComponent)
-  !renderred(comp) && return nothing
-  comp.render.render === nothing && return nothing
-  update!(comp.render.render)
+    !renderred(comp) && return nothing
+    comp.render.render === nothing && return nothing
+    return update!(comp.render.render)
 end
 init!(comp::CustomComponent) = comp.template.initializer(comp)
 
@@ -126,25 +126,25 @@ inlet(comp::CustomComponent)::AbstractComponent = comp.inlet === nothing ? nothi
 outlet(comp::CustomComponent)::AbstractComponent = comp.outlet === nothing ? nothing : outlet(comp.outlet)
 
 function (template::CustomTemplate)(
-  arguments::Vector,
-  namespace::AbstractNamespace,
-  parent::Union{Component,Nothing}=nothing,
-  stack::Union{ParserStack,Nothing}=nothing,
-)::Union{CustomComponent,AbstractEfusError}
-  params = matchparams(template, arguments, stack)
-  iserror(params) && return params
-  comp = CustomComponent(
-    template,
-    params,
-    Dict{Symbol,Any}(),
-    DictNamespace(namespace),
-    parent,
-    template.code,
-  )
-  err = evaluateargs!(comp)
-  iserror(err) && return err
-  err = init!(comp)
-  iserror(err) && return err
-  parent === nothing || iserror(parent) || push!(parent, comp)
-  comp
+        arguments::Vector,
+        namespace::AbstractNamespace,
+        parent::Union{Component, Nothing} = nothing,
+        stack::Union{ParserStack, Nothing} = nothing,
+    )::Union{CustomComponent, AbstractEfusError}
+    params = matchparams(template, arguments, stack)
+    iserror(params) && return params
+    comp = CustomComponent(
+        template,
+        params,
+        Dict{Symbol, Any}(),
+        DictNamespace(namespace),
+        parent,
+        template.code,
+    )
+    err = evaluateargs!(comp)
+    iserror(err) && return err
+    err = init!(comp)
+    iserror(err) && return err
+    parent === nothing || iserror(parent) || push!(parent, comp)
+    return comp
 end

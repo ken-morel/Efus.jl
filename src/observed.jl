@@ -19,8 +19,8 @@ abstract type AbstractObservable end
 A concrete observer that can subscribe to observables and receive notifications.
 """
 struct EObserver <: AbstractObserver
-  subscriptions::Vector{Tuple{Union{AbstractObservable,Nothing},Function}}
-  EObserver() = new(Vector())
+    subscriptions::Vector{Tuple{Union{AbstractObservable, Nothing}, Function}}
+    EObserver() = new(Vector())
 end
 """
     dropsubscriptions!(observer::AbstractObserver, observable::Union{AbstractObservable,Nothing,Missing}, fn::Union{Function,Missing})
@@ -29,21 +29,21 @@ Remove subscriptions from the observer matching the given observable and/or func
 If `observable` or `fn` is `missing`, it matches all.
 """
 function dropsubscriptions!(
-  observer::AbstractObserver,
-  observable::Union{AbstractObservable,Nothing,Missing},
-  fn::Union{Function,Missing},
-)
-  observer.subscriptions = filter(observer.subscriptions) do (obsbl, obsfn)
-    (observable === missing || obsbl != observable) && (fn === missing || fn != obsfn)
-  end
+        observer::AbstractObserver,
+        observable::Union{AbstractObservable, Nothing, Missing},
+        fn::Union{Function, Missing},
+    )
+    return observer.subscriptions = filter(observer.subscriptions) do (obsbl, obsfn)
+        (observable === missing || obsbl != observable) && (fn === missing || fn != obsfn)
+    end
 end
 """
     addsubscription!(observer::Observer, observable::Observable, fn::Function)
 
 Add a subscription to the observer for the given observable and callback function.
 """
-function addsubscription!(observer::EObserver, observable::Union{AbstractObservable,Nothing}, fn::Function)
-  push!(observer.subscriptions, (observable, fn))
+function addsubscription!(observer::EObserver, observable::Union{AbstractObservable, Nothing}, fn::Function)
+    return push!(observer.subscriptions, (observable, fn))
 end
 """
     unsubscribe!(observer::AbstractObserver, observable::Union{AbstractObservable,Nothing}, fn::Function)
@@ -51,18 +51,16 @@ end
 Unsubscribe the observer from the observable for the given function.
 Removes the subscription from both observer and observable.
 """
-function unsubscribe!(observer::AbstractObserver, observable::Union{AbstractObservable,Nothing}, fn::Function)
-  dropsubscriptions!(observer, observable, fn)
-  dropsubscriptions!(observable, observer, fn)
+function unsubscribe!(observer::AbstractObserver, observable::Union{AbstractObservable, Nothing}, fn::Function)
+    dropsubscriptions!(observer, observable, fn)
+    return dropsubscriptions!(observable, observer, fn)
 end
 """
     unsubscribe!(fn::Function, obsr::AbstractObserver, obsbl::Union{AbstractObservable,Nothing})
 
 Alternate signature for `unsubscribe!` with argument order: function, observer, observable.
 """
-unsubscribe!(fn::Function, obsr::AbstractObserver, obsbl::Union{AbstractObservable,Nothing}) = unsubscribe!(obsr, obsbl, fn)
-
-
+unsubscribe!(fn::Function, obsr::AbstractObserver, obsbl::Union{AbstractObservable, Nothing}) = unsubscribe!(obsr, obsbl, fn)
 
 
 """
@@ -71,16 +69,16 @@ unsubscribe!(fn::Function, obsr::AbstractObserver, obsbl::Union{AbstractObservab
 A concrete observable that can be observed by observers and notify them of changes.
 """
 struct EObservable <: AbstractObservable
-  subscriptions::Vector{Tuple{Union{AbstractObserver,Nothing},Function}}
-  EObservable() = new(Vector())
+    subscriptions::Vector{Tuple{Union{AbstractObserver, Nothing}, Function}}
+    EObservable() = new(Vector())
 end
 """
     addsubscription!(observable::Observable, observer::Union{Observer,Nothing}, fn::Function)
 
 Add a subscription to the observable for the given observer and callback function.
 """
-function addsubscription!(observable::EObservable, observer::Union{EObserver,Nothing}, fn::Function)
-  push!(observable.subscriptions, (observer, fn))
+function addsubscription!(observable::EObservable, observer::Union{EObserver, Nothing}, fn::Function)
+    return push!(observable.subscriptions, (observer, fn))
 end
 """
     dropsubscriptions!(observable::Union{EObservable,Nothing,Missing}, observer::AbstractObserver, fn::Union{Function,Missing})
@@ -89,13 +87,13 @@ Remove subscriptions from the observable matching the given observer and/or func
 If `observer` or `fn` is `missing`, it matches all.
 """
 function dropsubscriptions!(
-  observable::Union{EObservable,Nothing,Missing},
-  observer::AbstractObserver,
-  fn::Union{Function,Missing},
-)
-  observable.subscriptions = filter(observable.subscriptions) do (obsr, obsfn)
-    (observer === missing || obsr != observer) && (fn === missing || fn != obsfn)
-  end
+        observable::Union{EObservable, Nothing, Missing},
+        observer::AbstractObserver,
+        fn::Union{Function, Missing},
+    )
+    return observable.subscriptions = filter(observable.subscriptions) do (obsr, obsfn)
+        (observer === missing || obsr != observer) && (fn === missing || fn != obsfn)
+    end
 end
 """
     getsubscriptions(obsbl::Observable) -> Vector{Tuple{Union{AbstractObserver,Nothing},Function}}
@@ -110,13 +108,14 @@ Notify all observers of the observable by calling their registered functions wit
 Catches and warns on errors in observer functions.
 """
 function notify(observable::AbstractObservable, args...; kwargs...)
-  for (observer, fn) in getsubscriptions(observable)
-    try
-      fn(observer, args...; kwargs...)
-    catch e
-      @warn "Error notifying observer" observer "of" observable "with function" fn "and arguments" args ", error: " e
+    for (observer, fn) in getsubscriptions(observable)
+        try
+            fn(observer, args...; kwargs...)
+        catch e
+            @warn "Error notifying observer" observer "of" observable "with function" fn "and arguments" args ", error: " e
+        end
     end
-  end
+    return
 end
 
 
@@ -126,26 +125,25 @@ end
 Subscribe the observer to the observable with the given callback function.
 Adds the subscription to both observer and observable.
 """
-function subscribe!(observable::AbstractObservable, observer::Union{AbstractObserver,Nothing}, fn::Function)
-  addsubscription!(observable, observer, fn)
-  isnothing(observer) || addsubscription!(observer, observable, fn)
+function subscribe!(observable::AbstractObservable, observer::Union{AbstractObserver, Nothing}, fn::Function)
+    addsubscription!(observable, observer, fn)
+    return isnothing(observer) || addsubscription!(observer, observable, fn)
 end
 """
     subscribe!(fn::Function, obsbl::AbstractObservable, obsr::AbstractObserver)
 
 Alternate signature for `subscribe!` with argument order: function, observable, observer.
 """
-subscribe!(fn::Function, obsbl::AbstractObservable, obsr::Union{AbstractObserver,Nothing}) = subscribe!(obsbl, obsr, fn)
-
+subscribe!(fn::Function, obsbl::AbstractObservable, obsr::Union{AbstractObserver, Nothing}) = subscribe!(obsbl, obsr, fn)
 
 
 macro redirectobservablemethods(spec::Expr, getter::Expr)
-  quote
-    Efus.subscribe!($(esc(spec)), observer::Union{AbstractObserver,Nothing}, fn::Function) =
-      subscribe!($(esc(getter)), observer, fn)
-    Efus.subscribe!(fn::Function, $(esc(spec)), observer::Union{AbstractObserver,Nothing}) =
-      subscribe!($(esc(getter)), observer, fn)
-    Efus.notify($(esc(spec)), args...; kwargs...) =
-      notify($(esc(getter)), args...; kwargs...)
-  end
+    return quote
+        Efus.subscribe!($(esc(spec)), observer::Union{AbstractObserver, Nothing}, fn::Function) =
+            subscribe!($(esc(getter)), observer, fn)
+        Efus.subscribe!(fn::Function, $(esc(spec)), observer::Union{AbstractObserver, Nothing}) =
+            subscribe!($(esc(getter)), observer, fn)
+        Efus.notify($(esc(spec)), args...; kwargs...) =
+            notify($(esc(getter)), args...; kwargs...)
+    end
 end
