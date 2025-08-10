@@ -12,7 +12,7 @@ struct ESize{T, U} <: EObject
         return new{T, unit}(side, side)
     end
 end
-unit(s::ESize)::Union{Symbol, Nothing} = typeof(s.unit).parameters[2] #TODO: Improve this
+unit(s::ESize)::Union{Symbol, Nothing} = typeof(s).parameters[2] #TODO: Improve this
 Base.convert(::Type{Tuple}, val::ESize) =
     (val.width, val.height)
 
