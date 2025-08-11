@@ -1,9 +1,11 @@
 abstract type AbstractReactant{T} <: EObject end
+
+
 function subscribe!(
         fn::Function,
-        reactant::AbstractReactant,
+        reactant::AbstractReactant{T},
         observer::Union{AbstractObserver, Nothing},
-    )
+    ) where {T}
     return subscribe!(fn, reactant.observable, observer)
 end
 function unsubscribe!(
@@ -11,9 +13,9 @@ function unsubscribe!(
     )
     return unsubscribe!(reactant.observable, observer, fn)
 end
-function notify!(reactant::AbstractReactant, value::T) where {T}
+function notify!(reactant::AbstractReactant{T}, value::T) where {T}
     setvalue!(reactant, value)
-    notify(getobservable(reactant), value)
+    notify(reactant)
     return dirty!(reactant, false)
 end
 function notify(reactant::AbstractReactant)
@@ -81,6 +83,42 @@ function sync!(
             finally
                 syncing = false
             end
+        end
+    end
+    return
+end
+const _SyncCallPair = Union{
+    Tuple{Function, EReactant, Function}, # set get
+    Tuple{EReactant, Function},           # get only
+    Tuple{Function, EReactant},           # set only
+}
+function syncall!(
+        obs::Union{AbstractObserver, Nothing},
+        base::EReactant,
+        pairs::Vararg{_SyncCallPair},
+    )
+    syncs = zeros(length(pairs))  # to base is positive
+    for (idx, pair) in pairs
+        if pair isa Tuple{Function, EReactant, Function}
+            cvto, reactant, cvfrom = pair
+        elseif pair isa Tuple{EReactant, Function}
+            reactant, cvfrom = pair
+            cvto = nothing
+        elseif pair isa Tuple{Function, EReactant}
+            cvto, reactant = pair
+            cvfrom = nothing
+        end
+        isnothing(cvto) || subscribe!(base, obs) do val
+            syncs[idx] > 0 && return
+            syncs[idx] -= 1
+            setvalue!(reactant, cvto(val))
+            syncs[idx] += 1
+        end
+        isnothing(cvfrom) || subscribe!(reactant, obs) do val
+            syncs[idx] < 0 && return
+            syncs[idx] += 1
+            setvalue!(base, cvfrom(val))
+            syncs[idx] -= 1
         end
     end
     return

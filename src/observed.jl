@@ -110,7 +110,7 @@ Catches and warns on errors in observer functions.
 function notify(observable::AbstractObservable, args...; kwargs...)
     for (observer, fn) in getsubscriptions(observable)
         try
-            fn(observer, args...; kwargs...)
+            fn(args...; kwargs...)
         catch e
             @warn "Error notifying observer" observer "of" observable "with function" fn "and arguments" args ", error: " e
             printstyled(stderr, "[ERROR] "; bold = true, color = :red)

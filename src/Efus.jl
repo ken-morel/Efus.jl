@@ -1,6 +1,7 @@
 module Efus
 using Base: @kwdef
 using MacroTools
+using FunctionWrappers: FunctionWrapper
 
 
 export getmodule, gettemplate, registertemplatemodule, registertemplate

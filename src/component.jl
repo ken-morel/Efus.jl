@@ -3,10 +3,11 @@ abstract type AbstractComponent <: EObject end
 function Base.getindex(comp::AbstractComponent, key::Symbol)
     return get(getargs(comp), key, nothing)
 end
+
 function Base.setindex!(comp::AbstractComponent, value, key::Symbol)
     param = get(comp.params, key, nothing)
     comp.params[key] = ComponentParameter(param !== nothing ? param.param : nothing, key, value, true, nothing)
-    comp.dirty = true
+    dirty!(comp, key)
     return reevaluateargs!(comp, [key])
 end
 
@@ -27,7 +28,7 @@ mutable struct Component{T <: TemplateBackend} <: AbstractComponent
     parent::Union{AbstractComponent, Nothing}
     children::Vector{AbstractComponent}
     mount::Union{Nothing, AbstractMount}
-    dirty::Bool
+    dirty::Set{Symbol}
     aliases::Vector{Symbol}
     observer::EObserver
     Component(
@@ -37,7 +38,7 @@ mutable struct Component{T <: TemplateBackend} <: AbstractComponent
         args::Dict{Symbol, Any},
         namespace::AbstractNamespace,
         parent::Union{AbstractComponent, Nothing},
-    ) where {T} = new{T}(template, backend, params, args, namespace, parent, AbstractComponent[], nothing, false, Symbol[], EObserver())
+    ) where {T} = new{T}(template, backend, params, args, namespace, parent, AbstractComponent[], nothing, Set{Symbol}(), Symbol[], EObserver())
 end
 getparam(comp::AbstractComponent, name::Symbol)::Union{ComponentParameter, Nothing} = get(comp.params, name, nothing)
 getnamespace(comp::AbstractComponent) = comp.namespace
@@ -45,8 +46,10 @@ templatename(comp::AbstractComponent)::Symbol = gettemplate(comp).name
 gettemplate(comp::AbstractComponent)::AbstractTemplate = comp.template
 getargs(comp::AbstractComponent) = comp.args
 getparams(comp::AbstractComponent) = comp.params
-isdirty(comp::AbstractComponent) = comp.dirty
-dirty!(comp::AbstractComponent, dirt::Bool) = (comp.dirty = dirt)
+isdirty(comp::AbstractComponent, k::Symbol) = k ∈ comp.dirty
+dirty!(comp::AbstractComponent, k::Symbol) = push!(comp.dirty, k)
+clean(comp::AbstractComponent, k::Symbol) = k ∈ comp.dirty && pop!(comp.dirty, k)
+clean(comp::AbstractComponent) = empty!(comp.dirty)
 getmount(comp::Component) = comp.mount
 parent(comp::Component) = comp.parent
 inlet(comp::Component)::Component = comp
