@@ -10,6 +10,14 @@ end
 struct EString <: EMirrorObject{String}
     value::String
 end
+
+struct EBool <: EMirrorObject{Bool}
+    value::Bool
+end
+struct ENothing <: EMirrorObject{Nothing}
+    value::Nothing
+end
+
 Base.convert(::Type{T} where {T}, val::EMirrorObject{T} where {T})::T where {T} = val.value
 Base.convert(::Type{Symbol}, val::ESymbol) = val.value
 

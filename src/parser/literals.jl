@@ -159,10 +159,12 @@ function parseestring!(parser::Parser)::Union{EString, Nothing, AbstractEfusErro
         ]
     )
 end
-function parsefusesymbol!(parser::Parser)::Union{ESymbol, Nothing}
+function parsefusesymbol!(parser::Parser)::Union{ESymbol, EBool, ENothing, Nothing}
     !isletter(char(parser)) && return nothing
     word = parsesymbol!(parser)
     isnothing(word) && return nothing
+    word ∈ ["true", "false"] && return EBool(word == "true")
+    word == "nothing" && return ENothing(nothing)
     return ESymbol(Symbol(word))
 end
 function parseeexpr!(

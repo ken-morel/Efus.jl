@@ -47,9 +47,9 @@ end
 
 
 function sync!(
-        rea1::Pair{EReactant{T}, Union{Function, Nothing}},
-        rea2::Pair{EReactant{U}, Union{Function, Nothing}},
-        obs::Union{AbstractObserver, Nothing} = nothing,
+        rea1::Pair{EReactant{T}, <:Union{<:Function, Nothing}},
+        rea2::Pair{EReactant{U}, <:Union{<:Function, Nothing}},
+        obs::Union{AbstractObserver, Nothing} = nothing
     ) where {T, U}
 
     let syncing::Bool = false,
@@ -59,7 +59,7 @@ function sync!(
             syncing && return
             syncing = true
             try
-                setvalue!(other, convert(U, value |> uthis))
+                notify!(other, convert(U, value |> uthis))
             finally
                 syncing = false
             end
@@ -67,8 +67,11 @@ function sync!(
         isnothing(uother) || subscribe!(other, obs) do _, value
             syncing && return
             syncing = true
-            setvalue!(this, convert(T, value |> uother))
-            syncing = false
+            try
+                notify!(this, convert(T, value |> uother))
+            finally
+                syncing = false
+            end
         end
     end
     return
