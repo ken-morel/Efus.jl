@@ -53,6 +53,7 @@ export @efuspreeval_str
 #reactants.jl
 export EReactant
 export getvalue, getobservable, setvalue!, notify!
+export sync!
 
 # statement.jl
 export EfusEvalContext, ECodeBlock, ECode, EfusTemplate

@@ -20,8 +20,8 @@ struct EEdgeInsets{T, U} <: EObject
         return new{T, unit}(v, h, v, h, Val(unit))
     end
 end
-Base.convert(::Type{EEdgeInsets{T, Any}}, val::T) where {T <: Real} =
-    EEdgeInsets(val, nothing)
+Base.convert(::Type{EEdgeInsets{T, U}}, val::T) where {T <: Real, U} =
+    EEdgeInsets(val, U)
 Base.convert(::Type{EEdgeInsets{T, U}}, val::NTuple{2, <:T}) where {T, U} =
     EEdgeInsets(val..., U)
 Base.convert(::Type{EEdgeInsets{T, U}}, val::NTuple{4, <:T}) where {T, U} =
@@ -31,14 +31,14 @@ Base.convert(::Type{EEdgeInsets{T, U}}, val::ESize{<:T, U}) where {T, U} =
 function Base.convert(::Type{NTuple{4, T}}, val::EEdgeInsets{<:T}) where {T <: Real}
     return (val.top, val.right, val.bottom, val.left)
 end
-function Base.convert(::Type{EEdgeInsets{T, Any}}, val::EGeometry) where {T <: Real}
+function Base.convert(::Type{EEdgeInsets{T, U}}, val::EGeometry) where {T <: Number} where {U}
     return try
         if length(val.parts) == 1
-            EEdgeInsets(coalesce(val.parts[1][1], zero(T)), val.units[1])
+            EEdgeInsets(coalesce(val.parts[1][1], zero(T)), U)
         elseif length(val.parts) == 2
             EEdgeInsets(
                 (coalesce.([val.parts[1][1], val.parts[1][1]], (zero(T),)))...,
-                val.units[1],
+                U,
             )
         elseif length(val.parts) == 4
             EEdgeInsets(
@@ -49,7 +49,7 @@ function Base.convert(::Type{EEdgeInsets{T, Any}}, val::EGeometry) where {T <: R
                         ], (zero(T),)
                     )
                 )...,
-                val.units[1],
+                U,
             )
         else
             throw("Invalid number of arguments in geometry")

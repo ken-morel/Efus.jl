@@ -44,3 +44,32 @@ function setvalue!(reactant::AbstractReactant{T}, value::T) where {T}
     reactant.value = value
     return dirty!(reactant, true)
 end
+
+
+function sync!(
+        rea1::Pair{EReactant{T}, Union{Function, Nothing}},
+        rea2::Pair{EReactant{U}, Union{Function, Nothing}},
+        obs::Union{AbstractObserver, Nothing} = nothing,
+    ) where {T, U}
+
+    let syncing::Bool = false,
+            this = first(rea1), uthis = last(rea1),
+            other = first(rea2), uother = last(rea2)
+        isnothing(uthis) || subscribe!(this, obs) do _, value
+            syncing && return
+            syncing = true
+            try
+                setvalue!(other, convert(U, value |> uthis))
+            finally
+                syncing = false
+            end
+        end
+        isnothing(uother) || subscribe!(other, obs) do _, value
+            syncing && return
+            syncing = true
+            setvalue!(this, convert(T, value |> uother))
+            syncing = false
+        end
+    end
+    return
+end
