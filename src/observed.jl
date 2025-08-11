@@ -108,13 +108,12 @@ Notify all observers of the observable by calling their registered functions wit
 Catches and warns on errors in observer functions.
 """
 function notify(observable::AbstractObservable, args...; kwargs...)
-    for (observer, fn) in getsubscriptions(observable)
+    for (_, fn) in getsubscriptions(observable)
         try
             fn(args...; kwargs...)
         catch e
-            @warn "Error notifying observer" observer "of" observable "with function" fn "and arguments" args ", error: " e
             printstyled(stderr, "[ERROR] "; bold = true, color = :red)
-            printstyled(stderr, "In Attrape callback: "; bold = true)
+            printstyled(stderr, "While Efus tried to notify subscriber: "; bold = true)
             Base.showerror(stderr, e, catch_backtrace())
             print(stderr, "\n")
         end

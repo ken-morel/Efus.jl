@@ -114,13 +114,13 @@ function syncall!(
         isnothing(cvto) || subscribe!(base, obs) do val
             syncs[idx] > 0 && return
             syncs[idx] -= 1
-            setvalue!(reactant, cvto(val))
+            notify!(reactant, cvto(val))
             syncs[idx] += 1
         end
         isnothing(cvfrom) || subscribe!(reactant, obs) do val
             syncs[idx] < 0 && return
             syncs[idx] += 1
-            setvalue!(base, cvfrom(val))
+            notify!(base, cvfrom(val))
             syncs[idx] -= 1
         end
     end
