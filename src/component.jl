@@ -1,10 +1,5 @@
 abstract type AbstractComponent <: EObject end
-function master(comp::AbstractComponent)
-    while parent(comp) !== nothing
-        comp = inlet(parent(comp))
-    end
-    return comp
-end
+
 function Base.getindex(comp::AbstractComponent, key::Symbol)
     return get(getargs(comp), key, nothing)
 end
@@ -85,7 +80,6 @@ function matchparams(template::AbstractTemplate, arguments::Vector, stack::Union
             end
         else
             argument = popat!(arguments, index)
-
             params[parameter.name] = ComponentParameter(parameter, parameter.name, argument.value, false, argument.stack)
         end
     end
@@ -134,8 +128,10 @@ function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing, Vector{S
                 if !isa(args[name], param.param.type) && (param.param.required || args[name] !== param.param.default)
                     return ETypeError("value of evaluated reactant argument of type $(typeof(args[name])) does not match spec of parameter $(name)::$(param.param.type)", param.stack !== nothing ? param.stack : ParserStack[])
                 else
-                    subscribe!(reactant, comp.observer) do _, value
+                    println("subscribing to ", typeof(reactant))
+                    subscribe!(reactant, comp.observer) do value
                         comp[param.param.name] = value
+                        update!(comp)
                     end
                 end
             else

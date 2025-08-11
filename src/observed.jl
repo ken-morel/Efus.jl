@@ -113,6 +113,10 @@ function notify(observable::AbstractObservable, args...; kwargs...)
             fn(observer, args...; kwargs...)
         catch e
             @warn "Error notifying observer" observer "of" observable "with function" fn "and arguments" args ", error: " e
+            printstyled(stderr, "[ERROR] "; bold = true, color = :red)
+            printstyled(stderr, "In Attrape callback: "; bold = true)
+            Base.showerror(stderr, e, catch_backtrace())
+            print(stderr, "\n")
         end
     end
     return

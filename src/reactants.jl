@@ -22,6 +22,10 @@ function notify(reactant::AbstractReactant)
             fn(reactant.value)
         catch e
             @warn "Error in reactant subscription callback: " e
+            printstyled(stderr, "[ERROR] "; bold = true, color = :red)
+            printstyled(stderr, "In Attrape callback: "; bold = true)
+            Base.showerror(stderr, e, catch_backtrace())
+            print(stderr, "\n")
         end
     end
     return dirty!(reactant, false)
@@ -37,12 +41,17 @@ mutable struct EReactant{T} <: AbstractReactant{T}
     EReactant(value::T, observable::AbstractObservable) where {T} = new{T}(value, false, observable)
 end
 getvalue(reactant::EReactant) = reactant.value
+update!(fn::Function, reactant::EReactant; notify::Bool = false) = setvalue!(reactant, fn(getvalue(reactant)); notif = notify)
 getobservable(reactant::EReactant) = reactant.observable
 isdirty(reactant::EReactant) = reactant.dirty
 dirty!(reactant::EReactant, dirt::Bool) = (reactant.dirty = dirt)
-function setvalue!(reactant::AbstractReactant{T}, value::T) where {T}
+function setvalue!(reactant::AbstractReactant{T}, value::T; notif::Bool = false) where {T}
     reactant.value = value
-    return dirty!(reactant, true)
+    dirty!(reactant, true)
+    notif&& notify(
+        reactant
+    )
+    return value
 end
 
 

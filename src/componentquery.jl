@@ -71,3 +71,10 @@ function queryone( # Gemini adviced me to list parameters
     end
     return nothing
 end
+
+function master(comp::AbstractComponent)
+    while parent(comp) !== nothing
+        comp = inlet(parent(comp))
+    end
+    return comp
+end

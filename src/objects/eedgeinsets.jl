@@ -20,15 +20,15 @@ struct EEdgeInsets{T, U} <: EObject
         return new{T, unit}(v, h, v, h, Val(unit))
     end
 end
-Base.convert(::Type{EEdgeInsets{T, U}}, val::T) where {T <: Real, U} =
+Base.convert(::Type{EEdgeInsets{T, U}}, val::T) where {T <: Number, U} =
     EEdgeInsets(val, U)
-Base.convert(::Type{EEdgeInsets{T, U}}, val::NTuple{2, <:T}) where {T, U} =
+Base.convert(::Type{EEdgeInsets{T, U}}, val::NTuple{2, <:T}) where {T <: Number, U} =
     EEdgeInsets(val..., U)
-Base.convert(::Type{EEdgeInsets{T, U}}, val::NTuple{4, <:T}) where {T, U} =
+Base.convert(::Type{EEdgeInsets{T, U}}, val::NTuple{4, <:T}) where {T <: Number, U} =
     EEdgeInsets(val..., U)
-Base.convert(::Type{EEdgeInsets{T, U}}, val::ESize{<:T, U}) where {T, U} =
+Base.convert(::Type{EEdgeInsets{T, U}}, val::ESize{<:T, U}) where {T <: Number, U} =
     EEdgeInsets(val.width, val.height, U)
-function Base.convert(::Type{NTuple{4, T}}, val::EEdgeInsets{<:T}) where {T <: Real}
+function Base.convert(::Type{NTuple{4, T}}, val::EEdgeInsets{<:T}) where {T <: Number}
     return (val.top, val.right, val.bottom, val.left)
 end
 function Base.convert(::Type{EEdgeInsets{T, U}}, val::EGeometry) where {T <: Number} where {U}
