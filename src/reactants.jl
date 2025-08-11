@@ -98,7 +98,10 @@ function syncall!(
         pairs::Vararg{_SyncCallPair},
     )
     syncs = zeros(length(pairs))  # to base is positive
-    for (idx, pair) in pairs
+    for (idx, pair) in enumerate(pairs)
+        cvto::Union{Nothing, Function} = nothing
+        reactant::Union{Nothing, EReactant} = nothing
+        cvfrom::Union{Nothing, Function} = nothing
         if pair isa Tuple{Function, EReactant, Function}
             cvto, reactant, cvfrom = pair
         elseif pair isa Tuple{EReactant, Function}
