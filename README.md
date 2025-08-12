@@ -96,7 +96,7 @@ They are all descendandants of `AbstractNamespace` and include `DictNamespace` a
 Getting to the actual stuff, the efus language is simply an easy way of calling components. It is pretty simple
 just looks like This
 
-```efus
+```pug
 using MyLib
 
 Container padding=20x30
@@ -129,4 +129,6 @@ template actually associating it to efus code, to create a component composed of
 ## More, more
 
 Well, this has a little few more to show, but I will scratch myself to make a doc for that.
+
+Tip, for inline code for documenters, gemini adviced my `pug` and `yaml` lexers
 
