@@ -64,7 +64,7 @@ hasalias(comp::AbstractComponent, alias::Symbol) = alias ∈ getaliases(comp)
 
 
 Base.push!(parent::AbstractComponent, child::AbstractComponent) = push!(parent.children, child)
-function matchparams(template::AbstractTemplate, arguments::Vector, stack::Union{ParserStack, Nothing} = nothing)::Union{AbstractEfusError, Dict{Symbol, ComponentParameter}}
+function matchparams(template::AbstractTemplate, arguments::Vector{TemplateCallArgument}, stack::Union{ParserStack, Nothing} = nothing)::Union{AbstractEfusError, Dict{Symbol, ComponentParameter}}
     params::Dict{Symbol, ComponentParameter} = Dict()
     arguments = arguments[:]
     for parameter in template.parameters
@@ -101,14 +101,36 @@ end
 
 TBW
 """
-function (template::EfusTemplate)(arguments::Vector, namespace::AbstractNamespace, parent::Union{AbstractComponent, Nothing}, stack::Union{ParserStack, Nothing} = nothing)::Union{Component, AbstractEfusError}
+function (template::EfusTemplate)(
+        arguments::Vector{TemplateCallArgument},
+        namespace::AbstractNamespace,
+        parent::Union{AbstractComponent, Nothing},
+        stack::Union{ParserStack, Nothing} = nothing
+    )::Union{Component, AbstractEfusError}
     params = matchparams(template, arguments)
     iserror(params) && return params
+    params::Dict{Symbol, ComponentParameter}
     comp = Component(template, template.backend(), params, Dict{Symbol, Any}(), namespace, parent)
     err = evaluateargs!(comp)
     iserror(err) && return err
-    parent === nothing || iserror(parent) || push!(parent, comp)
+    isnothing(parent) || push!(parent, comp)
     return comp
+end
+function (template::EfusTemplate)(
+        parent::Union{AbstractComponent, Nothing},
+        params::Dict{Symbol, Any},
+        namespace::AbstractNamespace,
+    )
+    component = Component(
+        template,
+        template.backend(),
+        Dict{Symbol, ComponentParameter}(),
+        params,
+        namespace,
+        parent
+    )
+    isnothing(parent) || push!(parent, component)
+    return component
 end
 init!(::Component) = nothing
 function evaluateargs(comp::AbstractComponent; argnames::Union{Nothing, Vector{Symbol}} = nothing)::Union{Dict, AbstractEfusError}

@@ -1,10 +1,7 @@
-mutable struct Parser
+Base.@kwdef mutable struct Parser
     text::String
-    index::UInt
-    filename::String
-    function Parser(; text::String, file::String = "<string>")
-        return new(text, 1, file)
-    end
+    index::UInt = 1
+    filename::String = "<efus source>"
 end
 
 inbounds(parser::Parser) = parser.index <= length(parser.text)
