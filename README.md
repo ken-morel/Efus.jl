@@ -1,5 +1,7 @@
 # Efus.jl
 
+[![wakatime](https://wakatime.com/badge/github/ken-morel/Efus.jl.svg)](https://wakatime.com/badge/github/ken-morel/Efus.jl)
+
 Hello, Efus.jl is a component language and definitions to create component based reactive ui's.
 Efus provides you a language and set of tools to add an easy way to create reactive uis for your
 ui toolkit.
