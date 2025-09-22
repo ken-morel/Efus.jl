@@ -6,18 +6,29 @@ function parse_componentcall!(p::EfusParser)::Union{Ast.ComponentCall, Nothing, 
         @zig!n args parse_componentcallargs!(p)
         Ast.ComponentCall(;
             name,
-            arguments = args,
+            arguments = args[1],
+            splats = args[2],
             location = nothing,
         )
     end
 end
 
-function parse_componentcallargs!(p::EfusParser)::Union{Vector{Ast.ComponentCallArgument}, AbstractParseError}
+function parse_componentcallargs!(p::EfusParser)::Union{
+        Tuple{Vector{Ast.ComponentCallArgument}, Vector{Ast.ComponentCallSplat}},
+        AbstractParseError,
+    }
     return ereset(p) do
         args = Ast.ComponentCallArgument[]
+        splats = Ast.ComponentCallSplat[]
         while true
             skip_spaces!(p)
             inbounds(p) || break
+            splat = nothing
+            @zig! splat parse_componentcallsplat!(p)
+            if !isnothing(splat)
+                push!(splats, splat)
+                continue
+            end
             pair = nothing
             @zig! pair parse_componentcallargument!(p)
             if isnothing(pair)
@@ -29,10 +40,23 @@ function parse_componentcallargs!(p::EfusParser)::Union{Vector{Ast.ComponentCall
             end
             push!(args, pair)
         end
-        return args
+        return (args, splats)
     end
 end
 
+function parse_componentcallsplat!(p::EfusParser)::Union{Ast.ComponentCallSplat, AbstractParseError, Nothing}
+    return ereset(p) do
+        start = current_char(p)
+        name = parse_symbol!(p)
+        if !isnothing(name) && inbounds(p) && p.text[p.index] == '.'
+            if !(length(p.text) >= p.index + 2 && p.text[p.index:(p.index + 2)] == "...")
+                return EfusSyntaxError("Malformed splat operator after name", current_char(p))
+            end
+            p.index += 3
+            return Ast.ComponentCallSplat(name, start * current_char(p, -1))
+        end
+    end
+end
 function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.ComponentCallArgument, Nothing}
     return ereset(p) do
         start = current_char(p)

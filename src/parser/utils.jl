@@ -1,5 +1,6 @@
+const SPACE = r"^ *"
 function skip_spaces!(p::EfusParser)::UInt
-    m = match(r"^ *", p.text[p.index:end])
+    m = match(SPACE, p.text[p.index:end])
     p.index += length(m.match)
     return length(m.match)
 end

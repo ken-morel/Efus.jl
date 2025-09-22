@@ -1,5 +1,6 @@
+const NUMBER = r"^\d+(?:\.\d*)?"
 function parse_number!(p::EfusParser)::Union{Nothing, Real}
-    m = match(r"^\d+(?:\.\d*)?", p.text[p.index:end])
+    m = match(NUMBER, p.text[p.index:end])
     return if !isnothing(m)
         p.index += length(m.match)
         if '.' ∈ m.match

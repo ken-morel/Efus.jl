@@ -41,9 +41,10 @@ function parse_statement!(p::EfusParser)::Union{Ast.AbstractStatement, Nothing, 
 end
 
 
+const SYMBOL = r"\w[\w\d]*"
 function parse_symbol!(p::EfusParser)::Union{Symbol, Nothing}
     inbounds(p) || return nothing
-    m = match(r"\w[\w\d]*", p.text, p.index)
+    m = match(SYMBOL, p.text, p.index)
     return if !isnothing(m) && m.offset == p.index
         p.index += length(m.match)
         Symbol(m.match)

@@ -23,13 +23,18 @@ Base.:*(a::Location, b::Location) = Location(a.file, a.start, b.stop)
 
 Base.@kwdef struct ComponentCallArgument
     name::Symbol
-    value::Any
+    value::AbstractValue
     location::Location
 end
 
+struct ComponentCallSplat <: AbstractStatement
+    name::Symbol
+    location::Location
+end
 Base.@kwdef struct ComponentCall <: AbstractStatement
     name::Symbol
     arguments::Vector{ComponentCallArgument}
+    splats::Vector{ComponentCallSplat}
     location::Union{Location, Nothing}
 end
 

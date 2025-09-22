@@ -1,3 +1,5 @@
+const EXPRQUOTE = r"\"|'"
+const BRACKETQUOTE = r"\(|\)"
 function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, AbstractParseError, Nothing}
     return ereset(p) do
         start = current_char(p)
@@ -15,10 +17,10 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, AbstractPa
             exprstart = p.index
             while true
                 nextquote = if inbounds(p)
-                    match(r"\"|'", p.text, p.index)
+                    match(EXPRQUOTE, p.text, p.index)
                 end
                 next = if inbounds(p)
-                    match(r"\(|\)", p.text, p.index)
+                    match(BRACKETQUOTE, p.text, p.index)
                 end
                 isnothing(next) && return EfusSyntaxError("Unterminated literal expression started here", start)
                 if !isnothing(nextquote) && nextquote.offset < next.offset
