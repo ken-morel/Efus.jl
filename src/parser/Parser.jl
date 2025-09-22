@@ -11,7 +11,7 @@ mutable struct EfusParser
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
 
 
-    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.RootStatement())])
+    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
 end
 
 
@@ -27,28 +27,33 @@ include("./expression.jl")
 
 
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
+    root_block = p.stack[1][2]
+    @assert root_block isa Ast.Block "Parser stack was not initialized with a root Block."
+
     statement = nothing
     while true
-        print(p.index, " -> ")
         skip_emptylines!(p) || break
-        println(p.index)
+
         @zig! statement parse_statement!(p)
         isnothing(statement) && break
         indent, statement = statement
-        [ # clear sibings in stack
-            pop!(p.stack) for _ in 1:count(p.stack) do (sid, _)
-                    sid >= indent
-            end
-        ]
 
-        (_, parent) = length(p.stack) == 0 ? nothing : p.stack[end]
-        if !isnothing(parent)
-            statement.parent = parent
-            push!(parent.children, statement)
+        # Pop items from the stack that are no longer parents
+        while length(p.stack) > 1 && p.stack[end][1] >= indent
+            pop!(p.stack)
         end
+
+        # The parent is the last item on the stack
+        (_, parent) = p.stack[end]
+        if parent !== root_block # Don't set parent for top-level items
+            statement.parent = parent
+        end
+        push!(parent.children, statement)
+
+        # The new statement is now a potential parent
         push!(p.stack, (indent, statement))
     end
-    return Ast.Block(p.stack[1][2].children)
+    return root_block
 end
 function skip_emptylines!(p::EfusParser)
     while inbounds(p)

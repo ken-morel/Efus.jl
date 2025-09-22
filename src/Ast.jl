@@ -32,10 +32,7 @@ struct ComponentCallSplat <: AbstractStatement
     location::Location
 end
 
-struct RootStatement <: AbstractStatement
-    children::Vector{AbstractStatement}
-    RootStatement() = new(AbstractStatement[])
-end
+
 
 Base.@kwdef mutable struct ComponentCall <: AbstractStatement
     name::Symbol
@@ -46,7 +43,7 @@ Base.@kwdef mutable struct ComponentCall <: AbstractStatement
     children::Vector{AbstractStatement}
 end
 
-struct Block
+struct Block <: AbstractStatement
     children::Vector{AbstractStatement}
 end
 
