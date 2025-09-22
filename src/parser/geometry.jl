@@ -101,4 +101,3 @@ function parse_geometry!(p::EfusParser)::Union{AbstractParseError, Nothing, Geom
         return Geometry(signs, parts, units)
     end
 end
-

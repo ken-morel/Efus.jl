@@ -2,29 +2,9 @@
 
 julia_version = "1.11.7"
 manifest_format = "2.0"
-project_hash = "5c24db2374eb7a1d973963a4f92ae9989669cc8e"
-
-[[deps.AutoHashEquals]]
-git-tree-sha1 = "4ec6b48702dacc5994a835c1189831755e4e76ef"
-uuid = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
-version = "2.2.0"
+project_hash = "e5a21ef5a447d503820dba21b6745bad1f331c87"
 
 [[deps.FunctionWrappers]]
 git-tree-sha1 = "d62485945ce5ae9c0c48f124a84998d755bae00e"
 uuid = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
 version = "1.1.3"
-
-[[deps.ParserCombinator]]
-deps = ["AutoHashEquals", "Printf"]
-git-tree-sha1 = "5f2ab6899c7a056d475194d03393299e61a0425c"
-uuid = "fae87a5f-d1ad-5cf0-8f61-c941e1580b46"
-version = "2.2.1"
-
-[[deps.Printf]]
-deps = ["Unicode"]
-uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
-version = "1.11.0"
-
-[[deps.Unicode]]
-uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-version = "1.11.0"

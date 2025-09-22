@@ -20,8 +20,9 @@ include("./utils.jl")
 
 include("./string.jl")
 include("./geometry.jl")
-include("./expression.jl")
 include("./compcall.jl")
+include("./jexpr.jl")
+include("./expression.jl")
 
 
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
@@ -41,6 +42,7 @@ end
 
 
 function parse_symbol!(p::EfusParser)::Union{Symbol, Nothing}
+    inbounds(p) || return nothing
     m = match(r"\w[\w\d]*", p.text, p.index)
     return if !isnothing(m) && m.offset == p.index
         p.index += length(m.match)

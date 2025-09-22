@@ -8,8 +8,8 @@ struct LiteralValue <: AbstractValue
     val::Union{Real, String, Char}
 end
 
-struct LiteralExpression <: AbstractValue
-    expr::Union{Expr, Symbol}
+struct Expression <: AbstractValue
+    expr::String
 end
 
 struct Location
@@ -36,4 +36,6 @@ end
 struct Block
     children::Vector{AbstractStatement}
 end
+
+
 end
