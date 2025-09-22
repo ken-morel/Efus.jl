@@ -50,7 +50,7 @@ function parse_geometry_part!(p::EfusParser; force_sign::Bool = true)::Union{Abs
 end
 
 
-function parse_geometry!(p::EfusParser)::Union{AbstractParseError, Nothing, Geometry, Size, Real}
+function parse_geometry!(p::EfusParser)::Union{AbstractParseError, Nothing, Geometry, Size, Real, Ast.LiteralValue}
     if !inbounds(p) || (!isdigit(p.text[p.index]) && p.text[p.index] ∉ "+-")
         return nothing
     end
@@ -93,7 +93,7 @@ function parse_geometry!(p::EfusParser)::Union{AbstractParseError, Nothing, Geom
             val = parts[1][1] * (signs[1] == '-' ? -1 : 1)
 
             if length(parts[1]) == 1
-                return val
+                return Ast.LiteralValue(val)
             elseif length(parts[1]) == 2
                 return Size(promote(val, parts[1][2])..., units[1])
             end
