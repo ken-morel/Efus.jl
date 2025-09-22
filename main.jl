@@ -8,8 +8,8 @@ using MacroTools # For pretty-printing expressions
 # 1. Define some sample Efus code
 # (We'll keep it simple since the parser is still basic)
 efus_code = """
-Frame
-  Label
+Frame padding=3x3
+  Label text="Hello world" args...
   Button
 """
 
@@ -38,3 +38,4 @@ println()
 # You can also use `dump` for a more detailed view of the Expr
 # println("--- 4. Dump of Generated Expr ---")
 # dump(generated_expr)
+
