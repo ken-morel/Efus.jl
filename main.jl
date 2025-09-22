@@ -10,6 +10,6 @@ show(
         Okro
         Cment
         Banana args... name=(6)
-        Ok c=4
+        Ok c=4 expr=(bana)
     """
 )
