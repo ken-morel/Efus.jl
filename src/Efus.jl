@@ -23,5 +23,10 @@ include("./parser/Parser.jl")
 include("./macros.jl")
 include("./display.jl")
 
+include("./dev.jl")
+
+using .Dev
+export codegen_string
+
 
 end # module Efus
