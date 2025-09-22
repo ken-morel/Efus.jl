@@ -31,11 +31,19 @@ struct ComponentCallSplat <: AbstractStatement
     name::Symbol
     location::Location
 end
-Base.@kwdef struct ComponentCall <: AbstractStatement
+
+struct RootStatement <: AbstractStatement
+    children::Vector{AbstractStatement}
+    RootStatement() = new(AbstractStatement[])
+end
+
+Base.@kwdef mutable struct ComponentCall <: AbstractStatement
     name::Symbol
     arguments::Vector{ComponentCallArgument}
     splats::Vector{ComponentCallSplat}
     location::Union{Location, Nothing}
+    parent::Union{AbstractStatement, Nothing}
+    children::Vector{AbstractStatement}
 end
 
 struct Block

@@ -9,6 +9,8 @@ function parse_componentcall!(p::EfusParser)::Union{Ast.ComponentCall, Nothing, 
             arguments = args[1],
             splats = args[2],
             location = nothing,
+            parent = nothing,
+            children = [],
         )
     end
 end
