@@ -10,6 +10,28 @@ end
 
 struct Expression <: AbstractValue
     expr::String
+    reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
+end
+
+function substitute(fn::Function, expr::Expression)::String
+    text = expr.expr
+    replaces = Vector{Tuple{UInt, UInt, String}}()
+    for (name, positions) in expr.reactants
+        value = fn(name)
+        for (start, stop) in positions
+            push!(replaces, (start, stop, value))
+        end
+    end
+    sort!(replaces)
+    reverse!(replaces)
+    for (start, stop, txt) in replaces
+        text = (
+            prevind(text, start) > 0 ? text[begin:prevind(text, start)] : ""
+        ) * txt * (
+            nextind(text, stop) <= length(text) ? text[nextind(text, stop):end] : ""
+        )
+    end
+    return text
 end
 
 struct Location
@@ -31,7 +53,6 @@ struct ComponentCallSplat <: AbstractStatement
     name::Symbol
     location::Location
 end
-
 
 
 Base.@kwdef mutable struct ComponentCall <: AbstractStatement

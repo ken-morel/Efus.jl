@@ -30,27 +30,23 @@ function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
     root_block = p.stack[1][2]
     @assert root_block isa Ast.Block "Parser stack was not initialized with a root Block."
 
-    statement = nothing
     while true
         skip_emptylines!(p) || break
 
-        @zig! statement parse_statement!(p)
+        statement = @zig! parse_statement!(p)
         isnothing(statement) && break
         indent, statement = statement
 
-        # Pop items from the stack that are no longer parents
         while length(p.stack) > 1 && p.stack[end][1] >= indent
             pop!(p.stack)
         end
 
-        # The parent is the last item on the stack
         (_, parent) = p.stack[end]
-        if parent !== root_block # Don't set parent for top-level items
+        if parent !== root_block
             statement.parent = parent
         end
         push!(parent.children, statement)
 
-        # The new statement is now a potential parent
         push!(p.stack, (indent, statement))
     end
     return root_block
@@ -79,8 +75,7 @@ end
 function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
     return ereset(p) do
         indent = skip_spaces!(p)
-        statement = nothing
-        @zig!n statement parse_componentcall!(p)
+        statement = @zig!n  parse_componentcall!(p)
         return (indent, statement)
     end
 end

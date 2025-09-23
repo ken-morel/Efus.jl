@@ -2,10 +2,10 @@ module Efus
 
 using FunctionWrappers: FunctionWrapper
 
+export EfusError
+
 abstract type EfusError end
 
-
-include("./reactants.jl")
 
 include("./component.jl")
 
@@ -15,6 +15,8 @@ include("./Ast.jl")
 
 include("./objects.jl")
 
+
+include("./reactants.jl")
 
 include("./gen/Gen.jl")
 
