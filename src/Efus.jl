@@ -1,9 +1,6 @@
 module Efus
 
 using FunctionWrappers: FunctionWrapper
-
-export EfusError
-
 abstract type EfusError end
 
 
@@ -29,6 +26,9 @@ include("./dev.jl")
 
 using .Dev
 export codegen_string
+
+using .Parser
+export EfusError, EfusParser, try_parse!
 
 
 end # module Efus

@@ -5,8 +5,6 @@ using .Efus
 Efus.codegen_string(
     """
     Frame padding=3x3
-      Label text="Hello world" args...
-      Button val=(hello' + banana)
-      Button val=(bana' * "what is yours? :-(" * "?")
+      Scale size=20x20 value=4 val=(hello' * "friend") args...
     """, true
 ) |> println

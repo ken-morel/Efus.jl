@@ -1,4 +1,5 @@
 module Parser
+export EfusParser, try_parse!, parse!
 
 using ...Efus: EfusError, Geometry, Size
 import ..Ast
