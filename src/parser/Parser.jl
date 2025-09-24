@@ -25,6 +25,7 @@ include("./geometry.jl")
 include("./compcall.jl")
 include("./jexpr.jl")
 include("./expression.jl")
+include("./control.jl")
 
 
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}

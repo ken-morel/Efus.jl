@@ -4,6 +4,12 @@ abstract type AbstractStatement <: AbstractExpression end
 
 abstract type AbstractValue <: AbstractExpression end
 
+abstract type ControlFlow <: AbstractStatement end
+
+struct Block <: AbstractStatement
+    children::Vector{AbstractStatement}
+end
+
 struct LiteralValue <: AbstractValue
     val::Union{Real, String, Char, Symbol}
 end
@@ -13,25 +19,22 @@ struct Expression <: AbstractValue
     reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
 end
 
-function substitute(fn::Function, expr::Expression)::String
-    text = expr.expr
-    replaces = Vector{Tuple{UInt, UInt, String}}()
-    for (name, positions) in expr.reactants
-        value = fn(name)
-        for (start, stop) in positions
-            push!(replaces, (start, stop, value))
-        end
-    end
-    sort!(replaces)
-    reverse!(replaces)
-    for (start, stop, txt) in replaces
-        text = (
-            prevind(text, start) > 0 ? text[begin:prevind(text, start)] : ""
-        ) * txt * (
-            nextind(text, stop) <= length(text) ? text[nextind(text, stop):end] : ""
-        )
-    end
-    return text
+struct IfBranch
+    condition::Union{Expr, Symbol, Nothing}
+    branch::Block
+end
+
+struct IfStatement <: ControlFlow
+    branches::Vector{IfBranch}
+end
+struct ForStatement <: ControlFlow
+    iterator::Union{Expr, Symbol}
+    item::Union{Expr, Symbol}
+    block::Block
+end
+
+struct JuliaCode <: AbstractStatement
+    code::Expression
 end
 
 struct Location
@@ -64,8 +67,26 @@ Base.@kwdef mutable struct ComponentCall <: AbstractStatement
     children::Vector{AbstractStatement}
 end
 
-struct Block <: AbstractStatement
-    children::Vector{AbstractStatement}
+
+function substitute(fn::Function, expr::Expression)::String
+    text = expr.expr
+    replaces = Vector{Tuple{UInt, UInt, String}}()
+    for (name, positions) in expr.reactants
+        value = fn(name)
+        for (start, stop) in positions
+            push!(replaces, (start, stop, value))
+        end
+    end
+    sort!(replaces)
+    reverse!(replaces)
+    for (start, stop, txt) in replaces
+        text = (
+            prevind(text, start) > 0 ? text[begin:prevind(text, start)] : ""
+        ) * txt * (
+            nextind(text, stop) <= length(text) ? text[nextind(text, stop):end] : ""
+        )
+    end
+    return text
 end
 
 
