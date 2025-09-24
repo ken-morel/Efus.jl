@@ -7,5 +7,6 @@ Efus.codegen_string(
     Frame padding=3x3
       Label text="Hello world" args...
       Button val=(hello' + banana)
+      Button val=(bana' * "what is yours? :-(" * "?")
     """, true
 ) |> println

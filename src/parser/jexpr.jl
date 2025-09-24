@@ -1,5 +1,5 @@
 const EXPRQUOTE = r"\"|'"
-const BRACKETQUOTE = r"\(|\)"
+const BRACKET = r"\(|\)"
 const MARKEDREACTANT = r"(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 
 function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.LiteralValue, AbstractParseError, Nothing}
@@ -30,29 +30,21 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.Litera
             exprstart = p.index
             !inbounds(p) && return EfusSyntaxError("EOF Before literal expression at ", current_char(p, -1))
             exprstart = p.index
-            while true
-                nextquote = if inbounds(p)
-                    match(EXPRQUOTE, p.text, p.index)
+            while inbounds(p)
+                nextbracket = let m = match(BRACKET, p.text, p.index)
+                    if !isnothing(m)
+                        m.offset
+                    end
                 end
-                next = if inbounds(p)
-                    match(BRACKETQUOTE, p.text, p.index)
+                nextquote = findnext('"', p.text, p.index)
+                isnothing(nextbracket)&&return EfusSyntaxError("Unterminated julia expression stated here", start)
+                if isnothing(nextquote) || nextbracket < nextquote
+                    p.index = nextbracket + 1
+                    count += p.text[nextbracket] == '(' ? 1 : -1
+                else
+                    p.index = nextquote
+                    @zig! parse_string!(p)
                 end
-                nextreactant = if inbounds(p)
-                    match(MARKEDREACTANT, p.text, p.index)
-                end
-                isnothing(next) && return EfusSyntaxError("Unterminated literal expression started here", start)
-
-                if !isnothing(nextquote) && nextquote.offset < next.offset && (isnothing(nextreactant) || nextreactant.offset > nextquote.offset)
-                    p.index = nextquote.offset
-                    val = nothing
-                    val = @zig! parse_string!(p)
-                    isnothing(val) && AssertionError("Must me a string here")
-                    continue
-                elseif !isnothing(nextreactant)
-                    p.index = nextreactant.offset + length(nextreactant.match)
-                end
-                count += next.match == "(" ? 1 : -1
-                p.index = next.offset + length(next.match)
                 count == 0 && break
             end
             exprstop = p.index - 2

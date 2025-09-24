@@ -27,29 +27,26 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     const content::Vector{AbstractReactive}
     const reactions::Vector{AbstractReaction{T}}
     const catalyst::Catalyst
-    fouled::Bool
-    value::Union{T, Nil}
+    value::T
 
-    Reactor{T}(getter::REACTOR_GETTER{T}, setter::Union{REACTOR_SETTER{T}, Nothing}) where {T} = new{T}(
+    Reactor{T}(getter::REACTOR_GETTER{T}, setter::Union{REACTOR_SETTER{T}, Nothing}, val::T) where {T} = new{T}(
         getter,
         setter,
         [],
         [],
         Catalyst(),
-        true,
-        Nil(),
+        val,
     )
     function Reactor{T}(getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive})::Reactor{T} where {T}
         getter = REACTOR_GETTER{T}(getter)
         setter = if !isnothing(setter)
             REACTOR_SETTER{T}(setter)
         end
-        r = Reactor{T}(getter, setter)
-        callback = (_) -> if !r.fouled
-            r.fouled = true
+        r = Reactor{T}(getter, setter, getter())
+        callback = (_) -> begin
+            r.value = r.getter()
             notify!(r)
         end
-
         for reactant in content
             push!(r.content, reactant)
             catalyze!(r.catalyst, reactant, callback)
@@ -58,7 +55,6 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     end
     Reactor(::Type{T}, getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive}) where {T} = Reactor{T}(getter, setter, content)
 end
-
 
 mutable struct Reactant{T} <: AbstractReactive{T}
     value::T
@@ -151,8 +147,6 @@ function denature!(c::Catalyst)
 end
 
 
-isfouled(r::Reactor) = r.fouled
-
 function setvalue!(r::Reactor{T}, val::T) where {T}
     return isnothing(r.setter) || r.setter(val)
 end
@@ -162,19 +156,6 @@ function notify!(r::Reactor)
     end
     return
 end
-function unfoul!(r::Reactor{T})::T where {T}
-    r.value = r.getter()
-    r.fouled = false
-    return r.value
-end
-function getvalue(r::Reactor{T})::Union{T, Nil} where {T}
-    return if r.fouled
-        unfoul!(r)
-    else
-        r.value
-    end
-end
-
 
 const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
