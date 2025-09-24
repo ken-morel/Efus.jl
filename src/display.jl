@@ -15,6 +15,7 @@ function show_ast(io::IO, obj::Any; indent = 0, context = IdDict())
     return println(io)
 end
 
+
 function show_ast(io::IO, block::Ast.Block; indent = 0, context = IdDict())
     if haskey(context, block)
         print(io, " "^indent)
@@ -34,6 +35,42 @@ function show_ast(io::IO, block::Ast.Block; indent = 0, context = IdDict())
     return
 end
 
+function show_ast(io::IO, statement::Ast.IfStatement; indent = 0, context = IdDict())
+    if haskey(context, statement)
+        print(io, " "^indent)
+        printstyled(io, "Ast.IfStatement (circular reference)", color = :light_black)
+        println(io)
+        return
+    end
+    context[statement] = true
+
+    print(io, " "^indent)
+    printstyled(io, "Ast.IfStatement", color = :magenta, bold = true)
+    println(io)
+
+    for (i, branch) in enumerate(statement.branches)
+        print(io, " "^(indent + 2))
+        if i == 1
+            printstyled(io, "If", color = :cyan)
+        else
+            if branch.condition === nothing
+                printstyled(io, "Else", color = :cyan)
+            else
+                printstyled(io, "ElseIf", color = :cyan)
+            end
+        end
+
+        if branch.condition !== nothing
+            printstyled(io, " (", color = :cyan)
+            printstyled(io, branch.condition.expr, color = :yellow)
+            printstyled(io, ")", color = :cyan)
+        end
+        println(io)
+
+        show_ast(io, branch.block, indent = indent + 4, context = context)
+    end
+    return
+end
 function show_ast(io::IO, call::Ast.ComponentCall; indent = 0, context = IdDict())
     if haskey(context, call)
         print(io, " "^indent)
@@ -113,8 +150,4 @@ end
 function Base.show(io::IO, ::MIME"text/plain", statement::Ast.AbstractStatement)
     return show_ast(IOContext(io, :color => true), statement)
 end
-
-macro show_str(txt::String)
-end
-
 end # module Display

@@ -11,7 +11,11 @@ function generate(node::Ast.ComponentCall)
     children_exprs = [generate(child) for child in node.children]
 
     if !isempty(children_exprs)
-        children_kw = Expr(:kw, :children, Expr(:vect, children_exprs...))
+        children = Expr(:vect, children_exprs...)
+        children = quote
+            convert.($(Efus.AbstractComponent), filter!(!isnothing, $children))
+        end
+        children_kw = Expr(:kw, :children, children)
         push!(kwargs, children_kw)
     end
 

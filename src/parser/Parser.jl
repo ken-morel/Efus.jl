@@ -77,8 +77,11 @@ end
 function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
     return ereset(p) do
         indent = skip_spaces!(p)
-        statement = @zig!n  parse_componentcall!(p)
-        return (indent, statement)
+        control = @zig! parse_controlflow!(p)
+        !isnothing(control) && return (indent, control)
+        statement = @zig! parse_componentcall!(p)
+        !isnothing(statement) && return (indent, statement)
+        return
     end
 end
 

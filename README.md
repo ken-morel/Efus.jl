@@ -8,8 +8,7 @@ Efus.jl julia module combines a language parser for `efus` language
 components in julia using an easy to read language which converts to julia code at
 macro expansion.
 
-You can view an example of how it's used at
-[Attrape.jl](https://github.com/ken-morel/Attrape.jl).
+For a usage example, see the [Attrape.jl](https://github.com/ken-morel/Attrape.jl)
 
 ## Efus language & parser
 
