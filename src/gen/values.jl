@@ -1,7 +1,15 @@
 generate(value::Ast.AbstractValue) = error("Unsupported generating code for $value")
 
 
-generate(value::Ast.LiteralValue) = value.val
+function generate(value::Ast.LiteralValue)
+    return if value.val isa Symbol
+        quote
+            Symbol($(string(value.val)))
+        end
+    else
+        value.val
+    end
+end
 
 function generate(value::Ast.Expression)
     if length(value.reactants) > 0 # it is reactive

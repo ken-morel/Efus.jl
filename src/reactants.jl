@@ -1,12 +1,13 @@
 using FunctionWrappers
 
-abstract type AbstractReactive{T} end
 
 export Reactant, Catalyst, Reaction, AbstractReaction
 export getvalue, setvalue!, catalyze!, inhibit!, denature!
 export resolve, MayBeReactive
 export AbstractReactive, Reactor
 
+
+abstract type AbstractReactive{T} end
 
 abstract type AbstractReaction{T} end
 
@@ -74,20 +75,12 @@ struct Reaction{T} <: AbstractReaction{T}
     callback::FunctionWrapper{Nothing, Tuple{T}}
 end
 
-"""
-    getvalue(r::AbstractReactive{T})
 
-Returns the current value of the Reactant.
-"""
 function getvalue(r::AbstractReactive{T})::T where {T}
     return r.value
 end
 
-"""
-    setvalue!(r::Reactant{T}, new_value::T) where T
 
-Sets a new value for the Reactant and triggers all associated reactions.
-"""
 function setvalue!(r::Reactant{T}, new_value::T) where {T}
     r.value = new_value
     for reaction in r.reactions
@@ -96,14 +89,7 @@ function setvalue!(r::Reactant{T}, new_value::T) where {T}
     return r
 end
 
-"""
-    catalyze!(c::Catalyst, r::AbstractReactive{T}, callback::Function)::Reaction{T} where T
 
-Creates and registers a new Reaction.
-
-This is the core subscription function. It links a Reactant to a Catalyst
-and specifies the callback to execute when the Reactant's value changes.
-"""
 function catalyze!(c::Catalyst, r::AbstractReactive{T}, callback::Function)::Reaction{T} where {T}
     wrapped_callback = FunctionWrapper{Nothing, Tuple{T}}(callback)
 
@@ -190,12 +176,30 @@ function getvalue(r::Reactor{T})::Union{T, Nil} where {T}
 end
 
 
-const MayBeReactive{T} = Union{T, AbstractReactive{T}}
+const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
-function resolve(r::MayBeReactive{T})::T where {T}
-    if r isa AbstractReactive
-        return getvalue(r)
+Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive{Any}) where {T} = Reactor{T}(
+    () -> getvalue(r)::T,
+    (v::T) -> setvalue!(r, v),
+    [r],
+)
+
+Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive) where {T} = Reactor{T}(
+    () -> getvalue(r)::T,
+    (v::T) -> setvalue!(r, v),
+    [r],
+)
+
+Base.convert(::Type{MayBeReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+    () -> getvalue(r)::T,
+    (v::T) -> setvalue!(r, v),
+    [r],
+)
+
+function resolve(::Type{T}, r::MayBeReactive)::T where {T}
+    return if r isa T
+        r
     else
-        return r
+        getvalue(r)::T
     end
 end

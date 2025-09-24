@@ -4,7 +4,7 @@ struct Geometry <: Ast.AbstractValue
     units::Vector{Union{Symbol, Nothing}}
 end
 
-struct Size{T} <: Ast.AbstractValue
+struct Size{T <: Real} <: Ast.AbstractValue
     x::T
     y::T
     unit::Union{Symbol, Nothing}

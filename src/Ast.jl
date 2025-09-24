@@ -1,11 +1,11 @@
 module Ast
-abstract type AbstractStatement end
 abstract type AbstractExpression end
+abstract type AbstractStatement <: AbstractExpression end
 
 abstract type AbstractValue <: AbstractExpression end
 
 struct LiteralValue <: AbstractValue
-    val::Union{Real, String, Char}
+    val::Union{Real, String, Char, Symbol}
 end
 
 struct Expression <: AbstractValue

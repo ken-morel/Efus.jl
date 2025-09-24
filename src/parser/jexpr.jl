@@ -2,7 +2,7 @@ const EXPRQUOTE = r"\"|'"
 const BRACKETQUOTE = r"\(|\)"
 const MARKEDREACTANT = r"(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 
-function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, AbstractParseError, Nothing}
+function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.LiteralValue, AbstractParseError, Nothing}
     return ereset(p) do
         start = current_char(p)
         name = parse_symbol!(p)
@@ -19,7 +19,12 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, AbstractPa
             end
         end
 
-        if p.text[p.index] == '('
+        if p.text[p.index] == ':'
+            p.index += 1
+            name = parse_symbol!(p)
+            isnothing(name) && return EfusSyntaxError("Invalid julia Symbol at pos", start * current_char(p))
+            return Ast.LiteralValue(name)
+        elseif p.text[p.index] == '('
             count = 1
             p.index += 1
             exprstart = p.index
@@ -72,10 +77,13 @@ function parse_reactiveexpression(p::EfusParser, stop::UInt)::Union{Ast.Expressi
         reactants = Dict{Symbol, Vector{NTuple{2, UInt}}}()
         while p.index <= stop
             str = findfirst(==('"'), p.text[p.index:end])
-            str = if !isnothing(str)
+            str = if !isnothing(str) && str <= stop
                 str + p.index - 1
             end
             reactant = match(MARKEDREACTANT, p.text, p.index)
+            if !isnothing(reactant) && reactant.offset > stop
+                reactant = nothing
+            end
             isnothing(reactant) && break
             if !isnothing(str) && reactant.offset > str
                 p.index = str
