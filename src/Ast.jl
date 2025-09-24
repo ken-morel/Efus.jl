@@ -1,15 +1,37 @@
 module Ast
-abstract type AbstractStatement end
 abstract type AbstractExpression end
+abstract type AbstractStatement <: AbstractExpression end
 
 abstract type AbstractValue <: AbstractExpression end
 
 struct LiteralValue <: AbstractValue
-    val::Union{Real, String, Char}
+    val::Union{Real, String, Char, Symbol}
 end
 
 struct Expression <: AbstractValue
     expr::String
+    reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
+end
+
+function substitute(fn::Function, expr::Expression)::String
+    text = expr.expr
+    replaces = Vector{Tuple{UInt, UInt, String}}()
+    for (name, positions) in expr.reactants
+        value = fn(name)
+        for (start, stop) in positions
+            push!(replaces, (start, stop, value))
+        end
+    end
+    sort!(replaces)
+    reverse!(replaces)
+    for (start, stop, txt) in replaces
+        text = (
+            prevind(text, start) > 0 ? text[begin:prevind(text, start)] : ""
+        ) * txt * (
+            nextind(text, stop) <= length(text) ? text[nextind(text, stop):end] : ""
+        )
+    end
+    return text
 end
 
 struct Location
@@ -32,10 +54,6 @@ struct ComponentCallSplat <: AbstractStatement
     location::Location
 end
 
-struct RootStatement <: AbstractStatement
-    children::Vector{AbstractStatement}
-    RootStatement() = new(AbstractStatement[])
-end
 
 Base.@kwdef mutable struct ComponentCall <: AbstractStatement
     name::Symbol
@@ -46,7 +64,7 @@ Base.@kwdef mutable struct ComponentCall <: AbstractStatement
     children::Vector{AbstractStatement}
 end
 
-struct Block
+struct Block <: AbstractStatement
     children::Vector{AbstractStatement}
 end
 

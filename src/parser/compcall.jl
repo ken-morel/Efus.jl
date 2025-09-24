@@ -1,9 +1,7 @@
 function parse_componentcall!(p::EfusParser)::Union{Ast.ComponentCall, Nothing, AbstractParseError}
     return ereset(p) do
-        name = nothing
-        @zig!n name parse_symbol!(p)
-        args = nothing
-        @zig!n args parse_componentcallargs!(p)
+        name = @zig!n parse_symbol!(p)
+        args = @zig!n parse_componentcallargs!(p)
         Ast.ComponentCall(;
             name,
             arguments = args[1],
@@ -25,14 +23,12 @@ function parse_componentcallargs!(p::EfusParser)::Union{
         while true
             skip_spaces!(p)
             inbounds(p) || break
-            splat = nothing
-            @zig! splat parse_componentcallsplat!(p)
+            splat = @zig! parse_componentcallsplat!(p)
             if !isnothing(splat)
                 push!(splats, splat)
                 continue
             end
-            pair = nothing
-            @zig! pair parse_componentcallargument!(p)
+            pair = @zig! parse_componentcallargument!(p)
             if isnothing(pair)
                 if inbounds(p) && !isspace(p.text[p.index])
                     return EfusSyntaxError("Unexpected token in component call '$(p.text[p.index])'", current_char(p))
@@ -62,8 +58,7 @@ end
 function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.ComponentCallArgument, Nothing}
     return ereset(p) do
         start = current_char(p)
-        name = nothing
-        @zig!n name parse_symbol!(p)
+        name = @zig!n parse_symbol!(p)
 
         if !inbounds(p) || p.text[p.index] != '='
             if !inbounds(p)
@@ -76,8 +71,7 @@ function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, 
         else
             p.index += 1
         end
-        value = nothing
-        @zig! value parse_expression!(p)
+        value = @zig!  parse_expression!(p)
 
         if isnothing(value)
             return EfusSyntaxError(

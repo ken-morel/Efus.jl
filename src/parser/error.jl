@@ -1,22 +1,27 @@
 abstract type AbstractParseError <: EfusError end
 
-macro zig!(var::Symbol, expression::Union{Expr, Symbol})
+macro zig!(expression::Union{Expr, Symbol})
+    var = :__zig!_value__
     return quote
         $(LineNumberNode(__source__.line, __source__.file))
-        $(esc(var)) = $(esc(expression))
-        if $(esc(var)) isa $AbstractParseError
-            return $(esc(var))
+        let $(esc(var)) = $(esc(expression))
+            if $(esc(var)) isa $AbstractParseError
+                return $(esc(var))
+            end
+            $(esc(var))
         end
-        $(esc(var))
     end
 end
-macro zig!n(var::Symbol, expression::Union{Expr, Symbol})
+macro zig!n(expression::Union{Expr, Symbol})
+    var = :__zig!n_value__
     return quote
-        $(esc(var)) = $(esc(expression))
-        if $(esc(var)) isa $AbstractParseError || isnothing($(esc(var)))
-            return $(esc(var))
+        $(LineNumberNode(__source__.line, __source__.file))
+        let $(esc(var)) = $(esc(expression))
+            if $(esc(var)) isa $AbstractParseError || isnothing($(esc(var)))
+                return $(esc(var))
+            end
+            $(esc(var))
         end
-        $(esc(var))
     end
 end
 
@@ -37,10 +42,11 @@ struct EfusSyntaxError <: AbstractParseError
 end
 
 function throwparseerror(p::EfusParser, e::EfusSyntaxError)
+    loc = "In $(e.location.file)"
     ln = split(p.text, '\n')[e.location.start[1]]
     start = e.location.start[2]
     stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
     trace = " "^(start - 1) * "^"^(stop - start + 1)
     msg = "Efus.Parser.EfusSyntaxError: " * e.message
-    error(join([msg, ln, trace], "\n"))
+    error(join([msg, loc, ln, trace], "\n"))
 end

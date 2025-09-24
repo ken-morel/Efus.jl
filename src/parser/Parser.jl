@@ -1,4 +1,5 @@
 module Parser
+export EfusParser, try_parse!, parse!
 
 using ...Efus: EfusError, Geometry, Size
 import ..Ast
@@ -11,7 +12,7 @@ mutable struct EfusParser
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
 
 
-    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.RootStatement())])
+    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
 end
 
 
@@ -27,28 +28,29 @@ include("./expression.jl")
 
 
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
-    statement = nothing
+    root_block = p.stack[1][2]
+    @assert root_block isa Ast.Block "Parser stack was not initialized with a root Block."
+
     while true
-        print(p.index, " -> ")
         skip_emptylines!(p) || break
-        println(p.index)
-        @zig! statement parse_statement!(p)
+
+        statement = @zig! parse_statement!(p)
         isnothing(statement) && break
         indent, statement = statement
-        [ # clear sibings in stack
-            pop!(p.stack) for _ in 1:count(p.stack) do (sid, _)
-                    sid >= indent
-            end
-        ]
 
-        (_, parent) = length(p.stack) == 0 ? nothing : p.stack[end]
-        if !isnothing(parent)
-            statement.parent = parent
-            push!(parent.children, statement)
+        while length(p.stack) > 1 && p.stack[end][1] >= indent
+            pop!(p.stack)
         end
+
+        (_, parent) = p.stack[end]
+        if parent !== root_block
+            statement.parent = parent
+        end
+        push!(parent.children, statement)
+
         push!(p.stack, (indent, statement))
     end
-    return Ast.Block(p.stack[1][2].children)
+    return root_block
 end
 function skip_emptylines!(p::EfusParser)
     while inbounds(p)
@@ -74,8 +76,7 @@ end
 function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
     return ereset(p) do
         indent = skip_spaces!(p)
-        statement = nothing
-        @zig!n statement parse_componentcall!(p)
+        statement = @zig!n  parse_componentcall!(p)
         return (indent, statement)
     end
 end

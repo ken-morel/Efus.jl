@@ -1,8 +1,13 @@
 using FunctionWrappers
 
+
 export Reactant, Catalyst, Reaction, AbstractReaction
 export getvalue, setvalue!, catalyze!, inhibit!, denature!
+export resolve, MayBeReactive
+export AbstractReactive, Reactor
 
+
+abstract type AbstractReactive{T} end
 
 abstract type AbstractReaction{T} end
 
@@ -12,31 +17,66 @@ struct Catalyst
     Catalyst() = new([])
 end
 
-mutable struct Reactant{T}
+
+const REACTOR_SETTER{T} = FunctionWrapper{Any, Tuple{T}}
+const REACTOR_GETTER{T} = FunctionWrapper{T, Tuple{}}
+
+mutable struct Reactor{T} <: AbstractReactive{T}
+    getter::REACTOR_GETTER{T}
+    setter::Union{REACTOR_SETTER{T}, Nothing}
+    const content::Vector{AbstractReactive}
+    const reactions::Vector{AbstractReaction{T}}
+    const catalyst::Catalyst
+    value::T
+
+    Reactor{T}(getter::REACTOR_GETTER{T}, setter::Union{REACTOR_SETTER{T}, Nothing}, val::T) where {T} = new{T}(
+        getter,
+        setter,
+        [],
+        [],
+        Catalyst(),
+        val,
+    )
+    function Reactor{T}(getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive})::Reactor{T} where {T}
+        getter = REACTOR_GETTER{T}(getter)
+        setter = if !isnothing(setter)
+            REACTOR_SETTER{T}(setter)
+        end
+        r = Reactor{T}(getter, setter, getter())
+        callback = (_) -> begin
+            r.value = r.getter()
+            notify!(r)
+        end
+        for reactant in content
+            push!(r.content, reactant)
+            catalyze!(r.catalyst, reactant, callback)
+        end
+        return r
+    end
+    Reactor(::Type{T}, getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive}) where {T} = Reactor{T}(getter, setter, content)
+end
+
+mutable struct Reactant{T} <: AbstractReactive{T}
     value::T
     reactions::Vector{AbstractReaction{T}}
 
+    Reactant{T}(value) where {T} = new{T}(convert(T, value), [])
     Reactant(value::T) where {T} = new{T}(value, [])
 end
 
+
 struct Reaction{T} <: AbstractReaction{T}
-    reactant::Reactant{T}
+    reactant::AbstractReactive{T}
     catalyst::Catalyst
     callback::FunctionWrapper{Nothing, Tuple{T}}
 end
 
-"""
-    getvalue(r::Reactant)
 
-Returns the current value of the Reactant.
-"""
-getvalue(r::Reactant) = r.value
+function getvalue(r::AbstractReactive{T})::T where {T}
+    return r.value
+end
 
-"""
-    setvalue!(r::Reactant{T}, new_value::T) where T
 
-Sets a new value for the Reactant and triggers all associated reactions.
-"""
 function setvalue!(r::Reactant{T}, new_value::T) where {T}
     r.value = new_value
     for reaction in r.reactions
@@ -45,15 +85,8 @@ function setvalue!(r::Reactant{T}, new_value::T) where {T}
     return r
 end
 
-"""
-    catalyze!(c::Catalyst, r::Reactant{T}, callback::Function)::Reaction{T} where T
 
-Creates and registers a new Reaction.
-
-This is the core subscription function. It links a Reactant to a Catalyst
-and specifies the callback to execute when the Reactant's value changes.
-"""
-function catalyze!(c::Catalyst, r::Reactant{T}, callback::Function)::Reaction{T} where {T}
+function catalyze!(c::Catalyst, r::AbstractReactive{T}, callback::Function)::Reaction{T} where {T}
     wrapped_callback = FunctionWrapper{Nothing, Tuple{T}}(callback)
 
     reaction = Reaction{T}(r, c, wrapped_callback)
@@ -62,9 +95,10 @@ function catalyze!(c::Catalyst, r::Reactant{T}, callback::Function)::Reaction{T}
     push!(r.reactions, reaction)
     return reaction
 end
+catalyze!(fn::Function, c::Catalyst, r::AbstractReactive{T}) where {T} = catalyze!(c, r, fn)
 
 
-function inhibit!(catalyst::Catalyst, reactant::Reactant, callback::Function)
+function inhibit!(catalyst::Catalyst, reactant::AbstractReactive, callback::Function)
     reactions_to_inhibit = filter(catalyst.reactions) do sub
         sub.reactant === reactant && sub.callback.func === callback
     end
@@ -75,7 +109,7 @@ function inhibit!(catalyst::Catalyst, reactant::Reactant, callback::Function)
     return
 end
 
-function inhibit!(catalyst::Catalyst, reactant::Reactant)
+function inhibit!(catalyst::Catalyst, reactant::AbstractReactive)
     reactions_to_inhibit = filter(catalyst.reactions) do sub
         sub.reactant === reactant
     end
@@ -110,4 +144,38 @@ function denature!(c::Catalyst)
         inhibit!(reaction)
     end
     return
+end
+
+
+function setvalue!(r::Reactor{T}, val::T) where {T}
+    return isnothing(r.setter) || r.setter(val)
+end
+function notify!(r::Reactor)
+    for reaction in r.reactions
+        reaction.callback(r.value)
+    end
+    return
+end
+
+const MayBeReactive{T} = Union{AbstractReactive{T}, T}
+
+
+Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+    () -> convert(T, getvalue(r)),
+    (v::T) -> setvalue!(r, convert(K, v)),
+    [r],
+)
+
+Base.convert(::Type{MayBeReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+    () -> convert(T, getvalue(r)),
+    (v::T) -> setvalue!(r, convert(K, v)),
+    [r],
+)
+
+function resolve(::Type{T}, r::MayBeReactive) where {T}
+    return if r isa T
+        r
+    else
+        getvalue(r)
+    end
 end
