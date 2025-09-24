@@ -64,7 +64,7 @@ mutable struct Reactant{T} <: AbstractReactive{T}
     value::T
     reactions::Vector{AbstractReaction{T}}
 
-    Reactant{T}(value::T) where {T} = new{T}(value, [])
+    Reactant{T}(value) where {T} = new{T}(convert(T, value), [])
     Reactant(value::T) where {T} = new{T}(value, [])
 end
 
@@ -178,28 +178,23 @@ end
 
 const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
-Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive{Any}) where {T} = Reactor{T}(
-    () -> getvalue(r)::T,
-    (v::T) -> setvalue!(r, v),
-    [r],
-)
 
-Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive) where {T} = Reactor{T}(
-    () -> getvalue(r)::T,
-    (v::T) -> setvalue!(r, v),
+Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+    () -> convert(T, getvalue(r)),
+    (v::T) -> setvalue!(r, convert(K, v)),
     [r],
 )
 
 Base.convert(::Type{MayBeReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
-    () -> getvalue(r)::T,
-    (v::T) -> setvalue!(r, v),
+    () -> convert(T, getvalue(r)),
+    (v::T) -> setvalue!(r, convert(K, v)),
     [r],
 )
 
-function resolve(::Type{T}, r::MayBeReactive)::T where {T}
+function resolve(::Type{T}, r::MayBeReactive) where {T}
     return if r isa T
         r
     else
-        getvalue(r)::T
+        getvalue(r)
     end
 end
