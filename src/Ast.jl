@@ -20,21 +20,24 @@ struct Expression <: AbstractValue
 end
 
 struct IfBranch
-    condition::Union{Expr, Symbol, Nothing}
-    branch::Block
-end
-
-struct IfStatement <: ControlFlow
-    branches::Vector{IfBranch}
-end
-struct ForStatement <: ControlFlow
-    iterator::Union{Expr, Symbol}
-    item::Union{Expr, Symbol}
+    condition::Union{Expression, Nothing}
     block::Block
 end
 
-struct JuliaCode <: AbstractStatement
+Base.@kwdef mutable struct IfStatement <: ControlFlow
+    branches::Vector{IfBranch}
+    parent::Union{AbstractStatement, Nothing} = nothing
+end
+Base.@kwdef mutable struct ForStatement <: ControlFlow
+    iterator::Expression
+    item::Expression
+    block::Block
+    parent::Union{AbstractStatement, Nothing} = nothing
+end
+
+Base.@kwdef mutable struct JuliaCode <: AbstractStatement
     code::Expression
+    parent::Union{AbstractStatement, Nothing} = nothing
 end
 
 struct Location
