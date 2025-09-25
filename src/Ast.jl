@@ -19,12 +19,10 @@ struct Expression <: AbstractValue
     reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
 end
 
-struct Nil end
 
 Base.@kwdef struct Snippet <: AbstractValue
     content::Block
-    #                    param name    param type          default value
-    params::Vector{Tuple{Symbol, Union{Symbol, Nil}, Union{Expression, Nil}}}
+    params::Dict{Symbol, Union{Expression, Nothing}}
 end
 
 struct IfBranch

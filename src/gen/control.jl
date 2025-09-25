@@ -23,8 +23,8 @@ end
 # just to see what it will look like, and for debugging :-)
 count::UInt64 = 0
 function generate(node::Ast.ForStatement)
-    count += 1
-    name = Symbol("__efus_for_internal" + string(count))
+    global count += 1
+    name = Symbol("__efus_for_internal" * string(count))
     return quote
         let $name = $(generate(node.iterator))
             if isempty($name)

@@ -1,1 +1,3 @@
-const Snippet{T} = FunctionWrapper{AbstractComponent, T}
+export Snippet
+
+const Snippet{T} = FunctionWrapper{Vector{<:AbstractComponent}, T}

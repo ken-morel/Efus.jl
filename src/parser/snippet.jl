@@ -4,36 +4,30 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
         parse_symbol!(p) != :do && return nothing
         e = current_char(p, -1)
         # collect arguments, name::Type = value, puh, julia.
-        params = Vector{Tuple{Symbol, Union{Symbol, Ast.Nil}, Union{Ast.Expression, Ast.Nil}}}()
+        params = Dict{Symbol, Union{Ast.Expression, Nothing}}()
         ended = false
         while !ended
             skip_spaces!(p)
             name = parse_symbol!(p)
-            type = Ast.Nil()
-            default = Ast.Nil()
+            type = nothing
             isnothing(name) && break
             skip_spaces!(p)
-            if p.text[p.index] == ':'
+            params[name] = if p.text[p.index] == ':'
                 p.text[p.index + 1] != ':' && return EfusSyntaxError(
                     "Invalid type assert",
                     current_char(p, 1)
                 )
                 p.index += 2
                 skip_spaces!(p)
-                type = parse_symbol!(p)
-                isnothing(type) && return EfusSyntaxError("Missing type assertion type in snippet parameter list", current_char(p, -1))
-                skip_spaces!(p)
-            end
-            if p.text[p.index] == '='
-                p.index += 1
-                (default, token) = @zig! parse_jlexpressiontilltoken!(p, r",|\n")
+                (type, token) = @zig! parse_jlexpressiontilltoken!(p, r",|\n")
                 if token == "\n"
                     ended = true
                 end
-            else
-                p.text[p.index] == '\n' && break
+                type
             end
-            push!(params, (name, type, default))
+            if p.text[p.index] == ','
+                p.index += 1
+            end
         end
         code = skip_toblock!(p, [:end])
         isnothing(code) && return EfusSyntaxError("Missing closing end for snippet", b * e)
