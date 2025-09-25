@@ -45,7 +45,7 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
             if name == :elseif
                 (condition,) = @zig! parse_jlexpressiontilltoken!(p, r"\n")
             elseif name == :else
-                (condition,) = nothing
+                condition = nothing
             elseif name == :end
                 break
             end

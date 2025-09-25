@@ -12,7 +12,7 @@ mutable struct EfusParser
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
 
 
-    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))], 0)
+    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
 end
 
 

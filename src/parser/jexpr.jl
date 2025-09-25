@@ -3,7 +3,7 @@ const MARKEDREACTANT = r"(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 const INTERESTING_JLE = r"'|\"|\(|\)|(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 #                          |  |  |  |
 
-function parse_jlexpressiontilltoken!(p::EfusParser, token::Regex)::Union{Union{Ast.Expression, String}, AbstractParseError}
+function parse_jlexpressiontilltoken!(p::EfusParser, token::Regex)::Union{Tuple{Ast.Expression, AbstractString}, AbstractParseError}
     return ereset(p) do
         start = p.index
         startpos = current_char(p)

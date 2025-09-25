@@ -12,12 +12,13 @@ function ereset(f::Function, p::EfusParser)
         if r isa AbstractParseError || isnothing(r)
             p.index = idx
         end
+        r
     catch e
         if e isa BoundsError
             p.index = length(p.text)
             pos = (line(p), col(p))
             p.index = idx
-            return EfusSyntaxError("Unexpected EOF at position.", Ast.Location(p.file, pos, pos))
+            EfusSyntaxError("Unexpected EOF at position.", Ast.Location(p.file, pos, pos))
         else
             rethrow()
         end

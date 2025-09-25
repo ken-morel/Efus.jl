@@ -71,7 +71,7 @@ function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, 
         else
             p.index += 1
         end
-        if p.index == '|'
+        if p.text[p.index] == '|'
             p.index += 1
             skip_emptylines!(p)
             skip_spaces!(p)

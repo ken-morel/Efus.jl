@@ -38,6 +38,7 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
         code = skip_toblock!(p, [:end])
         isnothing(code) && return EfusSyntaxError("Missing closing end for snippet", b * e)
         (code,) = code
-        return Ast.Snippet(code, params)
+        content = @zig! subparse!(p, code, "In snippet starting at line $(b.start[1])")
+        return Ast.Snippet(content, params)
     end
 end
