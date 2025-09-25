@@ -3,7 +3,7 @@ const MARKEDREACTANT = r"(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 const INTERESTING_JLE = r"'|\"|\(|\)|(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 #                          |  |  |  |
 
-function parse_jlexpressiontilltoken!(p::EfusParser, token::Regex)::Union{Ast.Expression, AbstractParseError}
+function parse_jlexpressiontilltoken!(p::EfusParser, token::Regex)::Union{Tuple{Ast.Expression, AbstractString}, AbstractParseError}
     return ereset(p) do
         start = p.index
         startpos = current_char(p)
@@ -50,9 +50,11 @@ function parse_jlexpressiontilltoken!(p::EfusParser, token::Regex)::Union{Ast.Ex
             else
                 brackets != 0 && return EfusSyntaxError("Unmatched brackets in expression started at pos", startpos)
                 p.index = endtokenmatch.offset + length(endtokenmatch.match)
-                return Ast.Expression(
-                    p.text[start:(endtokenmatch.offset - 1)],
-                    reactants
+                return (
+                    Ast.Expression(
+                        p.text[start:(endtokenmatch.offset - 1)],
+                        reactants
+                    ), endtokenmatch.match,
                 )
             end
         end
@@ -83,8 +85,7 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.Litera
         elseif p.text[p.index] == '('
             p.index += 1
             !inbounds(p) && return EfusSyntaxError("EOF Before literal expression at ", current_char(p, -1))
-            expr = @zig! parse_jlexpressiontilltoken!(p, r"\)")
-            p.index += 1
+            (expr,) = @zig! parse_jlexpressiontilltoken!(p, r"\)")
             return expr
         end
     end

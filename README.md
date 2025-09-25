@@ -69,6 +69,27 @@ nothing, [hello]))])
 Basicly just function calls, so you can easily get on with it for
 even more.
 
+## Control flow
+
+efus suports if and for for now, each with the usual julia syntax.
+(for loop even supports both in and =).
+
+```julia
+Frame
+  if foobar !== true
+    Label text="hello world"
+    for (name, for) = foes
+      Plaintain name=name
+    else
+      Egg
+    end
+  end
+```
+
+The for generates a list comprehension and an if statement
+to check if the iterable is `empty`. And some more code
+flattens the children list before passing it to the parent.
+
 ### Generator macros
 
 To get that done more easily, there are two macros, `@efus_str` and

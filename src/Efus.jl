@@ -11,7 +11,7 @@ include("./Ast.jl")
 
 
 include("./objects.jl")
-
+include("./snippet.jl")
 
 include("./reactants.jl")
 

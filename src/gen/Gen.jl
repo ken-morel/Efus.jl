@@ -4,6 +4,7 @@ import ..Efus
 
 include("./root.jl")
 include("./statements.jl")
+include("./snippet.jl")
 include("./control.jl")
 include("./values.jl")
 

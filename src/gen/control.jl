@@ -20,11 +20,14 @@ function generate(node::Ast.IfStatement)
     return result
 end
 
+# just to see what it will look like, and for debugging :-)
+count::UInt64 = 0
 function generate(node::Ast.ForStatement)
-    name = Symbol("__efus_internal")
+    global count += 1
+    name = Symbol("__efus_for_internal" * string(count))
     return quote
         let $name = $(generate(node.iterator))
-            if $length($name) == 0
+            if isempty($name)
                 $(generate(node.elseblock))
             else
                 [$(generate(node.block)) for $(generate(node.item)) in $name]

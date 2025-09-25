@@ -10,10 +10,9 @@ mutable struct EfusParser
     file::String
     index::UInt
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
-    _indent::UInt
 
 
-    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))], 0)
+    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
 end
 
 
@@ -21,12 +20,14 @@ include("./error.jl")
 include("./location.jl")
 include("./utils.jl")
 
+include("./compcall.jl")
+include("./control.jl")
+
 include("./string.jl")
 include("./geometry.jl")
-include("./compcall.jl")
 include("./jexpr.jl")
 include("./expression.jl")
-include("./control.jl")
+include("./snippet.jl")
 
 
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
@@ -60,7 +61,6 @@ subparse!(p::EfusParser, code::String, loc::String) = parse!(
 function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
     return ereset(p) do
         indent = skip_spaces!(p)
-        p._indent = indent
         control = @zig! parse_controlflow!(p)
         !isnothing(control) && return (indent, control)
         statement = @zig! parse_componentcall!(p)

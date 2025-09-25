@@ -19,6 +19,12 @@ struct Expression <: AbstractValue
     reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
 end
 
+
+Base.@kwdef struct Snippet <: AbstractValue
+    content::Block
+    params::Dict{Symbol, Union{Expression, Nothing}}
+end
+
 struct IfBranch
     condition::Union{Expression, Nothing}
     block::Block
