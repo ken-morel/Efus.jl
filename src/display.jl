@@ -71,6 +71,36 @@ function show_ast(io::IO, statement::Ast.IfStatement; indent = 0, context = IdDi
     end
     return
 end
+
+function show_ast(io::IO, statement::Ast.ForStatement; indent = 0, context = IdDict())
+    if haskey(context, statement)
+        print(io, " "^indent)
+        printstyled(io, "Ast.ForStatement (circular reference)", color = :light_black)
+        println(io)
+        return
+    end
+    context[statement] = true
+
+    print(io, " "^indent)
+    printstyled(io, "Ast.ForStatement", color = :magenta, bold = true)
+    printstyled(io, " (", color = :cyan)
+    printstyled(io, statement.item.expr, color = :yellow)
+    printstyled(io, " in ", color = :cyan)
+    printstyled(io, statement.iterator.expr, color = :yellow)
+    printstyled(io, ")", color = :cyan)
+    println(io)
+
+    show_ast(io, statement.block, indent = indent + 4, context = context)
+
+    if statement.elseblock !== nothing
+        print(io, " "^(indent + 2))
+        printstyled(io, "Else", color = :cyan)
+        println(io)
+        show_ast(io, statement.elseblock, indent = indent + 4, context = context)
+    end
+    return
+end
+
 function show_ast(io::IO, call::Ast.ComponentCall; indent = 0, context = IdDict())
     if haskey(context, call)
         print(io, " "^indent)
