@@ -32,6 +32,7 @@ Base.@kwdef mutable struct ForStatement <: ControlFlow
     iterator::Expression
     item::Expression
     block::Block
+    elseblock::Union{Block, Nothing} = nothing
     parent::Union{AbstractStatement, Nothing} = nothing
 end
 
