@@ -71,7 +71,12 @@ function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, 
         else
             p.index += 1
         end
-        value = @zig!  parse_expression!(p)
+        if p.index == '|'
+            p.index += 1
+            skip_emptylines!(p)
+            skip_spaces!(p)
+        end
+        value = @zig! parse_expression!(p)
 
         if isnothing(value)
             return EfusSyntaxError(

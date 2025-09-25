@@ -5,7 +5,8 @@ end
 
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
-    shouldwrap = !all(isa.(node.children, Ast.ComponentCall))
+    shouldflatten = !all(isa.(node.children, Ast.ComponentCall))
+    shouldfilter = any(isa.(node.children, Ast.JuliaCode))
 
     kwargs = [Expr(:kw, arg.name, generate(arg.value)) for arg in node.arguments]
 
@@ -15,9 +16,14 @@ function generate(node::Ast.ComponentCall)
 
     if !isempty(children_exprs)
         children = Expr(:vect, children_exprs...)
-        if shouldwrap
+        if shouldfilter
             children = quote
-                convert.($(Efus.AbstractComponent), Iterators.flatten(filter!(!isnothing, $children)))
+                filter!(!isnothing, $children)
+            end
+        end
+        if shouldflatten
+            children = quote
+                convert.($(Efus.AbstractComponent), Iterators.flatten($children))
             end
         end
         children_kw = Expr(:kw, :children, children)

@@ -1,3 +1,6 @@
+const OPENING_CONTROLS = [:if, :for, :do]
+
+
 function parse_controlflow!(p::EfusParser)::Union{Ast.ControlFlow, AbstractParseError, Nothing}
     @zig! check_unbound_flows(p)
     flow = @zig! parse_ifstatement!(p)
@@ -26,10 +29,10 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
         e = current_char(p, -1)
         lastcontrol = b * e
         branches = Ast.IfBranch[]
-        condition = @zig! parse_jlexpressiontilltoken!(p, r"\n")
+        (condition,) = @zig! parse_jlexpressiontilltoken!(p, r"\n")
         name = :if
         while true
-            value = skip_toblock!(p, p._indent, [:elseif, :else, :end])
+            value = skip_toblock!(p, [:elseif, :else, :end])
             isnothing(value) && EfusSyntaxError(
                 "Non terminated control flow after here",
                 lastcontrol
@@ -40,9 +43,9 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
             block = @zig! subparse!(p, code, "in $name block at line $line")
             push!(branches, Ast.IfBranch(condition, block))
             if name == :elseif
-                condition = @zig! parse_jlexpressiontilltoken!(p, r"\n")
+                (condition,) = @zig! parse_jlexpressiontilltoken!(p, r"\n")
             elseif name == :else
-                condition = nothing
+                (condition,) = nothing
             elseif name == :end
                 break
             end
@@ -60,10 +63,10 @@ function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, Nothing}
 
         forloc = b * e
 
-        dest = @zig! parse_jlexpressiontilltoken!(p, r"in|∈|\=")
-        iter = @zig! parse_jlexpressiontilltoken!(p, r"\n")
+        (dest,) = @zig! parse_jlexpressiontilltoken!(p, r"in|∈|\=")
+        (iter,) = @zig! parse_jlexpressiontilltoken!(p, r"\n")
 
-        code = @zig! skip_toblock!(p, p._indent, [:end, :else])
+        code = @zig! skip_toblock!(p, [:end, :else])
         isnothing(code) && return EfusSyntaxError(
             "Missing `end` or `else` after for",
             forloc
@@ -71,9 +74,9 @@ function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, Nothing}
         (code, name, loc) = code
         forcontent = @zig! subparse!(p, code, "in for loop at line $(forloc.start[1])")
         elsecontent = if name == :else
-            elsecode = @zig! skip_toblock!(p, p._indent, [:end])
+            elsecode = @zig! skip_toblock!(p, [:end])
             isnothing(elsecode) && return EfusSyntaxError(
-                "Missing `end`  after for statement else",
+                "Missing `end` after for statement else",
                 loc
             )
             @zig! subparse!(p, elsecode[1], "in for loop else at line $(loc.start[1])")

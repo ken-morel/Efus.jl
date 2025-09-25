@@ -7,11 +7,21 @@ end
 
 function ereset(f::Function, p::EfusParser)
     idx = p.index
-    r = f()
-    if r isa AbstractParseError || isnothing(r)
-        p.index = idx
+    return try
+        r = f()
+        if r isa AbstractParseError || isnothing(r)
+            p.index = idx
+        end
+    catch e
+        if e isa BoundsError
+            p.index = length(p.text)
+            pos = (line(p), col(p))
+            p.index = idx
+            return EfusSyntaxError("Unexpected EOF at position.", Ast.Location(p.file, pos, pos))
+        else
+            rethrow()
+        end
     end
-    return r
 end
 
 inbounds(p::EfusParser) = length(p.text) >= p.index
@@ -36,17 +46,25 @@ function skip_emptylines!(p::EfusParser)
     end
     return inbounds(p)
 end
-function skip_toblock!(p::EfusParser, indent::UInt, names::Vector{Symbol})::Union{Tuple{String, Symbol, Ast.Location}, Nothing}
+function skip_toblock!(p::EfusParser, names::Vector{Symbol})::Union{Tuple{String, Symbol, Ast.Location}, Nothing}
     return ereset(p) do
         start = p.index
         stop = p.index
+        scope = zero(UInt)
         while inbounds(p)
-            ind = skip_spaces!(p)
+            skip_spaces!(p)
             b = current_char(p)
             name = parse_symbol!(p)
             e = current_char(p, -1)
-            if name ∈ names && ind == indent
+            if name ∈ names && scope == 0
                 return (p.text[start:stop], name, b * e)
+            elseif name ∈ OPENING_CONTROLS
+                scope += 1
+            elseif name == :end
+                scope -= 1
+            end
+            if scope < 0
+                return EfusSyntaxError("Unmatched end", b * e)
             end
             if inbounds(p)
                 newline = findnext('\n', p.text, p.index)
