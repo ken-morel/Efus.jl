@@ -2,11 +2,30 @@ function generate(node::Ast.AbstractStatement)
     error("Generation not implemented for this node type: $(typeof(node))")
 end
 
+function cleanchildren(children::Vector)
+    children isa Vector{<:Efus.AbstractComponent} && return children
+    final = Efus.AbstractComponent[]
+    for child in children
+        if child isa Efus.AbstractComponent
+            push!(final, child)
+        elseif child isa AbstractVector
+            push!.((final,), cleanchildren(child))
+
+        elseif !isnothing(child)
+            error(
+                "Component was passed an unexpected child of type" *
+                    " $(typeof(child)): $child" *
+                    "make sure it either returns a component, " *
+                    "a vector of components or nothing"
+            )
+        end
+    end
+    return final
+end
 
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
-    shouldflatten = !all(isa.(node.children, Ast.ComponentCall))
-    shouldfilter = any(isa.(node.children, Ast.JuliaCode))
+    shouldclean = !all(isa.(node.children, Ast.ComponentCall))
 
     kwargs = [Expr(:kw, arg.name, generate(arg.value)) for arg in node.arguments]
 
@@ -16,15 +35,8 @@ function generate(node::Ast.ComponentCall)
 
     if !isempty(children_exprs)
         children = Expr(:vect, children_exprs...)
-        if shouldfilter
-            children = quote
-                filter!(!isnothing, $children)
-            end
-        end
-        if shouldflatten
-            children = quote
-                convert.($(Efus.AbstractComponent), Iterators.flatten($children))
-            end
+        if shouldclean
+            children = Expr(:call, cleanchildren, children)
         end
         children_kw = Expr(:kw, :children, children)
         push!(kwargs, children_kw)

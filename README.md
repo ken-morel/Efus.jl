@@ -122,6 +122,21 @@ constituting of:
 - **updating**: This is to update the component when
   one of it's reactive attributes changed.
 
+## Composing components
+
+You can for that, define a function, which takes keyword
+arguments and return a component, then call it from
+efus code, as such the function will not count in the
+component tree, but it works.
+If you need your composite component to accept children,
+simply accept a `children::Vector{<:AbstractComponent} = []`.
+and pass it down to something else.
+
+You need to specify a default value, since if no children
+were passed, efus does not pass a children argument,
+but that's also what permits you to pass those
+children to another component, let say `Box children=children`.
+
 ## Reactivity
 
 Efus wants that the backend should be responsible of ui updates.
