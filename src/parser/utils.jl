@@ -15,3 +15,59 @@ function ereset(f::Function, p::EfusParser)
 end
 
 inbounds(p::EfusParser) = length(p.text) >= p.index
+
+function skip_emptylines!(p::EfusParser)
+    while inbounds(p)
+        line_start = p.index
+        line_end = findnext(==('\n'), p.text, line_start)
+
+        if isnothing(line_end)
+            if all(isspace, p.text[line_start:end])
+                p.index = length(p.text) + 1
+            end
+            break
+        else
+            if all(isspace, p.text[line_start:line_end])
+                p.index = line_end + 1
+            else
+                break
+            end
+        end
+    end
+    return inbounds(p)
+end
+function skip_toblock!(p::EfusParser, indent::UInt, names::Vector{Symbol})::Union{Tuple{String, Symbol, Ast.Location}, Nothing}
+    return ereset(p) do
+        start = p.index
+        stop = p.index
+        while inbounds(p)
+            ind = skip_spaces!(p)
+            b = current_char(p)
+            name = parse_symbol!(p)
+            e = current_char(p, -1)
+            if name ∈ names && ind == indent
+                return (p.text[start:stop], name, b * e)
+            end
+            if inbounds(p)
+                newline = findnext('\n', p.text, p.index)
+                if !isnothing(newline)
+                    p.index = newline + 1
+                    stop = p.index
+                    continue
+                end
+            end
+            return nothing
+        end
+    end
+end
+
+
+const SYMBOL = r"(\p{L}|_)(\p{L}|\p{N}|_)*"
+function parse_symbol!(p::EfusParser)::Union{Symbol, Nothing}
+    inbounds(p) || return nothing
+    m = match(SYMBOL, p.text, p.index)
+    return if !isnothing(m) && m.offset == p.index
+        p.index += length(m.match)
+        Symbol(m.match)
+    end
+end

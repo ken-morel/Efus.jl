@@ -10,9 +10,10 @@ mutable struct EfusParser
     file::String
     index::UInt
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
+    _indent::UInt
 
 
-    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
+    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))], 0)
 end
 
 
@@ -53,46 +54,18 @@ function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
     end
     return root_block
 end
-function skip_emptylines!(p::EfusParser)
-    while inbounds(p)
-        line_start = p.index
-        line_end = findnext(==('\n'), p.text, line_start)
-
-        if isnothing(line_end)
-            if all(isspace, p.text[line_start:end])
-                p.index = length(p.text) + 1
-            end
-            break
-        else
-            if all(isspace, p.text[line_start:line_end])
-                p.index = line_end + 1
-            else
-                break
-            end
-        end
-    end
-    return inbounds(p)
-end
-
+subparse!(p::EfusParser, code::String, loc::String) = parse!(
+    EfusParser(code, p.file * "; " * loc),
+)
 function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
     return ereset(p) do
         indent = skip_spaces!(p)
+        p._indent = indent
         control = @zig! parse_controlflow!(p)
         !isnothing(control) && return (indent, control)
         statement = @zig! parse_componentcall!(p)
         !isnothing(statement) && return (indent, statement)
         return
-    end
-end
-
-
-const SYMBOL = r"\w[\w\d]*"
-function parse_symbol!(p::EfusParser)::Union{Symbol, Nothing}
-    inbounds(p) || return nothing
-    m = match(SYMBOL, p.text, p.index)
-    return if !isnothing(m) && m.offset == p.index
-        p.index += length(m.match)
-        Symbol(m.match)
     end
 end
 
