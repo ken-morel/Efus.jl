@@ -36,3 +36,20 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
         return Ast.Snippet(content, params)
     end
 end
+
+function parse_block!(p::EfusParser)::Union{Ast.InlineBlock, AbstractParseError, Nothing}
+    return ereset(p) do
+        b = current_char(p)
+        parse_symbol!(p) != :begin && return nothing
+        e = current_char(p, -1)
+        code = skip_toblock!(p, [:end])
+        isnothing(code) && return EfusSyntaxError("Missing closing end for block", b * e)
+        (code,) = code
+        return Ast.InlineBlock(subparse!(p, code, "In begin block starting at line $(b.start[1])"))
+    end
+end
+
+function parse_juliablock!(p::EfusParser)::Union{Ast.JuliaBlock, AbstractParseError, Nothing}
+    expr = @zig!n parse_juliaexpression!(p)
+    return Ast.JuliaBlock(; code = expr)
+end

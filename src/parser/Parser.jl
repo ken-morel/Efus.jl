@@ -4,13 +4,11 @@ export EfusParser, try_parse!, parse!
 using ...Efus: EfusError, Geometry, Size
 import ..Ast
 
-
 mutable struct EfusParser
     text::String
     file::String
     index::UInt
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
-
 
     EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
 end
@@ -63,6 +61,8 @@ function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatemen
         indent = skip_spaces!(p)
         control = @zig! parse_controlflow!(p)
         !isnothing(control) && return (indent, control)
+        statement = @zig! parse_juliablock!(p)
+        !isnothing(statement) && return (indent, statement)
         statement = @zig! parse_componentcall!(p)
         !isnothing(statement) && return (indent, statement)
         return

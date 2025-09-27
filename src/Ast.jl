@@ -1,5 +1,6 @@
 module Ast
 abstract type AbstractExpression end
+
 abstract type AbstractStatement <: AbstractExpression end
 
 abstract type AbstractValue <: AbstractExpression end
@@ -8,6 +9,12 @@ abstract type ControlFlow <: AbstractStatement end
 
 struct Block <: AbstractStatement
     children::Vector{AbstractStatement}
+end
+
+struct InlineBlock <: AbstractValue
+    children::Vector{AbstractStatement}
+    InlineBlock(c::Vector{AbstractStatement}) = new(c)
+    InlineBlock(c::Block) = new(c.children)
 end
 
 struct LiteralValue <: AbstractValue
@@ -42,7 +49,7 @@ Base.@kwdef mutable struct ForStatement <: ControlFlow
     parent::Union{AbstractStatement, Nothing} = nothing
 end
 
-Base.@kwdef mutable struct JuliaCode <: AbstractStatement
+Base.@kwdef mutable struct JuliaBlock <: AbstractStatement
     code::Expression
     parent::Union{AbstractStatement, Nothing} = nothing
 end

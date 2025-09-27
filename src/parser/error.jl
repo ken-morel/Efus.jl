@@ -1,7 +1,7 @@
 abstract type AbstractParseError <: EfusError end
 
 macro zig!(expression::Union{Expr, Symbol})
-    var = :__zig!_value__
+    var = gensym(:__zig_value__)
     return quote
         $(LineNumberNode(__source__.line, __source__.file))
         let $(esc(var)) = $(esc(expression))
@@ -13,12 +13,24 @@ macro zig!(expression::Union{Expr, Symbol})
     end
 end
 macro zig!n(expression::Union{Expr, Symbol})
-    var = :__zig!n_value__
+    var = gensym(:__zig!n_value__)
     return quote
         $(LineNumberNode(__source__.line, __source__.file))
         let $(esc(var)) = $(esc(expression))
             if $(esc(var)) isa $AbstractParseError || isnothing($(esc(var)))
                 return $(esc(var))
+            end
+            $(esc(var))
+        end
+    end
+end
+macro zig!r(expression::Union{Expr, Symbol})
+    var = gensym(:__zig!r_value__)
+    return quote
+        $(LineNumberNode(__source__.line, __source__.file))
+        let $(esc(var)) = $(esc(expression))
+            if $(esc(var)) isa $AbstractParseError || !isnothing($(esc(var)))
+                return $(esc(default))
             end
             $(esc(var))
         end

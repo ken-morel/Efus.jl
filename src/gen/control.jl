@@ -21,10 +21,8 @@ function generate(node::Ast.IfStatement)
 end
 
 # just to see what it will look like, and for debugging :-)
-count::UInt64 = 0
 function generate(node::Ast.ForStatement)
-    global count += 1
-    name = Symbol("__efus_for_internal" * string(count))
+    name = gensym("efus")
     return quote
         let $name = $(generate(node.iterator))
             if isempty($name)

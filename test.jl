@@ -2,6 +2,7 @@ include("src/Efus.jl")
 
 using .Efus
 
+#PERF: Place the code in a function to avoid global scope performance issues.
 Efus.codegen_string(
     """
     Frame padding=3x3
@@ -9,6 +10,10 @@ Efus.codegen_string(
         (hello' * "friend") args... callback=|
         do b::Int, v, c::String
           Label c=b
+        end childs=|
+        begin
+          Child name=banana
+            Subchild foo=3x3
         end
       if banana == 4
         Button lbl=true
@@ -19,6 +24,12 @@ Efus.codegen_string(
         end
       else
         Text ama=false
+        (begin
+          name = 7;
+          if name > 3
+            name += 2;
+        end)
       end
     """, true
 ) |> println
+#TEST: Test several samples
