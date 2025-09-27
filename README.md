@@ -1,7 +1,7 @@
 # Efus.jl
 
-> [!WARNING]
-> This is still in very very active development.
+> [!NOTE]
+> This is still in very active development. It remains usable, though not tested enough to be proven stable yet.
 
 Efus.jl julia module combines a language parser for `efus` language
 (created with the module), a few types and abit more to help you create ui
