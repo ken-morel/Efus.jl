@@ -18,7 +18,6 @@ function generate(value::Ast.Expression; acceptreactive::Bool = true)
             "getvalue($name)"
         end
         getter = Meta.parse(final)
-
         if acceptreactive
             quote
                 $(Efus.Reactor){Any}(
@@ -31,7 +30,7 @@ function generate(value::Ast.Expression; acceptreactive::Bool = true)
             getter
         end
     else
-        Meta.parse(value.expr)
+        Meta.parse("(" * value.expr * ")")
     end
 end
 

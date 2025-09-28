@@ -24,7 +24,7 @@ Efus.codegen_string(
         end
       else
         Text ama=false
-        (banana(4))
+        (banana(4);c = 5;c += 1)
       end
     """, true
 ) |> println
