@@ -6,7 +6,7 @@ end
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
     shouldflatten = !all(isa.(node.children, Ast.ComponentCall))
-    shouldfilter = any(isa.(node.children, Ast.JuliaCode))
+    shouldfilter = any(isa.(node.children, Ast.JuliaBlock))
 
     kwargs = [Expr(:kw, arg.name, generate(arg.value)) for arg in node.arguments]
 

@@ -29,10 +29,11 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
                 p.index += 1
             end
         end
+        codestart = p.index
         code = skip_toblock!(p, [:end])
         isnothing(code) && return EfusSyntaxError("Missing closing end for snippet", b * e)
         (code,) = code
-        content = @zig! subparse!(p, code, "In snippet starting at line $(b.start[1])")
+        content = @zig! subparse!(p, code, "In snippet starting at line $(b.start[1])", codestart)
         return Ast.Snippet(content, params)
     end
 end
@@ -42,14 +43,20 @@ function parse_block!(p::EfusParser)::Union{Ast.InlineBlock, AbstractParseError,
         b = current_char(p)
         parse_symbol!(p) != :begin && return nothing
         e = current_char(p, -1)
+        codestart = p.index
         code = skip_toblock!(p, [:end])
         isnothing(code) && return EfusSyntaxError("Missing closing end for block", b * e)
         (code,) = code
-        return Ast.InlineBlock(subparse!(p, code, "In begin block starting at line $(b.start[1])"))
+        return Ast.InlineBlock(subparse!(p, code, "In begin block starting at line $(b.start[1])", codestart))
     end
 end
 
 function parse_juliablock!(p::EfusParser)::Union{Ast.JuliaBlock, AbstractParseError, Nothing}
-    expr = @zig!n parse_juliaexpression!(p)
-    return Ast.JuliaBlock(; code = expr)
+    return ereset(p) do
+        p.text[p.index] != '(' && return nothing
+        p.index += 1
+        !inbounds(p) && return EfusSyntaxError("EOF Before literal expression at ", current_char(p, -1))
+        (expr,) = @zig! parse_jlexpressiontilltoken!(p, r"\)")
+        Ast.JuliaBlock(; code = expr)
+    end
 end

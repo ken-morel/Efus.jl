@@ -77,7 +77,6 @@ function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, 
             skip_spaces!(p)
         end
         value = @zig! parse_expression!(p)
-
         if isnothing(value)
             return EfusSyntaxError(
                 "Missing value in key=value pair",

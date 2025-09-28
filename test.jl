@@ -24,11 +24,7 @@ Efus.codegen_string(
         end
       else
         Text ama=false
-        (begin
-          name = 7;
-          if name > 3
-            name += 2;
-        end)
+        (banana(4))
       end
     """, true
 ) |> println

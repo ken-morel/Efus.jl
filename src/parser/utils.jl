@@ -58,10 +58,10 @@ function skip_toblock!(p::EfusParser, names::Vector{Symbol})::Union{Tuple{String
             name = parse_symbol!(p)
             e = current_char(p, -1)
             if name == :end && inbounds(p)
-                newline = findnext('\n', p.text, p.index)
-                if !isnothing(newline) && !isspace(p.text[p.index:newline])
+                if p.text[p.index] == ')'
                     name = nothing
                 end
+
             end
             if name ∈ names && scope == 0
                 return (p.text[start:stop], name, b * e)

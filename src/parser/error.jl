@@ -30,7 +30,7 @@ macro zig!r(expression::Union{Expr, Symbol})
         $(LineNumberNode(__source__.line, __source__.file))
         let $(esc(var)) = $(esc(expression))
             if $(esc(var)) isa $AbstractParseError || !isnothing($(esc(var)))
-                return $(esc(default))
+                return $(esc(var))
             end
             $(esc(var))
         end
@@ -54,7 +54,7 @@ struct EfusSyntaxError <: AbstractParseError
 end
 
 function throwparseerror(p::EfusParser, e::EfusSyntaxError)
-    loc = "In $(e.location.file)"
+    loc = "In $(e.location.file) at line $(e.location.start[1]), column $(e.location.start[2]):"
     ln = split(p.text, '\n')[e.location.start[1]]
     start = e.location.start[2]
     stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
