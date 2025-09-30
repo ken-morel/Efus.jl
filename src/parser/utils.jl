@@ -1,4 +1,5 @@
 const SPACE = r"^ *"
+
 function skip_spaces!(p::EfusParser)::UInt
     m = match(SPACE, p.text[p.index:end])
     p.index += length(m.match)
@@ -58,7 +59,7 @@ function skip_toblock!(p::EfusParser, names::Vector{Symbol})::Union{Tuple{String
             name = parse_symbol!(p)
             e = current_char(p, -1)
             if name == :end && inbounds(p)
-                if p.text[p.index] == ')'
+                if p.text[p.index] == ')' #BUG: Completely bug prone
                     name = nothing
                 end
 

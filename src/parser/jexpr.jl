@@ -11,13 +11,13 @@ function parse_jlexpressiontilltoken!(p::EfusParser, token::Regex)::Union{Tuple{
         instring = false
         reactants = Dict{Symbol, Vector{NTuple{2, UInt}}}()
         while true
-            !inbounds(p) && return AbstractParseError(
+            !inbounds(p) && return EfusSyntaxError(
                 "OEF before end of julia expression started at pos",
                 startpos,
             )
             interesting = match(INTERESTING_JLE, p.text, p.index)
             endtokenmatch = match(token, p.text, p.index)
-            isnothing(endtokenmatch) && return AbstractParseError(
+            isnothing(endtokenmatch) && return EfusSyntaxError(
                 "Ending token $token not found while parsing expression",
                 startpos,
             )
@@ -84,9 +84,8 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.Litera
             return Ast.LiteralValue(name)
         elseif p.text[p.index] == '('
             p.index += 1
-            !inbounds(p) && return EfusSyntaxError("EOF Before literal expression at ", current_char(p, -1))
             (expr,) = @zig! parse_jlexpressiontilltoken!(p, r"\)")
-            return expr
+            return Ast.braced(expr)
         end
     end
 end

@@ -9,7 +9,7 @@ function cleanchildren(children::Vector)
         if child isa Efus.AbstractComponent
             push!(final, child)
         elseif child isa AbstractVector
-            push!.((final,), cleanchildren(child))
+            append!(final, cleanchildren(child))
 
         elseif !isnothing(child)
             error(
