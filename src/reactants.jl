@@ -134,7 +134,7 @@ end
 
 function setvalue!(r::Reactant{T}, new_value::T) where {T}
     r.value = new_value
-    for reaction in r.reactions
+    for reaction in copy(r.reactions)
         reaction.callback(r)
     end
     return r
@@ -181,8 +181,8 @@ end
 Stops and removes a single, specific Reaction. This is the low-level implementation.
 """
 function inhibit!(r::Reaction)
-    filter!(!==(r), r.reactant.reactions)
-    filter!(!==(r), r.catalyst.reactions)
+    filter!(!=(r), r.reactant.reactions)
+    filter!(!=(r), r.catalyst.reactions)
     return
 end
 
@@ -202,7 +202,7 @@ function denature!(c::Catalyst)
 end
 
 function notify!(r::Reactor)
-    for reaction in r.reactions
+    for reaction in copy(r.reactions)
         reaction.callback(r.value)
     end
     #PERF: Trace time and log if too long
