@@ -1,7 +1,8 @@
 const SPACE = r"^ *"
+const SPACENEWLINE = r"^[ \n]*"
 
-function skip_spaces!(p::EfusParser)::UInt
-    m = match(SPACE, p.text[p.index:end])
+function skip_spaces!(p::EfusParser; newline::Bool = false)::UInt
+    m = match(newline ? SPACENEWLINE : SPACE, p.text[p.index:end])
     p.index += length(m.match)
     return length(m.match)
 end

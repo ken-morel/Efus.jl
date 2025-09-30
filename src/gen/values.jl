@@ -35,3 +35,5 @@ function generate(value::Ast.Expression; acceptreactive::Bool = true)
 end
 
 generate(val::Ast.Numeric) = val.val
+
+generate(val::Ast.Vect) = Expr(:vect, generate.(val.items)...)

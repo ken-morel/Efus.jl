@@ -15,6 +15,10 @@ struct Numeric <: AbstractValue
     val::Union{Number, Expr}
 end
 
+struct Vect <: AbstractValue
+    items::Vector{AbstractValue}
+end
+
 struct InlineBlock <: AbstractValue
     children::Vector{AbstractStatement}
     InlineBlock(c::Vector{AbstractStatement}) = new(c)
