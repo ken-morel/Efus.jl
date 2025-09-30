@@ -69,10 +69,10 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.Litera
             if inbounds(p) && p.text[p.index] == '''
                 pos = (1, p.index) .|> UInt
                 p.index += 1
-                @zig! eoe(p)
+                @zig! eoe(p, "In julia expression")
                 return Ast.Expression(string(name) * "'", Dict(name => [pos]))
             else
-                @zig! eoe(p)
+                @zig! eoe(p, "In julia expression")
 
                 !isnothing(name) && return Ast.Expression(string(name), Dict())
             end
@@ -91,8 +91,8 @@ function parse_juliaexpression!(p::EfusParser)::Union{Ast.Expression, Ast.Litera
     end
 end
 
-function eoe(p::EfusParser)
+function eoe(p::EfusParser, pos::AbstractString)
     return if inbounds(p) && !isspace(p.text[p.index])
-        EfusSyntaxError("Unexpected token after end of expression", current_char(p))
+        EfusSyntaxError("Unexpected token after end of expression $pos", current_char(p))
     end
 end

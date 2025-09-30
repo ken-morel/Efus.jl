@@ -1,4 +1,4 @@
-function current_char(p::EfusParser, offset::Int = 0)::Ast.Location
+function current_char(p::EfusParser, offset::Number = 0)::Ast.Location
     p.index += offset
     pos = (line(p), col(p))
     p.index -= offset

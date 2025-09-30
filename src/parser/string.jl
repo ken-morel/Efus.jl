@@ -50,7 +50,7 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
                 if char == '"'
                     p.index += 1
                     break
-                elseif char == '\''
+                elseif char == '\\'
                     p.index += 1
                     if !inbounds(p)
                         return EfusSyntaxError("Unterminated string literal after escape", start_loc * current_char(p))
