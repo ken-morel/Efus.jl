@@ -81,7 +81,10 @@ mutable struct Reactor{T} <: AbstractReactive{T}
             REACTOR_SETTER{T}(setter)
         end
         r = Reactor{T}(getter, setter, getter())
-        callback = (_) -> r.fouled = true
+        callback = (_) -> begin
+            r.fouled = true
+            notify!(r)
+        end
         for reactant in content
             push!(r.content, reactant)
             catalyze!(r.catalyst, reactant, callback)
@@ -203,7 +206,7 @@ end
 
 function notify!(r::Reactor)
     for reaction in copy(r.reactions)
-        reaction.callback(r.value)
+        reaction.callback(r)
     end
     #PERF: Trace time and log if too long
     return
@@ -211,13 +214,7 @@ end
 
 const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
-Base.convert(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
-    () -> convert(T, getvalue(r)),
-    (v::T) -> setvalue!(r, convert(K, v)),
-    [r],
-)
-
-Base.convert(::Type{MayBeReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+mirror(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
     () -> convert(T, getvalue(r)),
     (v::T) -> setvalue!(r, convert(K, v)),
     [r],

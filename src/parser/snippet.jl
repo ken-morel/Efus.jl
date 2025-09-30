@@ -57,6 +57,6 @@ function parse_juliablock!(p::EfusParser)::Union{Ast.JuliaBlock, AbstractParseEr
         p.index += 1
         !inbounds(p) && return EfusSyntaxError("EOF Before literal expression at ", current_char(p, -1))
         (expr,) = @zig! parse_jlexpressiontilltoken!(p, r"\)")
-        Ast.JuliaBlock(; code = expr)
+        Ast.JuliaBlock(; code = Ast.braced(expr))
     end
 end

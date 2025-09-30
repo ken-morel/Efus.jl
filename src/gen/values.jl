@@ -30,10 +30,8 @@ function generate(value::Ast.Expression; acceptreactive::Bool = true)
             getter
         end
     else
-        Meta.parse("(" * value.expr * ")")
+        Meta.parse(value.expr)
     end
 end
 
-generate(value::Efus.Size) = value
-
-generate(value::Efus.Geometry) = value
+generate(val::Ast.Numeric) = val.val

@@ -1,7 +1,7 @@
 module Parser
 export EfusParser, try_parse!, parse!
 
-using ...Efus: EfusError, Geometry, Size
+using ...Efus: EfusError
 import ..Ast
 
 mutable struct EfusParser
@@ -21,8 +21,8 @@ include("./utils.jl")
 include("./compcall.jl")
 include("./control.jl")
 
+include("./number.jl")
 include("./string.jl")
-include("./geometry.jl")
 include("./jexpr.jl")
 include("./expression.jl")
 include("./snippet.jl")
