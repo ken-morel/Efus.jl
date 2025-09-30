@@ -32,16 +32,14 @@ end
 struct Expression <: AbstractValue
     expr::String
     reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
+    delimiters::Union{Tuple{Char, Char}, Nothing}
 end
 
-function braced(e::Expression)
-    reactants = Dict{Symbol, Vector{NTuple{2, UInt}}}()
-    expr = "(" * e.expr * ")"
-    for (key, val) in e.reactants
-        reactants[key] = [pos .+ 1 for pos in val]
-    end
-    return Expression(expr, reactants)
-end
+# Constructor for backward compatibility
+Expression(expr::String, reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}) =
+    Expression(expr, reactants, nothing)
+
+# braced() function removed - no longer needed with the new unified parser
 
 
 Base.@kwdef struct Snippet <: AbstractValue

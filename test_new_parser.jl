@@ -11,7 +11,10 @@ test_cases = [
     "((a + b) * c)",
     "(func(a, b))",
     "(array[x + y])",
-    
+    "[1, begin
+      Label n=e
+    end]",
+
     # Simple expressions (no parentheses needed)
     "myvar'",  # reactive variable
     "42",      # number
@@ -20,7 +23,7 @@ test_cases = [
 ]
 
 println("Testing new unified expression parser:")
-println("=" ^ 50)
+println("="^50)
 
 for (i, test_case) in enumerate(test_cases)
     println("\nTest $i: $test_case")
@@ -33,7 +36,7 @@ for (i, test_case) in enumerate(test_cases)
 end
 
 # Test reactive expressions
-println("\n" * "=" ^ 50)
+println("\n" * "="^50)
 println("Testing reactive expressions:")
 
 reactive_tests = [
@@ -52,3 +55,4 @@ for (i, test_case) in enumerate(reactive_tests)
         println("✗ Error: $e")
     end
 end
+
