@@ -24,33 +24,28 @@ end
 
 macro reactor(expr, setter = nothing, usedeps = nothing)
     getter, ionicdeps = Ionic.translate(expr)
-    name = gensym(:__radical_reactor__)
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
-        quote
-            let $name = $Reactor(
-                    () -> $getter,
-                    $setter,
-                    $deps
-                )
-                $name
-            end
-        end
+        :(
+            $Reactor(
+                () -> $getter,
+                $setter,
+                $deps
+            )
+        )
     )
 end
 macro radical(expr, usedeps = nothing)
     getter, ionicdeps = Ionic.translate(expr)
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
-        quote
-            let $name = $Reactor(
-                    () -> $getter,
-                    nothing,
-                    $deps
-                )
-                $catalyze!($getvalue, $Catalyst(), $name)
-                $name
-            end
-        end
+        :(
+            $Reactor(
+                () -> $getter,
+                nothing,
+                $deps;
+                eager = true
+            )
+        )
     )
 end
