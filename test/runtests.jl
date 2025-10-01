@@ -158,5 +158,59 @@ end
     @testset "Unescaped quotes in string" begin
         @test_throws Efus.EfusError Efus.codegen_string("Comp text=\"Hello, \"world\"!\"")
     end
+    @testset "Reactivity System (Unit Tests)" begin
+        @testset "Reactant" begin
+            r = Efus.Reactant(10)
+            @test Efus.getvalue(r) == 10
+            Efus.setvalue!(r, 20)
+            @test Efus.getvalue(r) == 20
+        end
+
+        @testset "Catalyst and Reactions" begin
+            r = Efus.Reactant(5)
+            c = Efus.Catalyst()
+            triggered_value = 0
+
+            reaction_fn = (reactant) -> triggered_value = Efus.getvalue(reactant)
+
+            reaction = Efus.catalyze!(c, r, reaction_fn)
+
+            Efus.setvalue!(r, 15)
+            @test triggered_value == 15
+
+            # Test inhibit!
+            Efus.inhibit!(reaction)
+            Efus.setvalue!(r, 25)
+            @test triggered_value == 15 # Should not have changed
+
+            # Test denature!
+            Efus.catalyze!(c, r, reaction_fn)
+            Efus.setvalue!(r, 35)
+            @test triggered_value == 35
+            Efus.denature!(c)
+            Efus.setvalue!(r, 45)
+            @test triggered_value == 35 # Should not have changed
+        end
+
+        @testset "Reactor" begin
+            a = Efus.Reactant(10)
+            b = Efus.Reactant(20)
+
+            # Create a reactor that sums a and b
+            sum_reactor = Efus.Reactor(Int, () -> Efus.getvalue(a) + Efus.getvalue(b), nothing, [a, b])
+
+            @test Efus.getvalue(sum_reactor) == 30
+
+            Efus.setvalue!(a, 15)
+            @test Efus.isfouled(sum_reactor) == true
+            @test Efus.getvalue(sum_reactor) == 35
+            @test Efus.isfouled(sum_reactor) == false
+
+            Efus.setvalue!(b, 25)
+            @test Efus.isfouled(sum_reactor) == true
+            @test Efus.getvalue(sum_reactor) == 40
+            @test Efus.isfouled(sum_reactor) == false
+        end
+    end
 end
 
