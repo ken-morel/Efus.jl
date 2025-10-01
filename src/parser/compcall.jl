@@ -31,7 +31,7 @@ function parse_componentcallargs!(p::EfusParser)::Union{
             pair = @zig! parse_componentcallargument!(p)
             if isnothing(pair)
                 if inbounds(p) && !isspace(p.text[p.index])
-                    return EfusSyntaxError("Unexpected token in component call '$(p.text[p.index])'", current_char(p))
+                    return EfusSyntaxError(p, "Unexpected token in component call '$(p.text[p.index])'", current_char(p))
                 else
                     break
                 end
@@ -48,7 +48,7 @@ function parse_componentcallsplat!(p::EfusParser)::Union{Ast.ComponentCallSplat,
         name = parse_symbol!(p)
         if !isnothing(name) && inbounds(p) && p.text[p.index] == '.'
             if !(length(p.text) >= p.index + 2 && p.text[p.index:(p.index + 2)] == "...")
-                return EfusSyntaxError("Malformed splat operator after name", current_char(p))
+                return EfusSyntaxError(p, "Malformed splat operator after name", current_char(p))
             end
             p.index += 3
             return Ast.ComponentCallSplat(name, start * current_char(p, -1))
@@ -65,6 +65,7 @@ function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, 
                 p.index -= 1
             end
             return EfusSyntaxError(
+                p,
                 "Missing equal sign after key in key=value pair in tempate call argument",
                 current_char(p)
             )
@@ -79,6 +80,7 @@ function parse_componentcallargument!(p::EfusParser)::Union{AbstractParseError, 
         value = @zig! parse_expression!(p)
         if isnothing(value)
             return EfusSyntaxError(
+                p,
                 "Missing value in key=value pair",
                 current_char(p)
             )

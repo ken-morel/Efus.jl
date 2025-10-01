@@ -14,7 +14,7 @@ function parse_jlsymbol!(p::EfusParser)::Union{Ast.LiteralValue, AbstractParseEr
 
         symb = parse_symbol!(p)
         isnothing(symb) &&
-            return EfusSyntaxError("Expected symbol after ':'", start_loc * current_char(p))
+            return EfusSyntaxError(p, "Expected symbol after ':'", start_loc * current_char(p))
         return Ast.LiteralValue(symb)
     end
 end

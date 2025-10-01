@@ -13,10 +13,10 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
 
         if start_char == '''
             char_val::Char = if !inbounds(p)
-                return EfusSyntaxError("Unterminated empty character literal", start_loc)
+                return EfusSyntaxError(p, "Unterminated empty character literal", start_loc)
             elseif p.text[p.index] == '\''
                 p.index += 1
-                !inbounds(p) && return EfusSyntaxError("Unterminated character literal", start_loc * current_char(p))
+                !inbounds(p) && return EfusSyntaxError(p, "Unterminated character literal", start_loc * current_char(p))
                 c = p.text[p.index]
                 p.index += 1
                 c == 'n' ? '\n' : \
@@ -24,7 +24,7 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
                 c == 'r' ? '\r' : \
                 c == '\\' ? '\\' : \
                 c == ''' ? '\'' : \
-                return EfusSyntaxError("Invalid character escape sequence", current_char(p, -1) * current_char(p))
+                return EfusSyntaxError(p, "Invalid character escape sequence", current_char(p, -1) * current_char(p))
             else
                 c = p.text[p.index]
                 p.index += 1
@@ -32,7 +32,7 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
             end
 
             if !inbounds(p) || p.text[p.index] != '''
-                return EfusSyntaxError("Character literal must be enclosed in single quotes and contain only one character", start_loc * current_char(p))
+                return EfusSyntaxError(p, "Character literal must be enclosed in single quotes and contain only one character", start_loc * current_char(p))
             end
             p.index += 1
             return Ast.LiteralValue(char_val)
@@ -42,7 +42,7 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
             content = IOBuffer()
             while true
                 if !inbounds(p)
-                    return EfusSyntaxError("Unterminated string literal", start_loc * current_char(p))
+                    return EfusSyntaxError(p, "Unterminated string literal", start_loc * current_char(p))
                 end
 
                 char = p.text[p.index]
@@ -53,7 +53,7 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
                 elseif char == '\\'
                     p.index += 1
                     if !inbounds(p)
-                        return EfusSyntaxError("Unterminated string literal after escape", start_loc * current_char(p))
+                        return EfusSyntaxError(p, "Unterminated string literal after escape", start_loc * current_char(p))
                     end
                     escape_loc = current_char(p, -1) * current_char(p)
                     escaped_char = p.text[p.index]
@@ -69,7 +69,7 @@ function parse_string!(p::EfusParser)::Union{AbstractParseError, Nothing, Ast.Li
                     elseif escaped_char == '"'
                         write(content, '"')
                     else
-                        return EfusSyntaxError("Invalid string escape sequence: $(escaped_char)", escape_loc)
+                        return EfusSyntaxError(p, "Invalid string escape sequence: $(escaped_char)", escape_loc)
                     end
                 else
                     p.index += 1

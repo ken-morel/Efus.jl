@@ -31,11 +31,13 @@ function skip_julia!(p::EfusParser, stop_tokens::Union{Regex, Nothing} = nothing
             !inbounds(p) && begin
                 if !isnothing(delimiters)
                     return EfusSyntaxError(
+                        p,
                         "EOF before closing $(delimiters[2]) for expression started at pos",
                         startpos,
                     )
                 elseif !isnothing(stop_tokens)
                     return EfusSyntaxError(
+                        p,
                         "EOF before stop token $stop_tokens for expression started at pos",
                         startpos,
                     )
@@ -66,10 +68,12 @@ function skip_julia!(p::EfusParser, stop_tokens::Union{Regex, Nothing} = nothing
                     p.index = interesting.offset + 1
                 elseif interesting.match[1] in values(BRACES)
                     isempty(brackets) && return EfusSyntaxError(
+                        p,
                         "Unmatched closing $(interesting.match) at position", current_char(p),
                     )
                     last = pop!(brackets)
                     interesting.match[1] != last && return EfusSyntaxError(
+                        p,
                         "Unexpected closing bracket $(interesting.match) at position, expected $(last)", current_char(p),
                     )
                     p.index = interesting.offset + 1
@@ -105,7 +109,7 @@ function parse_juliaexpression!(p::EfusParser, stop_tokens::Union{Regex, Nothing
         try
             Ast.Expression(Meta.parse(expr))
         catch e
-            EfusSyntaxError("Invalid Julia expression: $(e.msg)", start * current_char(p, -1))
+            EfusSyntaxError(p, "Invalid Julia expression: $(e.msg)", start * current_char(p, -1))
         end
     end
 end

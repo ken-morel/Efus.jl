@@ -1,5 +1,7 @@
 # Efus.jl
 
+[![CI](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml)
+
 > [!NOTE]
 > This is still in very active development. It remains usable, though not tested enough to be proven stable yet.
 

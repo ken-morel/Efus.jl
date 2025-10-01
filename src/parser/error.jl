@@ -38,15 +38,8 @@ macro zig!r(expression::Union{Expr, Symbol})
 end
 
 
-function try_parse!(p::EfusParser)
-    content = parse!(p)
-    if content isa EfusError
-        throw(content)
-    end
-    return content
-end
-
 struct EfusSyntaxError <: AbstractParseError
+    parser::Union{Nothing, EfusParser}
     message::String
     location::Ast.Location
 end
@@ -59,15 +52,19 @@ function Base.showerror(io::IO, e::EfusSyntaxError)
     printstyled(io, e.location.file, color = :blue, bold = true)
     print(io, " at line ")
     print(io, e.location.start[1])
-    printst(io, ", column ")
+    printstyled(io, ", column ")
     printstyled(io, e.location.start[2])
     print(io, ":\n")
 
-    print(io, split(e.location.file, "\n")[e.location.start[1]], "\n")
+    if !isnothing(e.parser)
+        ln = split(e.parser.text, "\n")[e.location.start[1]]
 
-    start = e.location.start[2]
-    stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
-    print(io, " "^(start - 1))
-    printstyled(io, "^"^(stop - start + 1); collor = :red, bold = true)
+        print(io, ln, "\n")
+
+        start = e.location.start[2]
+        stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
+        print(io, " "^(start - 1))
+        printstyled(io, "^"^(stop - start + 1); color = :red, bold = true)
+    end
     return
 end

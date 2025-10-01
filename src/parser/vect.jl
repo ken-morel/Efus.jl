@@ -6,7 +6,7 @@ function parse_vect!(p::EfusParser)::Union{Ast.Vect, AbstractParseError, Nothing
         while true
             skip_spaces!(p; newline = true)
             if !inbounds(p)
-                return EfusSyntaxError("Unterminated vector", current_char(p, -1))
+                return EfusSyntaxError(p, "Unterminated vector", current_char(p, -1))
             end
             p.text[p.index] == ']' && break
             if p.text[p.index] == ','
@@ -15,12 +15,13 @@ function parse_vect!(p::EfusParser)::Union{Ast.Vect, AbstractParseError, Nothing
             end
             nextvalue = @zig! parse_expression!(p)
             isnothing(nextvalue) && return EfusSyntaxError(
+                p,
                 "Expected expression in vector", current_char(p),
             )
             push!(values, nextvalue)
             skip_spaces!(p; newline = true)
             if !inbounds(p)
-                return EfusSyntaxError("Unterminated vector", current_char(p, -1))
+                return EfusSyntaxError(p, "Unterminated vector", current_char(p, -1))
             end
             if p.text[p.index] == ','
                 p.index += 1
@@ -28,7 +29,7 @@ function parse_vect!(p::EfusParser)::Union{Ast.Vect, AbstractParseError, Nothing
             elseif p.text[p.index] == ']'
                 break
             else
-                return EfusSyntaxError("Expected ',' or ']' in vector", current_char(p))
+                return EfusSyntaxError(p, "Expected ',' or ']' in vector", current_char(p))
             end
         end
         p.index += 1
