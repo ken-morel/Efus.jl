@@ -7,6 +7,7 @@ include("./statements.jl")
 include("./snippet.jl")
 include("./control.jl")
 include("./values.jl")
+include("./fuss.jl")
 
 
 # We need to generate code for values, too.

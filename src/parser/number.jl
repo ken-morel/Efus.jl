@@ -1,4 +1,4 @@
-const NUMERIC = r"(-|\+)?([\d_]+)(\.[\d_]*)?([eE]\d+)?((?:\p{L}|_)(?:\p{L}|\p{N}|_)*)?"
+const NUMERIC = r"(-|\+)?([\d_]+)(\.[\d_]*)?([eE](?:\+|-)?\d+)?((?:\p{L}|_)(?:\p{L}|\p{N}|_)*)?"
 
 function parse_number!(p::EfusParser)::Union{Ast.Numeric, Nothing}
     return ereset(p) do

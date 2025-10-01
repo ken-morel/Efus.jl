@@ -4,12 +4,11 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
         parse_symbol!(p) != :do && return nothing
         e = current_char(p, -1)
         # collect arguments, name::Type, puh, julia.
-        params = Dict{Symbol, Union{Ast.Expression, Nothing}}()
+        params = Dict{Symbol, Any}()
         ended = false
         while !ended
             skip_spaces!(p)
             name = parse_symbol!(p)
-            type = nothing
             isnothing(name) && break
             skip_spaces!(p)
             params[name] = if p.text[p.index] == ':'
@@ -19,9 +18,10 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
                 )
                 p.index += 2
                 skip_spaces!(p)
-                type = @zig! parse_julia_expression!(p, r",|\n")
+                type = @zig! parse_juliaexpression!(p, r",|\n")
+                p.index -= 1
                 # Check if we hit a newline (end of parameters)
-                if inbounds(p) && p.text[p.index] == '\n'
+                if p.text[p.index] == '\n'
                     ended = true
                 end
                 type
@@ -55,8 +55,7 @@ end
 function parse_juliablock!(p::EfusParser)::Union{Ast.JuliaBlock, AbstractParseError, Nothing}
     return ereset(p) do
         p.text[p.index] != '(' && return nothing
-        !inbounds(p) && return EfusSyntaxError("EOF Before literal expression at ", current_char(p))
-        expr = @zig! parse_julia_expression!(p, nothing)
+        expr = @zig! parse_juliaexpression!(p, nothing)
         Ast.JuliaBlock(; code = expr)
     end
 end

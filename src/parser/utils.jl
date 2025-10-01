@@ -59,12 +59,7 @@ function skip_toblock!(p::EfusParser, names::Vector{Symbol})::Union{Tuple{String
             b = current_char(p)
             name = parse_symbol!(p)
             e = current_char(p, -1)
-            if name == :end && inbounds(p)
-                if p.text[p.index] == ')' #BUG: Completely bug prone
-                    name = nothing
-                end
 
-            end
             if name ∈ names && scope == 0
                 return (p.text[start:stop], name, b * e)
             elseif name ∈ OPENING_CONTROLS
@@ -96,5 +91,12 @@ function parse_symbol!(p::EfusParser)::Union{Symbol, Nothing}
     return if !isnothing(m) && m.offset == p.index
         p.index += length(m.match)
         Symbol(m.match)
+    end
+end
+
+
+function eoe(p::EfusParser, pos::AbstractString)
+    return if inbounds(p) && !isspace(p.text[p.index])
+        EfusSyntaxError("Unexpected token after end of expression $pos", current_char(p))
     end
 end

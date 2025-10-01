@@ -30,16 +30,13 @@ struct LiteralValue <: AbstractValue
 end
 
 struct Expression <: AbstractValue
-    expr::String
-    reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
-    delimiters::Union{Tuple{Char, Char}, Nothing}
+    expr::Any
 end
 
-# Constructor for backward compatibility
-Expression(expr::String, reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}) =
-    Expression(expr, reactants, nothing)
-
-# braced() function removed - no longer needed with the new unified parser
+struct Fuss <: AbstractValue
+    expr::Any
+    type::Any
+end
 
 
 Base.@kwdef struct Snippet <: AbstractValue
