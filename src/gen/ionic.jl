@@ -6,7 +6,7 @@ function generate(ionic::Ast.Ionic)
         Expr(:(::), expr, type)
     else
         quote
-            $(Efus.Reactor){$type}(
+            $(IonicEfus.Reactor){$type}(
                 () -> $expr,
                 nothing,
                 $(Expr(:vect, dependencies...))
