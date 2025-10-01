@@ -5,16 +5,7 @@ function parse_fuss!(p::EfusParser)::Union{Ast.Fuss, AbstractParseError, Nothing
         if !isnothing(name)
             if inbounds(p) && p.text[p.index] == '''
                 p.index += 1
-                # Check if we're at the end of the string or at whitespace
-                if !inbounds(p) || isspace(p.text[p.index])
-                    return Ast.Fuss(Expr(Symbol("'"), name), nothing)
-                else
-                    if inbounds(p)
-                        return EfusSyntaxError("Unexpected token after reactive variable", current_char(p))
-                    else
-                        return EfusSyntaxError("Unexpected end of input after reactive variable", start)
-                    end
-                end
+                return Ast.Fuss(Expr(Symbol("'"), name), nothing)
             else
                 @zig! eoe(p, "In julia expression")
 
