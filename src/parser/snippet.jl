@@ -48,7 +48,7 @@ function parse_block!(p::EfusParser)::Union{Ast.InlineBlock, AbstractParseError,
         code = skip_toblock!(p, [:end])
         isnothing(code) && return EfusSyntaxError("Missing closing end for block", b * e)
         (code,) = code
-        return Ast.InlineBlock(subparse!(p, code, "In begin block starting at line $(b.start[1])", codestart))
+        return Ast.InlineBlock(@zig! subparse!(p, code, "In begin block starting at line $(b.start[1])", codestart))
     end
 end
 

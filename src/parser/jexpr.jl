@@ -1,6 +1,8 @@
 const MARKEDREACTANT = r"(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'"
 
 const INTERESTING_JLE = r"'|\"|\(|\)|\[|\]|\{|\}|(?<!')(\p{L}|_)(\p{L}|\p{N}|_)*'|(-|\+)?([\d_]+)(\.[\d_]*)?([eE](?:\+|-)?\d+)?'"
+
+const BRACES = Dict('[' => ']', '(' => ')', '{' => '}')
 #                                                                                | number
 
 
@@ -24,6 +26,7 @@ function skip_julia!(p::EfusParser, stop_tokens::Union{Regex, Nothing} = nothing
         end
         brackets = Char[]
 
+        stop = start
         while true
             !inbounds(p) && begin
                 if !isnothing(delimiters)
@@ -58,15 +61,16 @@ function skip_julia!(p::EfusParser, stop_tokens::Union{Regex, Nothing} = nothing
                         (isnothing(close_match) || interesting.offset < close_match.offset) ||
                         !isempty(brackets)
                 )
-                if interesting.match == "(" || interesting.match == "[" || interesting.match == "{"
-                    push!(brackets, interesting.match[1])
+                if interesting.match[1] in keys(BRACES)
+                    push!(brackets, BRACES[interesting.match[1]])
                     p.index = interesting.offset + 1
-                elseif interesting.match == ")" || interesting.match == "]" || interesting.match == "}"
+                elseif interesting.match[1] in values(BRACES)
                     isempty(brackets) && return EfusSyntaxError(
                         "Unmatched closing $(interesting.match) at position", current_char(p),
                     )
-                    interesting.match[1] != pop!(brackets) && return EfusSyntaxError(
-                        "Unmatched closing $(interesting.match) at position", current_char(p),
+                    last = pop!(brackets)
+                    interesting.match[1] != last && return EfusSyntaxError(
+                        "Unexpected closing bracket $(interesting.match) at position, expected $(last)", current_char(p),
                     )
                     p.index = interesting.offset + 1
                 elseif interesting.match == "\""
@@ -79,17 +83,17 @@ function skip_julia!(p::EfusParser, stop_tokens::Union{Regex, Nothing} = nothing
                 end
             elseif !isnothing(close_match) && isempty(brackets)
                 p.index = close_match.offset + 1
+                stop = close_match.offset
                 break
             elseif !isnothing(stop_match) && isempty(brackets)
                 p.index = stop_match.offset + length(stop_match.match)
+                stop = stop_match.offset - 1
                 break
             else
                 p.index += 1
             end
         end
-
-
-        return p.text[start:(p.index - 1)]
+        return p.text[start:stop]
     end
 end
 

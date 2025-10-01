@@ -1,7 +1,7 @@
 module Efus
 
 using FunctionWrappers: FunctionWrapper
-abstract type EfusError end
+abstract type EfusError <: Exception end
 
 
 include("./component.jl")

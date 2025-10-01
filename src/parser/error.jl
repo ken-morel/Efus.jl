@@ -40,9 +40,7 @@ end
 
 function try_parse!(p::EfusParser)
     content = parse!(p)
-    if content isa AbstractParseError
-        throwparseerror(p, content)
-    elseif content isa EfusError
+    if content isa EfusError
         throw(content)
     end
     return content
@@ -53,12 +51,23 @@ struct EfusSyntaxError <: AbstractParseError
     location::Ast.Location
 end
 
-function throwparseerror(p::EfusParser, e::EfusSyntaxError)
-    loc = "In $(e.location.file) at line $(e.location.start[1]), column $(e.location.start[2]):"
-    ln = split(p.text, '\n')[e.location.start[1]]
+function Base.showerror(io::IO, e::EfusSyntaxError)
+    printstyled(io, "EfusSyntaxError", color = :red, bold = true)
+    print(io, ": ", e.message, "\n")
+
+    print(io, "In ")
+    printstyled(io, e.location.file, color = :blue, bold = true)
+    print(io, " at line ")
+    print(io, e.location.start[1])
+    printst(io, ", column ")
+    printstyled(io, e.location.start[2])
+    print(io, ":\n")
+
+    print(io, split(e.location.file, "\n")[e.location.start[1]], "\n")
+
     start = e.location.start[2]
     stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
-    trace = " "^(start - 1) * "^"^(stop - start + 1)
-    msg = "Efus.Parser.EfusSyntaxError: " * e.message
-    error(join([msg, loc, ln, trace], "\n"))
+    print(io, " "^(start - 1))
+    printstyled(io, "^"^(stop - start + 1); collor = :red, bold = true)
+    return
 end

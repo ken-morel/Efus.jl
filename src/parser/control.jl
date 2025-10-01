@@ -29,7 +29,7 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
         e = current_char(p, -1)
         lastcontrol = b * e
         branches = Ast.IfBranch[]
-        condition = @zig! parse_julia_expression!(p, r"\n")
+        condition = @zig! parse_juliaexpression!(p, r"\n")
         name = :if
         while true
             incodestart = p.index
@@ -44,7 +44,7 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
             block = @zig! subparse!(p, code, "in $name block at line $line", incodestart)
             push!(branches, Ast.IfBranch(condition, block))
             if name == :elseif
-                condition = @zig! parse_julia_expression!(p, r"\n")
+                condition = @zig! parse_juliaexpression!(p, r"\n")
             elseif name == :else
                 condition = nothing
             elseif name == :end
@@ -56,7 +56,7 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
     end
 end
 
-function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, Nothing}
+function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, AbstractParseError, Nothing}
     return ereset(p) do
         b = current_char(p)
         parse_symbol!(p) != :for && return nothing
@@ -64,8 +64,8 @@ function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, Nothing}
 
         forloc = b * e
 
-        dest = @zig! parse_julia_expression!(p, r"in|∈|\=")
-        iter = @zig! parse_julia_expression!(p, r"\n")
+        dest = @zig! parse_juliaexpression!(p, r"in|∈|\=")
+        iter = @zig! parse_juliaexpression!(p, r"\n")
 
         codestart = p.index
         code = @zig! skip_toblock!(p, [:end, :else])
