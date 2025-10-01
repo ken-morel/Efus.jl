@@ -15,6 +15,10 @@ struct Numeric <: AbstractValue
     val::Union{Number, Expr}
 end
 
+struct Vect <: AbstractValue
+    items::Vector{AbstractValue}
+end
+
 struct InlineBlock <: AbstractValue
     children::Vector{AbstractStatement}
     InlineBlock(c::Vector{AbstractStatement}) = new(c)
@@ -26,17 +30,12 @@ struct LiteralValue <: AbstractValue
 end
 
 struct Expression <: AbstractValue
-    expr::String
-    reactants::Dict{Symbol, Vector{NTuple{2, UInt}}}
+    expr::Any
 end
 
-function braced(e::Expression)
-    reactants = Dict{Symbol, Vector{NTuple{2, UInt}}}()
-    expr = "(" * e.expr * ")"
-    for (key, val) in e.reactants
-        reactants[key] = [pos .+ 1 for pos in val]
-    end
-    return Expression(expr, reactants)
+struct Fuss <: AbstractValue
+    expr::Any
+    type::Any
 end
 
 

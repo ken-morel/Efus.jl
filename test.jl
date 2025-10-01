@@ -6,8 +6,13 @@ using .Efus
 #PERF: Place the code in a function to avoid global scope performance issues.
 Efus.codegen_string(
     """
-    Frame padding=(3, 3)
-      Label text=-12.5e6im
+    Label padding=[
+      (d' = c' * ama';d' / 4),
+      do c::Int
+        Button text=ama
+      end,
+      (ama', 4)
+    ]
     """, true
 ) |> println
 #TEST: Test several samples
