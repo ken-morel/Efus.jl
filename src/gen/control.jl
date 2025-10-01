@@ -23,12 +23,19 @@ end
 # just to see what it will look like, and for debugging :-)
 function generate(node::Ast.ForStatement)
     name = gensym("efus")
-    return quote
-        let $name = $(generate(node.iterator))
-            if isempty($name)
-                $(generate(node.elseblock))
-            else
-                [$(generate(node.block)) for $(generate(node.item)) in $name]
+
+    return if isnothing(node.elseblock)
+        quote
+            [$(generate(node.block)) for $(generate(node.item)) in $(generate(node.iterator))]
+        end
+    else
+        quote
+            let $name = $(generate(node.iterator))
+                if isempty($name)
+                    $(generate(node.elseblock))
+                else
+                    [$(generate(node.block)) for $(generate(node.item)) in $name]
+                end
             end
         end
     end
