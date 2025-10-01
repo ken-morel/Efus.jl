@@ -1,7 +1,7 @@
 abstract type AbstractParseError <: EfusError end
 
 macro zig!(expression::Union{Expr, Symbol})
-    var = :__zig!_value__
+    var = gensym(:__zig_value__)
     return quote
         $(LineNumberNode(__source__.line, __source__.file))
         let $(esc(var)) = $(esc(expression))
@@ -13,7 +13,7 @@ macro zig!(expression::Union{Expr, Symbol})
     end
 end
 macro zig!n(expression::Union{Expr, Symbol})
-    var = :__zig!n_value__
+    var = gensym(:__zig!n_value__)
     return quote
         $(LineNumberNode(__source__.line, __source__.file))
         let $(esc(var)) = $(esc(expression))
@@ -24,29 +24,47 @@ macro zig!n(expression::Union{Expr, Symbol})
         end
     end
 end
-
-
-function try_parse!(p::EfusParser)
-    content = parse!(p)
-    if content isa AbstractParseError
-        throwparseerror(p, content)
-    elseif content isa EfusError
-        throw(content)
+macro zig!r(expression::Union{Expr, Symbol})
+    var = gensym(:__zig!r_value__)
+    return quote
+        $(LineNumberNode(__source__.line, __source__.file))
+        let $(esc(var)) = $(esc(expression))
+            if $(esc(var)) isa $AbstractParseError || !isnothing($(esc(var)))
+                return $(esc(var))
+            end
+            $(esc(var))
+        end
     end
-    return content
 end
 
+
 struct EfusSyntaxError <: AbstractParseError
+    parser::Union{Nothing, EfusParser}
     message::String
     location::Ast.Location
 end
 
-function throwparseerror(p::EfusParser, e::EfusSyntaxError)
-    loc = "In $(e.location.file)"
-    ln = split(p.text, '\n')[e.location.start[1]]
-    start = e.location.start[2]
-    stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
-    trace = " "^(start - 1) * "^"^(stop - start + 1)
-    msg = "Efus.Parser.EfusSyntaxError: " * e.message
-    error(join([msg, loc, ln, trace], "\n"))
+function Base.showerror(io::IO, e::EfusSyntaxError)
+    printstyled(io, "EfusSyntaxError", color = :red, bold = true)
+    print(io, ": ", e.message, "\n")
+
+    print(io, "In ")
+    printstyled(io, e.location.file, color = :blue, bold = true)
+    print(io, " at line ")
+    print(io, e.location.start[1])
+    printstyled(io, ", column ")
+    printstyled(io, e.location.start[2])
+    print(io, ":\n")
+
+    if !isnothing(e.parser)
+        ln = split(e.parser.text, "\n")[e.location.start[1]]
+
+        print(io, ln, "\n")
+
+        start = e.location.start[2]
+        stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
+        print(io, " "^(start - 1))
+        printstyled(io, "^"^(stop - start + 1); color = :red, bold = true)
+    end
+    return
 end

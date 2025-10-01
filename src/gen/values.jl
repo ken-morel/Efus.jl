@@ -11,25 +11,8 @@ function generate(value::Ast.LiteralValue)
     end
 end
 
-function generate(value::Ast.Expression)
-    if length(value.reactants) > 0 # it is reactive
-        final = Ast.substitute(value) do name
-            "getvalue($name)"
-        end
-        getter = Meta.parse(final)
+generate(val::Ast.Expression) = val.expr
 
-        return quote
-            $(Efus.Reactor){Any}(
-                () -> $(getter),
-                nothing,
-                $(Expr(:vect, keys(value.reactants)...))
-            )
-        end
-    else
-        return Meta.parse(value.expr)
-    end
-end
+generate(val::Ast.Numeric) = val.val
 
-generate(value::Efus.Size) = value
-
-generate(value::Efus.Geometry) = value
+generate(val::Ast.Vect) = Expr(:vect, generate.(val.items)...)

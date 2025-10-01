@@ -1,9 +1,9 @@
 module Parser
 export EfusParser, try_parse!, parse!
+export efus_parse, try_parse
 
-using ...Efus: EfusError, Geometry, Size
+using ...Efus: EfusError
 import ..Ast
-
 
 mutable struct EfusParser
     text::String
@@ -11,8 +11,7 @@ mutable struct EfusParser
     index::UInt
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
 
-
-    EfusParser(text::String, file::String) = new(text, file, 1, [(-1, Ast.Block([]))])
+    EfusParser(text::String, file::String) = new(text * "\n", file, 1, [(-1, Ast.Block([]))])
 end
 
 
@@ -20,11 +19,16 @@ include("./error.jl")
 include("./location.jl")
 include("./utils.jl")
 
-include("./string.jl")
-include("./geometry.jl")
 include("./compcall.jl")
+include("./control.jl")
+
+include("./number.jl")
+include("./string.jl")
+include("./vect.jl")
 include("./jexpr.jl")
+include("./ionic.jl")
 include("./expression.jl")
+include("./snippet.jl")
 
 
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
@@ -52,43 +56,53 @@ function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
     end
     return root_block
 end
-function skip_emptylines!(p::EfusParser)
-    while inbounds(p)
-        line_start = p.index
-        line_end = findnext(==('\n'), p.text, line_start)
-
-        if isnothing(line_end)
-            if all(isspace, p.text[line_start:end])
-                p.index = length(p.text) + 1
-            end
-            break
-        else
-            if all(isspace, p.text[line_start:line_end])
-                p.index = line_end + 1
-            else
-                break
-            end
-        end
-    end
-    return inbounds(p)
+function efus_parse(code::String, file::String = "<string>")::Union{Ast.Block, AbstractParseError}
+    return parse!(EfusParser(code, file))
 end
+function try_parse!(p::EfusParser)
+    content = parse!(p)
+    if content isa EfusError
+        throw(content)
+    end
+    return content
+end
+
+function try_parse(code::String, file::String = "<string>")
+    return try_parse!(EfusParser(code, file))
+end
+function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
+    code = parse!(
+        EfusParser(code, p.file * "; " * loc),
+    )
+    return if code isa AbstractParseError
+        posindices = (getindex(p, code.location.start), getindex(p, code.location.stop)) .+ starting
+        positions = current_char.((p,), posindices .- p.index)
+        EfusSyntaxError(
+            p,
+            code.message,
+            Ast.Location(
+                code.location.file,
+                positions[1].start,
+                positions[2].stop,
+            ),
+        )
+    else
+        code
+    end
+end
+getindex(p::EfusParser, loc::NTuple{2, UInt})::UInt =
+    (0, findall(==('\n'), p.text)...)[loc[1]] + loc[2]
 
 function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
     return ereset(p) do
         indent = skip_spaces!(p)
-        statement = @zig!n  parse_componentcall!(p)
-        return (indent, statement)
-    end
-end
-
-
-const SYMBOL = r"\w[\w\d]*"
-function parse_symbol!(p::EfusParser)::Union{Symbol, Nothing}
-    inbounds(p) || return nothing
-    m = match(SYMBOL, p.text, p.index)
-    return if !isnothing(m) && m.offset == p.index
-        p.index += length(m.match)
-        Symbol(m.match)
+        control = @zig! parse_controlflow!(p)
+        !isnothing(control) && return (indent, control)
+        statement = @zig! parse_juliablock!(p)
+        !isnothing(statement) && return (indent, statement)
+        statement = @zig! parse_componentcall!(p)
+        !isnothing(statement) && return (indent, statement)
+        return
     end
 end
 

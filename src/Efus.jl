@@ -1,17 +1,18 @@
 module Efus
 
 using FunctionWrappers: FunctionWrapper
-abstract type EfusError end
+abstract type EfusError <: Exception end
 
 
 include("./component.jl")
 
 
 include("./Ast.jl")
+include("./Ionic.jl")
 
 
 include("./objects.jl")
-
+include("./snippet.jl")
 
 include("./reactants.jl")
 
@@ -28,7 +29,26 @@ using .Dev
 export codegen_string
 
 using .Parser
-export EfusError, EfusParser, try_parse!
+export EfusError, EfusParser, try_parse!, try_parse, efus_parse
+
+function cleanchildren(children::Vector)
+    children isa Vector{<:AbstractComponent} && return children
+    final = AbstractComponent[]
+    for child in children
+        if child isa AbstractComponent
+            push!(final, child)
+        elseif child isa AbstractVector
+            append!(final, cleanchildren(child))
+        elseif !isnothing(child)
+            error(
+                "Component was passed an unexpected child of type $(typeof(child)): $child. " *
+                    "Make sure it either returns a component, a vector of components, or nothing."
+            )
+
+        end
+    end
+    return final
+end
 
 
 end # module Efus
