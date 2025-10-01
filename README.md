@@ -3,14 +3,14 @@
 [![CI](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml)
 
 > [!NOTE]
-> This is still in very active development. It remains usable, though not tested enough to be proven stable yet.
+> This is not very stable, but it works.
 
 Efus.jl julia module combines a language parser for `efus` language
-(created with the module), a few types and abit more to help you create ui
-components in julia using an easy to read language which converts to julia code at
-macro expansion.
+(created with the module), converter for `ionic`, and abit more
+to help you build component based ui's using an easy to read
+language with concepts idiomatic to julia.
 
-For a usage example, see the [Attrape.jl](https://github.com/ken-morel/Attrape.jl)
+For a usage example, see the [Gtak.jl](https://github.com/ken-morel/Gtak.jl)
 
 ## Efus language & parser
 
@@ -23,7 +23,7 @@ or `Efus.Parser.AbstractParseError`.
 ```julia
 using Efus
 file = "code.efus"
-ast = try_parse!(EfusParser(read(file, String), file))
+ast = try_parse(read(file, String), file)
 
 ```
 
@@ -47,33 +47,9 @@ Efus.codegen_string(
     """
     Frame padding=(3, 3)
       Scale size=(20, 20) value=4 val=(hello' * "friend") args...
-    """, true
+    """
 ) |> println
 
-Ast.Block
-  ComponentCall(:Frame)
-    Arguments:
-      Argument name=:padding
-        Value:
-          Vect
-            Numeric val=3
-            Numeric val=3
-    Children:
-      ComponentCall(:Scale)
-        Arguments:
-          Argument name=:size
-            Value:
-              Vect
-                Numeric val=20
-                Numeric val=20
-          Argument name=:value
-            Value:
-              Numeric val=4
-          Argument name=:val
-            Value:
-              Ionic expr=(hello' * "friend")
-        Splats:
-          Splat name=:args
 Frame(padding = (3, 3), children =
 [Scale(args..., size = (20, 20),
 value = 4, val = (Reactor){Any}((()->getvalue(hello) * "friend"),
@@ -85,14 +61,16 @@ even more.
 
 ## Control flow
 
-efus suports if and for for now, each with the usual julia syntax.
-(for loop even supports both in and =).
+efus suports if and for control flow structures, each with meant
+to capture the most of the usual julia syntax.
+For expressions, efus allows any `ionic` expression, which
+will be translated to julia.
 
 ```julia
 Frame
-  if foobar !== true
+  if foobar' !== true
     Label text="hello world"
-    for (name, for) = foes
+    for (name, for) in foes
       Plaintain name=name
     else
       Egg
@@ -101,13 +79,13 @@ Frame
 ```
 
 The for generates a list comprehension and an if statement
-to check if the iterable is `empty`. And some more code
+to check if the iterable is `empty` when given an else block.
+And some more code
 flattens the children list before passing it to the parent.
 
 ### Generator macros
 
-To get that done more easily, there are two macros, `@efus_str` and
-`@efus_build_str`, where the first returns a closure.
+To generate code, use the `@efus_str`.
 
 ## Components
 
@@ -127,6 +105,11 @@ constituting of:
   ```
 
   This can then be easily used.
+  A standard rule I would like to impose, is that just initialized components
+  should store only parameters data, any other thing, like subscriptions,
+  parents and others should be passed during mounting, and removed when
+  unmounting. To be sure components are fully serialisable, remountable
+  copyable and reusable units.
 
 - **mounting**: Mounting is done via the `mount!` method.
   Efus is not responsible for implementing this, on to you.
@@ -135,21 +118,15 @@ constituting of:
 - **unmounting**: This is just the opposite. Done with `unnmount!`.
 - **updating**: This is to update the component when
   one of it's reactive attributes changed.
+  An option, could be to check for an internal list of
+  dirty attributes, and only update those.
 
 ## Composing components
 
-You can for that, define a function, which takes keyword
-arguments and return a component, then call it from
-efus code, as such the function will not count in the
-component tree, but it works.
-If you need your composite component to accept children,
-simply accept a `children::Vector{<:AbstractComponent} = []`.
-and pass it down to something else.
-
-You need to specify a default value, since if no children
-were passed, efus does not pass a children argument,
-but that's also what permits you to pass those
-children to another component, let say `Box children=children`.
+One good things with components, is that they can
+be composed.
+All you have to do, is to create a function!
+You can also add a children keyword parameter to support children.
 
 ## Reactivity
 
@@ -166,10 +143,16 @@ Reactants as all other reactives are subtypes of
 `AbstractReactive{T}`, where T is the type of the contained
 value. They store a value, and notifies reacting
 catalysts when it is changed via `setvalue!`. It's
-value can be gotten via `getvalue!`(or simply getting
+value can be gotten via `getvalue`(or simply getting
 or setting the .value attribute).
 Reactants are abit strict in typing, and we advice to only
 use concrete types when operating with them.
+
+> [!TIP]
+> You can always create a custom reactive type by
+> subtyping `AbstractReactive{T}` and implementing.
+
+> You can also use `MayBeReactive{T}` for you know what.
 
 ### Catalysts
 
@@ -180,7 +163,7 @@ They support a few methods:
 - `catalyze!(catalyst, reactant, callback)`: To trigger
   a callback when reactant value changes. (start
   a `Reaction`).
-- `denature!(catalyst)`: To inhibit all ungoing
+- `denature!(catalyst)`: To inhibit all ongoing
   `Reactions`.
 
 ### Reactions
@@ -205,7 +188,7 @@ denature!(catalyst)
 A reactor is an `AbstractReactive{T}` subtype which aim
 to permit you create reactive objects whose value are
 computer or set via methods to other reactants or not.
-Efus uses that internally if you create a reactive
+Efus uses that internally if you create an ionic
 expression like `("I love" + react')`.
 
 ```
@@ -221,27 +204,17 @@ It also allows a last optional argument which is a list
 of other AbstractReactive objects(even other reactors) it depends on,
 and will sibscribe and update when they change.
 
-### Reactive expressions
-
-A reactive expression is that which Efus converts to a Reactor
-it is like normal julia code, except that you end
-reactor names with a `'` and use them directly, Efus will
-then expand to the appropriate `getvalue` call and create
-a reactor with it as dependency.
-
-```julia
-(hello' * "friend")
-# Becomes
-Reactor){Any}((()->getvalue(hello) * "friend"), nothing, [hello])
-```
+> [!TIP]
+> Reactors also allow type inferation, or passing the type
+> as first argument.
 
 ## Ionic Syntax and Utilities
 
-Efus provides a powerful reactive programming model, centered around the 'ionic' syntax (ending a variable name with `'`) and a set of utility macros to simplify working with reactive values.
-
-### Ionic Syntax (`'`)
-
-The apostrophe (`'`) at the end of a variable name signifies an "ionic expression." This indicates that the variable is a reactive value (an `AbstractReactive` subtype like `Reactant` or `Reactor`), and Efus will automatically expand it to `getvalue(variable)` when used in an expression, or `setvalue!(variable, ...)` when used in an assignment.
+Efus adds tools mini language it calls `ionic` it is actually julia
+code, where you don't have the burden of calling getvalue and setvalue!
+Again. You can directly assign or use the reactives if you prepend
+their name or getter with an apostrophe(`'`).
+Doubling the apostrophe(`''`) escapes it, except in assignments.
 
 ```julia
 # In Efus code:
@@ -253,7 +226,9 @@ Label(text = getvalue(my_reactive_var) * " is active!")
 
 ### `@ionic` Macro
 
-The `@ionic` macro is a low-level utility that translates Efus's ionic syntax into standard Julia code, specifically `getvalue` and `setvalue!` calls. It's primarily used internally by other macros but can be useful for debugging or when you need precise control over the translation.
+The `@ionic` macro is a low-level utility that translates Efus's
+ionic syntax into standard Julia code, specifically `getvalue`
+and `setvalue!` calls.
 
 ```julia
 using Efus
@@ -272,9 +247,12 @@ result = @ionic my_reactant' * 2
 
 ### `@radical` Macro
 
-The `@radical` macro is designed to create a piece of Julia code that automatically re-evaluates whenever any of its reactive dependencies change. It's conceptually similar to reactive statements in frameworks like Svelte (e.g., `$: {}` or `$effect`). The primary goal is the side-effect of re-evaluation, making it ideal for triggering updates, logging, or performing computations that need to stay synchronized with reactive state.
-
-Internally, `@radical` creates an _eagerly evaluated_ `Reactor`. While it returns this `Reactor` object, its main purpose is to establish the reactive link that drives the re-evaluation.
+The `@radical` macro is designed to create a piece of Julia code that
+automatically re-evaluates whenever any of its reactive dependencies
+change. I wanted something like svelte's $effect. which re-runs
+when a dependency changes. It internally uses a Reactor, but
+with `eager = true` keword argument to force re-computation when dependency
+changes(since reactors by default use lazy evaluation).
 
 ```julia
 using Efus
@@ -282,30 +260,24 @@ a = Efus.Reactant(1)
 b = Efus.Reactant(2)
 
 # This block will re-run whenever `a` or `b` changes
-my_effect = @radical begin
+reactor = @radical begin
     sum_val = a' + b'
     println("Current sum: ", sum_val)
     sum_val # The value of the radical itself
 end
-
-# Initial run
-# Output: Current sum: 3
-@test Efus.getvalue(my_effect) == 3
-
-Efus.setvalue!(a, 10)
-# Output: Current sum: 12 (re-evaluated automatically)
-@test Efus.getvalue(my_effect) == 12
-
-Efus.setvalue!(b, 20)
-# Output: Current sum: 30 (re-evaluated automatically)
-@test Efus.getvalue(my_effect) == 30
 ```
 
 ### `@reactor` Macro
 
-The `@reactor` macro provides a convenient and type-inferring way to create a `Reactor` object. A `Reactor` is a reactive value whose content is derived from other reactive (or non-reactive) sources. By default, `@reactor` creates a _lazily evaluated_ `Reactor`, meaning its value is only re-computed when explicitly requested via `getvalue` after its dependencies have changed.
+The `@reactor` macro provides a convenient and type-inferring way to
+create a `Reactor` object. A `Reactor` is a reactive value whose
+content is derived from other reactive (or non-reactive) sources.
+By default, `@reactor` creates a _lazily evaluated_ `Reactor`,
+meaning its value is only re-computed when explicitly requested via
+`getvalue` after its dependencies have changed.
 
-This macro simplifies the creation of derived reactive state, allowing you to define complex reactive computations with a clean syntax.
+This macro simplifies the creation of derived reactive state,
+allowing you to define complex reactive computations with a clean syntax.
 
 ```julia
 using Efus
