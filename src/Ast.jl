@@ -33,7 +33,7 @@ struct Expression <: AbstractValue
     expr::Any
 end
 
-struct Fuss <: AbstractValue
+struct Ionic <: AbstractValue
     expr::Any
     type::Any
 end

@@ -1,15 +1,15 @@
-function parse_fuss!(p::EfusParser)::Union{Ast.Fuss, AbstractParseError, Nothing}
+function parse_ionic!(p::EfusParser)::Union{Ast.Ionic, AbstractParseError, Nothing}
     return ereset(p) do
         start = current_char(p)
         name = parse_symbol!(p)
         if !isnothing(name)
             if inbounds(p) && p.text[p.index] == '''
                 p.index += 1
-                return Ast.Fuss(Expr(Symbol("'"), name), nothing)
+                return Ast.Ionic(Expr(Symbol("'"), name), nothing)
             else
                 @zig! eoe(p, "In julia expression")
 
-                !isnothing(name) && return Ast.Fuss(name, nothing)
+                !isnothing(name) && return Ast.Ionic(name, nothing)
             end
         end
 
@@ -34,7 +34,7 @@ function parse_fuss!(p::EfusParser)::Union{Ast.Fuss, AbstractParseError, Nothing
                 end
             end
 
-            return Ast.Fuss(code, type)
+            return Ast.Ionic(code, type)
         end
     end
 end

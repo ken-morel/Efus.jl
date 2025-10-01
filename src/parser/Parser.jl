@@ -26,7 +26,7 @@ include("./number.jl")
 include("./string.jl")
 include("./vect.jl")
 include("./jexpr.jl")
-include("./fuss.jl")
+include("./ionic.jl")
 include("./expression.jl")
 include("./snippet.jl")
 
