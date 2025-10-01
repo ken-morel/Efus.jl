@@ -23,6 +23,12 @@ abstract type AbstractReaction{T} end
 
 const ReactiveCallback{T} = FunctionWrapper{Any, Tuple{<:AbstractReactive{T}}}
 
+"""
+Setvalue set's the value of a given AbstractReactive{T}
+object.
+"""
+function setvalue! end
+
 
 """
     struct Catalyst
@@ -221,14 +227,34 @@ function notify!(r::Reactor)
     return
 end
 
+"""
+    const MayBeReactive{T} = Union{AbstractReactive{T}, T}
+
+A builtin helper to filter for reactive values.
+"""
 const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
-mirror(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+"""
+    converter(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K}
+
+Creates a reactor which subscribes and get's it value 
+from converting that of the other and set's it with another
+conversion.
+"""
+converter(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
     () -> convert(T, getvalue(r)),
     (v::T) -> setvalue!(r, convert(K, v)),
     [r],
 )
 
+public converter
+
+
+"""
+    function resolve(::Type{T}, r::MayBeReactive) where {T}
+
+Resolve returns r if it is of type T, else calls getvalue on it.
+"""
 function resolve(::Type{T}, r::MayBeReactive) where {T}
     return if r isa T
         r

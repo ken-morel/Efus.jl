@@ -1,6 +1,3 @@
-generate(value::Ast.AbstractValue) = error("Unsupported generating code for $value")
-
-
 function generate(value::Ast.LiteralValue)
     return if value.val isa Symbol
         quote

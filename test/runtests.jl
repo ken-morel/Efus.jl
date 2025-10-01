@@ -1,305 +1,351 @@
-using Efus
+using IonicEfus
 using Test
 
-@testset "Efus.jl" begin
+@testset "IonicEfus.jl" begin
 
-    @testset "Component Calls" begin
-        @test Efus.codegen_string("MyComponent") isa String
-    end
-
-    @testset "Component with complex arguments" begin
-        @test Efus.codegen_string("MyComponent text=\"Hello\" number=123 flag=true") isa String
-    end
-
-    @testset "Component with splat arguments" begin
-        @test Efus.codegen_string("MyComponent args...") isa String
-    end
-
-    @testset "Deeply nested components" begin
-        @test Efus.codegen_string(
-            """
-            Panel
-              Column
-                Row
-                  Button text=\"Click Me\"
-            """
-        ) isa String
-    end
-end
-
-@testset "Control Flow" begin
-    @testset "Nested if-else in for loop" begin
-        @test Efus.codegen_string(
-            """
-            for item in items'
-              if item.type == :A
-                ComponentA data=item
-              else
-                ComponentB data=item
-              end
+    @testset "Parser and Codegen" begin
+        @testset "Component Calls" begin
+            @testset "Basic component call" begin
+                @test IonicEfus.codegen_string("MyComponent") isa String
             end
-            """
-        ) isa String
-    end
 
-    @testset "For-else loop" begin
-        @test Efus.codegen_string(
-            """
-            for i in []
-              Label text=(i)
-            else
-              Label text=\"Empty\"
+            @testset "Component with complex arguments" begin
+                @test IonicEfus.codegen_string("MyComponent text=\"Hello\" number=123 flag=true") isa String
             end
-            """
-        ) isa String
-    end
-end
 
-@testset "Data Types and Reactivity" begin
-    @testset "Complex vector with reactive elements" begin
-        @test Efus.codegen_string("Comp value=[1, (a' + b'), :symbol, [c', d']]") isa String
-    end
-
-    @testset "Reactive assignment and usage" begin
-        @test Efus.codegen_string("Comp value=(my_var' = 5; my_var' * 2)") isa String
-    end
-end
-
-@testset "Blocks and Snippets" begin
-    @testset "Component with complex begin block" begin
-        @test Efus.codegen_string(
-            """
-            MyComponent value=begin
-              calculate_something a=(a', b')
-              if x > 10
-                Label x=:big
-              else
-                Label c=:small
-              end
+            @testset "Component with splat arguments" begin
+                @test IonicEfus.codegen_string("MyComponent args...") isa String
             end
-            """
-        ) isa String
+
+            @testset "Deeply nested components" begin
+                @test IonicEfus.codegen_string("""
+                Panel
+                  Column
+                    Row
+                      Button text="Click Me"
+                """) isa String
+            end
+        end
+
+        @testset "Control Flow" begin
+            @testset "Nested if-else in for loop" begin
+                @test IonicEfus.codegen_string("""
+                for item in items'
+                  if item.type == :A
+                    ComponentA data=item
+                  else
+                    ComponentB data=item
+                  end
+                end
+                """) isa String
+            end
+
+            @testset "For-else loop" begin
+                @test IonicEfus.codegen_string("""
+                for i in []
+                  Label text=(i)
+                else
+                  Label text="Empty"
+                end
+                """) isa String
+            end
+
+            @testset "Complex Nesting and Syntax Variations" begin
+                @testset "For loop with '=' iterator" begin
+                    @test IonicEfus.codegen_string("""
+                    for i = 1:10
+                      Label text=(i)
+                    end
+                    """) isa String
+                end
+
+                @testset "For loop with '∈' iterator" begin
+                    @test IonicEfus.codegen_string("""
+                    for i ∈ 1:10
+                      Label text=(i)
+                    end
+                    """) isa String
+                end
+
+                @testset "Triple nested for loops with nested if" begin
+                    @test IonicEfus.codegen_string("""
+                    Container
+                      for i in 1:2
+                        for j = 1:2
+                          for k ∈ 1:2
+                            if i + j + k > 3
+                              Label text="Sum is large"
+                            else
+                              Label text="Sum is small"
+                            end
+                          end
+                        end
+                      end
+                    """) isa String
+                end
+
+                @testset "Mixed if/for nesting" begin
+                    @test IonicEfus.codegen_string("""
+                    if condition1'
+                      Container
+                        for item in list'
+                          if item.is_special
+                            SpecialComponent data=item
+                          end
+                        end
+                    else
+                      Label text="Nothing to show"
+                    end
+                    """) isa String
+                end
+            end
+        end
+
+        @testset "Data Types and Reactivity" begin
+            @testset "Complex vector with reactive elements" begin
+                @test IonicEfus.codegen_string("Comp value=[1, (a' + b'), :symbol, [c', d']]") isa String
+            end
+
+            @testset "Reactive assignment and usage" begin
+                @test IonicEfus.codegen_string("Comp value=(my_var' = 5; my_var' * 2)") isa String
+            end
+        end
+
+        @testset "Blocks and Snippets" begin
+            @testset "Component with complex begin block" begin
+                @test IonicEfus.codegen_string("""
+                MyComponent value=begin
+                  x = calculate_something(a', b')
+                  if x > 10
+                    :big
+                  else
+                    :small
+                  end
+                end
+                """) isa String
+            end
+
+            @testset "Snippet with multiple parameters" begin
+                @test IonicEfus.codegen_string("""
+                MyComponent
+                  do item::String, index::Int
+                    Label text=(index + \": \" + item)
+                  end
+                """) isa String
+            end
+
+            @testset "Julia Block Statements" begin
+                @testset "Simple Julia block" begin
+                    @test IonicEfus.codegen_string("""
+                    MyComponent
+                      (println("Hello from Julia"))
+                    """) isa String
+                end
+
+                @testset "Variable assignment and use in component" begin
+                    @test IonicEfus.codegen_string("""
+                    MyComponent
+                      (c = 5; Label(text=c))
+                    """) isa String
+                end
+
+                @testset "Multi-line Julia block" begin
+                    @test IonicEfus.codegen_string("""
+                    MyComponent
+                      (
+                        x = 10;
+                        y = 20;
+                        z = x + y;
+                        Label(text=z)
+                      )
+                    """) isa String
+                end
+            end
+        end
+
+        @testset "Original complex test case" begin
+            @test IonicEfus.codegen_string("""
+            Label padding=[
+              (d' = c' * ama';d' / 4),
+              do c::Int
+                Button text=ama
+              end,
+              (ama', 4)
+            ]
+            """) isa String
+        end
     end
 
-    @testset "Snippet with multiple parameters" begin
-        @test Efus.codegen_string(
-            """
-            MyComponent c=|
-              do item::String, index::Int
-                Label text=(index + \": \" + item)
-              end
-            """
-        ) isa String
-    end
-end
-
-@testset "Original complex test case" begin
-    @test Efus.codegen_string(
-        """
-        Label padding=[
-          (d' = c' * ama';d' / 4),
-          do c::Int
-            Button text=ama
-          end,
-          (ama', 4)
-        ]
-        """, true
-    ) isa String
-end
-
-@testset "Invalid Syntax" begin
-    @testset "Unterminated if" begin
-        @test_throws Efus.EfusError Efus.codegen_string(
-            """
+    @testset "Invalid Syntax" begin
+        @testset "Unterminated if" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
             if a > b
-              Label text=\"Missing end\"
-            """
-        )
-    end
+              Label text="Missing end"
+            """)
+        end
 
-    @testset "Unterminated for" begin
-        @test_throws Efus.EfusError Efus.codegen_string(
-            """
+        @testset "Unterminated for" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
             for i in 1:10
               Label text=(i)
-            """
-        )
-    end
+            """)
+        end
 
-    @testset "Unterminated do block" begin
-        @test_throws Efus.EfusError Efus.codegen_string(
-            """
-            MyComponent val=|
+        @testset "Unterminated do block" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
+            MyComponent
               do
                 Label
-            """
-        )
-    end
+            """)
+        end
 
-    @testset "Invalid component argument" begin
-        @test_throws Efus.EfusError Efus.codegen_string("MyComponent text=")
-        @test_throws Efus.EfusError Efus.codegen_string("MyComponent =value")
-    end
+        @testset "Invalid component argument" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("MyComponent text=")
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("MyComponent =value")
+        end
 
-    @testset "Unmatched brackets in vector" begin
-        @test_throws Efus.EfusError Efus.codegen_string("MyComponent value=[1, 2, (a + b]")
-    end
+        @testset "Unmatched brackets in vector" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("MyComponent value=[1, 2, (a + b]")
+        end
 
-    @testset "Unexpected 'else'" begin
-        @test_throws Efus.EfusError Efus.codegen_string(
-            """
+        @testset "Unexpected 'else'" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
             else
-              Label text=\"misplaced else\"
+              Label text="misplaced else"
             end
-            """
-        )
+            """)
+        end
+
+        @testset "Unescaped quotes in string" begin
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("Comp text=\"Hello, \"world\"!\"")
+        end
     end
 
-    @testset "Unescaped quotes in string" begin
-        @test_throws Efus.EfusError Efus.codegen_string("Comp text=\"Hello, \"world\"!\"")
+    @testset "Reactivity System (Unit Tests)" begin
+        @testset "Reactant" begin
+            r = IonicEfus.Reactant(10)
+            @test IonicEfus.getvalue(r) == 10
+            IonicEfus.setvalue!(r, 20)
+            @test IonicEfus.getvalue(r) == 20
+        end
+
+        @testset "Catalyst and Reactions" begin
+            r = IonicEfus.Reactant(5)
+            c = IonicEfus.Catalyst()
+            triggered_value = 0
+            
+            reaction_fn = (reactant) -> triggered_value = IonicEfus.getvalue(reactant)
+            
+            IonicEfus.catalyze!(c, r, reaction_fn)
+            
+            IonicEfus.setvalue!(r, 15)
+            @test triggered_value == 15
+            
+            # Test inhibit!
+            IonicEfus.inhibit!(c, r, reaction_fn)
+            IonicEfus.setvalue!(r, 25)
+            @test triggered_value == 15 # Should not have changed
+
+            # Test denature!
+            IonicEfus.catalyze!(c, r, reaction_fn)
+            IonicEfus.setvalue!(r, 35)
+            @test triggered_value == 35
+            IonicEfus.denature!(c)
+            IonicEfus.setvalue!(r, 45)
+            @test triggered_value == 35 # Should not have changed
+        end
+
+        @testset "Reactor" begin
+            a = IonicEfus.Reactant(10)
+            b = IonicEfus.Reactant(20)
+            
+            # Create a reactor that sums a and b
+            sum_reactor = IonicEfus.Reactor(Int, () -> IonicEfus.getvalue(a) + IonicEfus.getvalue(b), nothing, [a, b])
+            
+            @test IonicEfus.getvalue(sum_reactor) == 30
+            
+            IonicEfus.setvalue!(a, 15)
+            @test IonicEfus.isfouled(sum_reactor) == true
+            @test IonicEfus.getvalue(sum_reactor) == 35
+            @test IonicEfus.isfouled(sum_reactor) == false
+            
+            IonicEfus.setvalue!(b, 25)
+            @test IonicEfus.isfouled(sum_reactor) == true
+            @test IonicEfus.getvalue(sum_reactor) == 40
+            @test IonicEfus.isfouled(sum_reactor) == false
+        end
     end
 
+    @testset "Macros (@reactor and @radical)" begin
+        @testset "@reactor (Lazy Evaluation)" begin
+            a = IonicEfus.Reactant(10)
+            b = IonicEfus.Reactant(20)
+            
+            # Assumes Ionic.translate is available and works
+            # We are testing the macro expansion here
+            lazy_reactor = @reactor a' + b'
+            
+            @test lazy_reactor isa IonicEfus.Reactor{Int}
+            @test IonicEfus.getvalue(lazy_reactor) == 30
+            @test !IonicEfus.isfouled(lazy_reactor)
 
-end
-@testset "Reactivity System (Unit Tests)" begin
-    @testset "Reactant" begin
-        r = Efus.Reactant(10)
-        @test Efus.getvalue(r) == 10
-        Efus.setvalue!(r, 20)
-        @test Efus.getvalue(r) == 20
-    end
+            IonicEfus.setvalue!(a, 15)
+            
+            # Should be fouled, but value should not have updated yet
+            @test IonicEfus.isfouled(lazy_reactor)
+            @test lazy_reactor.value == 30 
+            
+            # Now, getvalue should trigger the update
+            @test IonicEfus.getvalue(lazy_reactor) == 35
+            @test !IonicEfus.isfouled(lazy_reactor)
+        end
 
-    @testset "Catalyst and Reactions" begin
-        r = Efus.Reactant(5)
-        c = Efus.Catalyst()
-        triggered_value = 0
+        @testset "@radical (Eager Evaluation)" begin
+            a = IonicEfus.Reactant(10)
+            b = IonicEfus.Reactant(20)
+            
+            eager_reactor = @radical a' + b'
+            
+            @test eager_reactor isa IonicEfus.Reactor{Int}
+            @test IonicEfus.getvalue(eager_reactor) == 30
+            @test !IonicEfus.isfouled(eager_reactor)
 
-        reaction_fn = (reactant) -> triggered_value = Efus.getvalue(reactant)
+            IonicEfus.setvalue!(a, 15)
+            
+            # Should have re-computed immediately
+            @test !IonicEfus.isfouled(eager_reactor)
+            @test IonicEfus.getvalue(eager_reactor) == 35
+        end
 
-        reaction = Efus.catalyze!(c, r, reaction_fn)
+        @testset "Type Inference" begin
+            s1 = IonicEfus.Reactant("Hello")
+            s2 = IonicEfus.Reactant(", world!")
+            str_reactor = @reactor s1' * s2'
+            @test str_reactor isa IonicEfus.Reactor{String}
+            @test IonicEfus.getvalue(str_reactor) == "Hello, world!"
 
-        Efus.setvalue!(r, 15)
-        @test triggered_value == 15
+            f1 = IonicEfus.Reactant(1.5)
+            f2 = IonicEfus.Reactant(2.5)
+            float_radical = @radical f1' + f2'
+            @test float_radical isa IonicEfus.Reactor{Float64}
+            @test IonicEfus.getvalue(float_radical) == 4.0
+        end
 
-        # Test inhibit!
-        Efus.inhibit!(reaction)
-        Efus.setvalue!(r, 25)
-        @test triggered_value == 15 # Should not have changed
+        @testset "@reactor with setter" begin
+            a = IonicEfus.Reactant(5)
+            # This reactor's setter will write back to `a`
+            writable_reactor = @reactor a' * 2 (v -> IonicEfus.setvalue!(a, v / 2))
 
-        # Test denature!
-        Efus.catalyze!(c, r, reaction_fn)
-        Efus.setvalue!(r, 35)
-        @test triggered_value == 35
-        Efus.denature!(c)
-        Efus.setvalue!(r, 45)
-        @test triggered_value == 35 # Should not have changed
-    end
-
-    @testset "Reactor" begin
-        a = Efus.Reactant(10)
-        b = Efus.Reactant(20)
-
-        # Create a reactor that sums a and b
-        sum_reactor = Efus.Reactor(Int, () -> Efus.getvalue(a) + Efus.getvalue(b), nothing, [a, b])
-
-        @test Efus.getvalue(sum_reactor) == 30
-
-        Efus.setvalue!(a, 15)
-        @test Efus.isfouled(sum_reactor) == true
-        @test Efus.getvalue(sum_reactor) == 35
-        @test Efus.isfouled(sum_reactor) == false
-
-        Efus.setvalue!(b, 25)
-        @test Efus.isfouled(sum_reactor) == true
-        @test Efus.getvalue(sum_reactor) == 40
-        @test Efus.isfouled(sum_reactor) == false
-    end
-end
-@testset "Ast display" begin
-    show(
-        stdout, MIME("text/plain"), Efus.try_parse(
-            """
-            LabelFrame padding=(3.5, 4) label=|
-              do frm::LabelFrame
-                Label text="Hello world" justify=c
-              end
-              Box orient=:h
-                Label text=("Your name(" * valid' * "): ")
-                Input var=name placeholder=name'
-                Button text="Clear" onclick=(() -> name' = "")
-                """
-        )
-    )
-end
-@testset "Macros (@reactor and @radical)" begin
-    @testset "@reactor (Lazy Evaluation)" begin
-        a = Efus.Reactant(10)
-        b = Efus.Reactant(20)
-
-        # Assumes Ionic.translate is available and works
-        # We are testing the macro expansion here
-        lazy_reactor = @reactor a' + b'
-
-        @test lazy_reactor isa Efus.Reactor{Int}
-        @test Efus.getvalue(lazy_reactor) == 30
-        @test !Efus.isfouled(lazy_reactor)
-
-        Efus.setvalue!(a, 15)
-
-        # Should be fouled, but value should not have updated yet
-        @test Efus.isfouled(lazy_reactor)
-        @test lazy_reactor.value == 30
-
-        # Now, getvalue should trigger the update
-        @test Efus.getvalue(lazy_reactor) == 35
-        @test !Efus.isfouled(lazy_reactor)
-    end
-
-    @testset "@radical (Eager Evaluation)" begin
-        a = Efus.Reactant(10)
-        b = Efus.Reactant(20)
-
-        eager_reactor = @radical a' + b'
-
-        @test eager_reactor isa Efus.Reactor{Int}
-        @test Efus.getvalue(eager_reactor) == 30
-        @test !Efus.isfouled(eager_reactor)
-
-        Efus.setvalue!(a, 15)
-
-        # Should have re-computed immediately
-        @test !Efus.isfouled(eager_reactor)
-        @test Efus.getvalue(eager_reactor) == 35
-    end
-
-    @testset "Type Inference" begin
-        s1 = Efus.Reactant("Hello")
-        s2 = Efus.Reactant(", world!")
-        str_reactor = @reactor s1' * s2'
-        @test str_reactor isa Efus.Reactor{String}
-        @test Efus.getvalue(str_reactor) == "Hello, world!"
-
-        f1 = Efus.Reactant(1.5)
-        f2 = Efus.Reactant(2.5)
-        float_radical = @radical f1' + f2'
-        @test float_radical isa Efus.Reactor{Float64}
-        @test Efus.getvalue(float_radical) == 4.0
-    end
-
-    @testset "@reactor with setter" begin
-        a = Efus.Reactant(5)
-        # This reactor's setter will write back to `a`
-        writable_reactor = @reactor a' * 2 (v -> Efus.setvalue!(a, round(v / 2)))
-
-        @test Efus.getvalue(writable_reactor) == 10
-
-        Efus.setvalue!(writable_reactor, 30)
-
-        # The reactor's value itself is lazy, so it's fouled
-        @test Efus.isfouled(writable_reactor)
-        # But the setter should have fired, updating `a`
-        @test Efus.getvalue(a) == 15
-        # Now, getting the reactor's value will update it based on the new `a`
-        @test Efus.getvalue(writable_reactor) == 30
+            @test IonicEfus.getvalue(writable_reactor) == 10
+            
+            IonicEfus.setvalue!(writable_reactor, 30)
+            
+            # The reactor's value itself is lazy, so it's fouled
+            @test IonicEfus.isfouled(writable_reactor)
+            # But the setter should have fired, updating `a`
+            @test IonicEfus.getvalue(a) == 15
+            # Now, getting the reactor's value will update it based on the new `a`
+            @test IonicEfus.getvalue(writable_reactor) == 30
+        end
     end
 end

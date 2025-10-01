@@ -1,6 +1,10 @@
-module EfusUI
+"""
+IonicEfus.jl is a Julia module that provides the Efus language, a pug-like declarative syntax for building reactive components. It features an 'ionic' reactive programming model, allowing for the creation of dynamic and modular systems that compile directly to native Julia code.
+"""
+module IonicEfus
 
 using FunctionWrappers: FunctionWrapper
+
 abstract type EfusError <: Exception end
 
 
@@ -32,4 +36,4 @@ using .Parser
 export EfusError, EfusParser, try_parse!, try_parse, efus_parse
 
 
-end # module Efus
+end # module IonicEfus

@@ -1,8 +1,3 @@
-function generate(node::Ast.AbstractStatement)
-    error("Generation not implemented for this node type: $(typeof(node))")
-end
-
-
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
     shouldclean = !all(isa.(node.children, Ast.ComponentCall))
@@ -16,7 +11,7 @@ function generate(node::Ast.ComponentCall)
     if !isempty(children_exprs)
         children = Expr(:vect, children_exprs...)
         if shouldclean
-            children = Expr(:|>, children, Efus.cleanchildren)
+            children = Expr(:|>, children, IonicEfus.cleanchildren)
         end
         children_kw = Expr(:kw, :children, children)
         push!(kwargs, children_kw)

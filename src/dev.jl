@@ -1,3 +1,8 @@
+"""
+    module Dev
+
+Development utilities.
+"""
 module Dev
 
 using ..Parser
