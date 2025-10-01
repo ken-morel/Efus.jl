@@ -20,7 +20,7 @@ function ereset(f::Function, p::EfusParser)
             p.index = length(p.text)
             pos = (line(p), col(p))
             p.index = idx
-            EfusSyntaxError("Unexpected EOF at position.", Ast.Location(p.file, pos, pos))
+            EfusSyntaxError(p, "Unexpected EOF at position.", Ast.Location(p.file, pos, pos))
         else
             rethrow()
         end
@@ -68,7 +68,7 @@ function skip_toblock!(p::EfusParser, names::Vector{Symbol})::Union{Tuple{String
                 scope -= 1
             end
             if scope < 0
-                return EfusSyntaxError("Unmatched end", b * e)
+                return EfusSyntaxError(p, "Unmatched end", b * e)
             end
             if inbounds(p)
                 newline = findnext('\n', p.text, p.index)
@@ -97,6 +97,6 @@ end
 
 function eoe(p::EfusParser, pos::AbstractString)
     return if inbounds(p) && !isspace(p.text[p.index])
-        EfusSyntaxError("Unexpected token after end of expression $pos", current_char(p))
+        EfusSyntaxError(p, "Unexpected token after end of expression $pos", current_char(p))
     end
 end

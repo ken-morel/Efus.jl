@@ -1,5 +1,6 @@
 module Parser
 export EfusParser, try_parse!, parse!
+export efus_parse, try_parse
 
 using ...Efus: EfusError
 import ..Ast
@@ -55,15 +56,29 @@ function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
     end
     return root_block
 end
+function efus_parse(code::String, file::String = "<string>")::Union{Ast.Block, AbstractParseError}
+    return parse!(EfusParser(code, file))
+end
+function try_parse!(p::EfusParser)
+    content = parse!(p)
+    if content isa EfusError
+        throw(content)
+    end
+    return content
+end
+
+function try_parse(code::String, file::String = "<string>")
+    return try_parse!(EfusParser(code, file))
+end
 function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
-    file = p.file * "; " * loc
     code = parse!(
-        EfusParser(code, file),
+        EfusParser(code, p.file * "; " * loc),
     )
     return if code isa AbstractParseError
         posindices = (getindex(p, code.location.start), getindex(p, code.location.stop)) .+ starting
         positions = current_char.((p,), posindices .- p.index)
         EfusSyntaxError(
+            p,
             code.message,
             Ast.Location(
                 code.location.file,

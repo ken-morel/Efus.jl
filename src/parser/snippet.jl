@@ -13,6 +13,7 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
             skip_spaces!(p)
             params[name] = if p.text[p.index] == ':'
                 p.text[p.index + 1] != ':' && return EfusSyntaxError(
+                    p,
                     "Invalid type assert",
                     current_char(p, 1)
                 )
@@ -32,7 +33,7 @@ function parse_snippet!(p::EfusParser)::Union{Ast.Snippet, AbstractParseError, N
         end
         codestart = p.index
         code = skip_toblock!(p, [:end])
-        isnothing(code) && return EfusSyntaxError("Missing closing end for snippet", b * e)
+        isnothing(code) && return EfusSyntaxError(p, "Missing closing end for snippet", b * e)
         (code,) = code
         content = @zig! subparse!(p, code, "In snippet starting at line $(b.start[1])", codestart)
         return Ast.Snippet(content, params)
@@ -46,7 +47,7 @@ function parse_block!(p::EfusParser)::Union{Ast.InlineBlock, AbstractParseError,
         e = current_char(p, -1)
         codestart = p.index
         code = skip_toblock!(p, [:end])
-        isnothing(code) && return EfusSyntaxError("Missing closing end for block", b * e)
+        isnothing(code) && return EfusSyntaxError(p, "Missing closing end for block", b * e)
         (code,) = code
         return Ast.InlineBlock(@zig! subparse!(p, code, "In begin block starting at line $(b.start[1])", codestart))
     end

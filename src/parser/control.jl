@@ -18,7 +18,7 @@ function check_unbound_flows(p::EfusParser)::Union{AbstractParseError, Nothing}
     e = current_char(p, -1)
     p.index = origin
     return if s ∈ (:end, :else, :elseif)
-        EfusSyntaxError("Unexpected $s at position", e)
+        EfusSyntaxError(p, "Unexpected $s at position", e)
     end
 end
 
@@ -35,6 +35,7 @@ function parse_ifstatement!(p::EfusParser)::Union{Ast.IfStatement, AbstractParse
             incodestart = p.index
             value = skip_toblock!(p, [:elseif, :else, :end])
             isnothing(value) && return EfusSyntaxError(
+                p,
                 "Non terminated control flow after here",
                 lastcontrol
             )
@@ -70,6 +71,7 @@ function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, AbstractPar
         codestart = p.index
         code = @zig! skip_toblock!(p, [:end, :else])
         isnothing(code) && return EfusSyntaxError(
+            p,
             "Missing `end` or `else` after for",
             forloc
         )
@@ -79,6 +81,7 @@ function parse_forstatement!(p::EfusParser)::Union{Ast.ForStatement, AbstractPar
             codestart = p.index
             elsecode = @zig! skip_toblock!(p, [:end])
             isnothing(elsecode) && return EfusSyntaxError(
+                p,
                 "Missing `end` after for statement else",
                 loc
             )
