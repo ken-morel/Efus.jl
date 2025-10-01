@@ -67,14 +67,16 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     fouled::Bool
     eager::Bool
 
-    function Reactor{T}(getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive}; eager::Bool = false; initial = nothing)::Reactor{T} where {T}
+    function Reactor{T}(
+            getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive};
+            eager::Bool = false, initial = nothing,
+        )::Reactor{T} where {T}
         getter = REACTOR_GETTER{T}(getter)
         setter = if !isnothing(setter)
             REACTOR_SETTER{T}(setter)
         end
         initial = isnothing(initial) ? getter() : convert(T, initial)
-        r = Reactor{T}(getter, setter, initial; eager)
-        r = new{T}(getter, setter, [], [], Catalyst(), r.value, false, eager)
+        r = new{T}(getter, setter, [], [], Catalyst(), initial, false, eager)
         callback = (_) -> begin
             r.fouled = true
             eager && getvalue(r)
@@ -92,7 +94,8 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     ) where {T} = Reactor{T}(getter, setter, content; eager)
 
     function Reactor(
-            getter::Function, setter::Function, content::Vector{<:AbstractReactive}; eager::Bool = false
+            getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive};
+            eager::Bool = false,
         )
         initial = getter()
         type = typeof(initial)
@@ -116,9 +119,9 @@ function getvalue(r::Reactor{T})::T where {T}
     end
     return r.value
 end
-function setvalue!(r::Reactor{T}, new_value::T) where {T}
+function setvalue!(r::Reactor{T}, new_value) where {T}
     r.fouled = true
-    isnothing(r.setter) || r.setter(new_value)
+    isnothing(r.setter) || r.setter(convert(T, new_value))
     return
 end
 
@@ -141,8 +144,8 @@ function getvalue(r::Reactant{T})::T where {T}
     return r.value
 end
 
-function setvalue!(r::Reactant{T}, new_value::T) where {T}
-    r.value = new_value
+function setvalue!(r::Reactant{T}, new_value) where {T}
+    r.value = convert(T, new_value)
     for reaction in copy(r.reactions)
         reaction.callback(r)
     end

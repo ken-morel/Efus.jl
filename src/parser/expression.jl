@@ -25,6 +25,6 @@ function parse_expression!(p::EfusParser)::Union{AbstractParseError, Ast.Abstrac
     @zig!r parse_jlsymbol!(p)
     @zig!r parse_number!(p)
     @zig!r parse_vect!(p)
-    @zig!r parse_fuss!(p)
+    @zig!r parse_ionic!(p)
     return
 end

@@ -1,4 +1,4 @@
-export @efus_str, parseandgenerate
+export @efus_str, parseandgenerate, @radical, @reactor, @ionic
 
 function parseandgenerate(code::String; file::String = "<efus_macro>")
     parser = Parser.EfusParser(code, file)

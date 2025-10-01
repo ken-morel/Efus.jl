@@ -227,7 +227,79 @@ end
                 Label text=("Your name(" * valid' * "): ")
                 Input var=name placeholder=name'
                 Button text="Clear" onclick=(() -> name' = "")
-            """
+                """
         )
     )
+end
+@testset "Macros (@reactor and @radical)" begin
+    @testset "@reactor (Lazy Evaluation)" begin
+        a = Efus.Reactant(10)
+        b = Efus.Reactant(20)
+
+        # Assumes Ionic.translate is available and works
+        # We are testing the macro expansion here
+        lazy_reactor = @reactor a' + b'
+
+        @test lazy_reactor isa Efus.Reactor{Int}
+        @test Efus.getvalue(lazy_reactor) == 30
+        @test !Efus.isfouled(lazy_reactor)
+
+        Efus.setvalue!(a, 15)
+
+        # Should be fouled, but value should not have updated yet
+        @test Efus.isfouled(lazy_reactor)
+        @test lazy_reactor.value == 30
+
+        # Now, getvalue should trigger the update
+        @test Efus.getvalue(lazy_reactor) == 35
+        @test !Efus.isfouled(lazy_reactor)
+    end
+
+    @testset "@radical (Eager Evaluation)" begin
+        a = Efus.Reactant(10)
+        b = Efus.Reactant(20)
+
+        eager_reactor = @radical a' + b'
+
+        @test eager_reactor isa Efus.Reactor{Int}
+        @test Efus.getvalue(eager_reactor) == 30
+        @test !Efus.isfouled(eager_reactor)
+
+        Efus.setvalue!(a, 15)
+
+        # Should have re-computed immediately
+        @test !Efus.isfouled(eager_reactor)
+        @test Efus.getvalue(eager_reactor) == 35
+    end
+
+    @testset "Type Inference" begin
+        s1 = Efus.Reactant("Hello")
+        s2 = Efus.Reactant(", world!")
+        str_reactor = @reactor s1' * s2'
+        @test str_reactor isa Efus.Reactor{String}
+        @test Efus.getvalue(str_reactor) == "Hello, world!"
+
+        f1 = Efus.Reactant(1.5)
+        f2 = Efus.Reactant(2.5)
+        float_radical = @radical f1' + f2'
+        @test float_radical isa Efus.Reactor{Float64}
+        @test Efus.getvalue(float_radical) == 4.0
+    end
+
+    @testset "@reactor with setter" begin
+        a = Efus.Reactant(5)
+        # This reactor's setter will write back to `a`
+        writable_reactor = @reactor a' * 2 (v -> Efus.setvalue!(a, round(v / 2)))
+
+        @test Efus.getvalue(writable_reactor) == 10
+
+        Efus.setvalue!(writable_reactor, 30)
+
+        # The reactor's value itself is lazy, so it's fouled
+        @test Efus.isfouled(writable_reactor)
+        # But the setter should have fired, updating `a`
+        @test Efus.getvalue(a) == 15
+        # Now, getting the reactor's value will update it based on the new `a`
+        @test Efus.getvalue(writable_reactor) == 30
+    end
 end
