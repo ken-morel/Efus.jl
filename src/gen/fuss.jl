@@ -30,7 +30,7 @@ end
 
 function generate(fuss::Ast.Fuss)
     expr, dependencies = fussubstitute(fuss.expr)
-    type = something(fussubstitute(fuss.type), Any)
+    type = something(fussubstitute(fuss.type)[1], Any)
 
     return if isempty(dependencies)
         Expr(:(::), expr, type)
