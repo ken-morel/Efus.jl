@@ -1,6 +1,6 @@
-function generate(fuss::Ast.Ionic)
-    expr, dependencies = Ionic.translate(fuss.expr)
-    type = something(Ionic.translate(fuss.type)[1], Any)
+function generate(ionic::Ast.Ionic)
+    expr, dependencies = Ionic.translate(ionic.expr)
+    type = something(Ionic.translate(ionic.type)[1], Any)
 
     return if isempty(dependencies)
         Expr(:(::), expr, type)

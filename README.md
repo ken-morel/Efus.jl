@@ -71,7 +71,7 @@ Ast.Block
               Numeric val=4
           Argument name=:val
             Value:
-              Fuss expr=(hello' * "friend")
+              Ionic expr=(hello' * "friend")
         Splats:
           Splat name=:args
 Frame(padding = (3, 3), children =
@@ -274,7 +274,7 @@ result = @ionic my_reactant' * 2
 
 The `@radical` macro is designed to create a piece of Julia code that automatically re-evaluates whenever any of its reactive dependencies change. It's conceptually similar to reactive statements in frameworks like Svelte (e.g., `$: {}` or `$effect`). The primary goal is the side-effect of re-evaluation, making it ideal for triggering updates, logging, or performing computations that need to stay synchronized with reactive state.
 
-Internally, `@radical` creates an *eagerly evaluated* `Reactor`. While it returns this `Reactor` object, its main purpose is to establish the reactive link that drives the re-evaluation.
+Internally, `@radical` creates an _eagerly evaluated_ `Reactor`. While it returns this `Reactor` object, its main purpose is to establish the reactive link that drives the re-evaluation.
 
 ```julia
 using Efus
@@ -303,7 +303,7 @@ Efus.setvalue!(b, 20)
 
 ### `@reactor` Macro
 
-The `@reactor` macro provides a convenient and type-inferring way to create a `Reactor` object. A `Reactor` is a reactive value whose content is derived from other reactive (or non-reactive) sources. By default, `@reactor` creates a *lazily evaluated* `Reactor`, meaning its value is only re-computed when explicitly requested via `getvalue` after its dependencies have changed.
+The `@reactor` macro provides a convenient and type-inferring way to create a `Reactor` object. A `Reactor` is a reactive value whose content is derived from other reactive (or non-reactive) sources. By default, `@reactor` creates a _lazily evaluated_ `Reactor`, meaning its value is only re-computed when explicitly requested via `getvalue` after its dependencies have changed.
 
 This macro simplifies the creation of derived reactive state, allowing you to define complex reactive computations with a clean syntax.
 
