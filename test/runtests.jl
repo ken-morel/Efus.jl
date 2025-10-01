@@ -18,85 +18,99 @@ using Test
             end
 
             @testset "Deeply nested components" begin
-                @test IonicEfus.codegen_string("""
-                Panel
-                  Column
-                    Row
-                      Button text="Click Me"
-                """) isa String
+                @test IonicEfus.codegen_string(
+                    """
+                    Panel
+                      Column
+                        Row
+                          Button text="Click Me"
+                    """
+                ) isa String
             end
         end
 
         @testset "Control Flow" begin
             @testset "Nested if-else in for loop" begin
-                @test IonicEfus.codegen_string("""
-                for item in items'
-                  if item.type == :A
-                    ComponentA data=item
-                  else
-                    ComponentB data=item
-                  end
-                end
-                """) isa String
+                @test IonicEfus.codegen_string(
+                    """
+                    for item in items'
+                      if item.type == :A
+                        ComponentA data=item
+                      else
+                        ComponentB data=item
+                      end
+                    end
+                    """
+                ) isa String
             end
 
             @testset "For-else loop" begin
-                @test IonicEfus.codegen_string("""
-                for i in []
-                  Label text=(i)
-                else
-                  Label text="Empty"
-                end
-                """) isa String
+                @test IonicEfus.codegen_string(
+                    """
+                    for i in []
+                      Label text=(i)
+                    else
+                      Label text="Empty"
+                    end
+                    """
+                ) isa String
             end
 
             @testset "Complex Nesting and Syntax Variations" begin
                 @testset "For loop with '=' iterator" begin
-                    @test IonicEfus.codegen_string("""
-                    for i = 1:10
-                      Label text=(i)
-                    end
-                    """) isa String
+                    @test IonicEfus.codegen_string(
+                        """
+                        for i = 1:10
+                          Label text=(i)
+                        end
+                        """
+                    ) isa String
                 end
 
                 @testset "For loop with '∈' iterator" begin
-                    @test IonicEfus.codegen_string("""
-                    for i ∈ 1:10
-                      Label text=(i)
-                    end
-                    """) isa String
+                    @test IonicEfus.codegen_string(
+                        """
+                        for i ∈ 1:10
+                          Label text=(i)
+                        end
+                        """
+                    ) isa String
                 end
 
                 @testset "Triple nested for loops with nested if" begin
-                    @test IonicEfus.codegen_string("""
-                    Container
-                      for i in 1:2
-                        for j = 1:2
-                          for k ∈ 1:2
-                            if i + j + k > 3
-                              Label text="Sum is large"
-                            else
-                              Label text="Sum is small"
+                    @test IonicEfus.codegen_string(
+                        """
+                        Container
+                          for i in 1:2
+                            for j = 1:2
+                              for k ∈ 1:2
+                                if i + j + k > 3
+                                  Label text="Sum is large"
+                                else
+                                  Label text="Sum is small"
+                                end
+                              end
                             end
                           end
-                        end
-                      end
-                    """) isa String
+                        """
+                    ) isa String
                 end
 
                 @testset "Mixed if/for nesting" begin
-                    @test IonicEfus.codegen_string("""
-                    if condition1'
-                      Container
-                        for item in list'
-                          if item.is_special
-                            SpecialComponent data=item
-                          end
+                    @test IonicEfus.codegen_string(
+                        """
+                        if condition1'
+                          Container
+                            for item in list'
+                              if item.is_special
+                                SpecialComponent data=item
+                              end
+                            end
+                        else
+                          Label text="Nothing to show"
                         end
-                    else
-                      Label text="Nothing to show"
-                    end
-                    """) isa String
+                        """
+                    ) isa String
                 end
             end
         end
@@ -109,94 +123,115 @@ using Test
             @testset "Reactive assignment and usage" begin
                 @test IonicEfus.codegen_string("Comp value=(my_var' = 5; my_var' * 2)") isa String
             end
+            @testset "Trailing comma and empty vectors" begin
+                @test IonicEfus.codegen_string("Comp value=[] ama=[4,]") isa String
+            end
         end
 
         @testset "Blocks and Snippets" begin
             @testset "Component with complex begin block" begin
-                @test IonicEfus.codegen_string("""
-                MyComponent value=begin
-                  x = calculate_something(a', b')
-                  if x > 10
-                    :big
-                  else
-                    :small
-                  end
-                end
-                """) isa String
+                @test IonicEfus.codegen_string(
+                    """
+                    MyComponent value=begin
+                      x = calculate_something(a', b')
+                      if x > 10
+                        :big
+                      else
+                        :small
+                      end
+                    end
+                    """
+                ) isa String
             end
 
             @testset "Snippet with multiple parameters" begin
-                @test IonicEfus.codegen_string("""
-                MyComponent
-                  do item::String, index::Int
-                    Label text=(index + \": \" + item)
-                  end
-                """) isa String
+                @test IonicEfus.codegen_string(
+                    """
+                    MyComponent
+                      do item::String, index::Int
+                        Label text=(index + \": \" + item)
+                      end
+                    """
+                ) isa String
             end
 
             @testset "Julia Block Statements" begin
                 @testset "Simple Julia block" begin
-                    @test IonicEfus.codegen_string("""
-                    MyComponent
-                      (println("Hello from Julia"))
-                    """) isa String
+                    @test IonicEfus.codegen_string(
+                        """
+                        MyComponent
+                          (println("Hello from Julia"))
+                        """
+                    ) isa String
                 end
 
                 @testset "Variable assignment and use in component" begin
-                    @test IonicEfus.codegen_string("""
-                    MyComponent
-                      (c = 5; Label(text=c))
-                    """) isa String
+                    @test IonicEfus.codegen_string(
+                        """
+                        MyComponent
+                          (c = 5; Label(text=c))
+                        """
+                    ) isa String
                 end
 
                 @testset "Multi-line Julia block" begin
-                    @test IonicEfus.codegen_string("""
-                    MyComponent
-                      (
-                        x = 10;
-                        y = 20;
-                        z = x + y;
-                        Label(text=z)
-                      )
-                    """) isa String
+                    @test IonicEfus.codegen_string(
+                        """
+                        MyComponent
+                          (
+                            x = 10;
+                            y = 20;
+                            z = x + y;
+                            Label(text=z)
+                          )
+                        """
+                    ) isa String
                 end
             end
         end
 
         @testset "Original complex test case" begin
-            @test IonicEfus.codegen_string("""
-            Label padding=[
-              (d' = c' * ama';d' / 4),
-              do c::Int
-                Button text=ama
-              end,
-              (ama', 4)
-            ]
-            """) isa String
+            @test IonicEfus.codegen_string(
+                """
+                Label padding=[
+                  (d' = c' * ama';d' / 4),
+                  do c::Int
+                    Button text=ama
+                  end,
+                  (ama', 4)
+                ]
+                """
+            ) isa String
         end
     end
 
     @testset "Invalid Syntax" begin
         @testset "Unterminated if" begin
-            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
-            if a > b
-              Label text="Missing end"
-            """)
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string(
+                """
+                if a > b
+                  Label text="Missing end"
+                """
+            )
         end
 
         @testset "Unterminated for" begin
-            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
-            for i in 1:10
-              Label text=(i)
-            """)
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string(
+                """
+                for i in 1:10
+                  Label text=(i)
+                """
+            )
         end
 
         @testset "Unterminated do block" begin
-            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
-            MyComponent
-              do
-                Label
-            """)
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string(
+                """
+                MyComponent
+                  do
+                    Label
+                """
+            )
         end
 
         @testset "Invalid component argument" begin
@@ -209,11 +244,13 @@ using Test
         end
 
         @testset "Unexpected 'else'" begin
-            @test_throws IonicEfus.EfusError IonicEfus.codegen_string("""
-            else
-              Label text="misplaced else"
-            end
-            """)
+            @test_throws IonicEfus.EfusError IonicEfus.codegen_string(
+                """
+                else
+                  Label text="misplaced else"
+                end
+                """
+            )
         end
 
         @testset "Unescaped quotes in string" begin
@@ -233,14 +270,14 @@ using Test
             r = IonicEfus.Reactant(5)
             c = IonicEfus.Catalyst()
             triggered_value = 0
-            
+
             reaction_fn = (reactant) -> triggered_value = IonicEfus.getvalue(reactant)
-            
+
             IonicEfus.catalyze!(c, r, reaction_fn)
-            
+
             IonicEfus.setvalue!(r, 15)
             @test triggered_value == 15
-            
+
             # Test inhibit!
             IonicEfus.inhibit!(c, r, reaction_fn)
             IonicEfus.setvalue!(r, 25)
@@ -258,17 +295,17 @@ using Test
         @testset "Reactor" begin
             a = IonicEfus.Reactant(10)
             b = IonicEfus.Reactant(20)
-            
+
             # Create a reactor that sums a and b
             sum_reactor = IonicEfus.Reactor(Int, () -> IonicEfus.getvalue(a) + IonicEfus.getvalue(b), nothing, [a, b])
-            
+
             @test IonicEfus.getvalue(sum_reactor) == 30
-            
+
             IonicEfus.setvalue!(a, 15)
             @test IonicEfus.isfouled(sum_reactor) == true
             @test IonicEfus.getvalue(sum_reactor) == 35
             @test IonicEfus.isfouled(sum_reactor) == false
-            
+
             IonicEfus.setvalue!(b, 25)
             @test IonicEfus.isfouled(sum_reactor) == true
             @test IonicEfus.getvalue(sum_reactor) == 40
@@ -280,21 +317,21 @@ using Test
         @testset "@reactor (Lazy Evaluation)" begin
             a = IonicEfus.Reactant(10)
             b = IonicEfus.Reactant(20)
-            
+
             # Assumes Ionic.translate is available and works
             # We are testing the macro expansion here
             lazy_reactor = @reactor a' + b'
-            
+
             @test lazy_reactor isa IonicEfus.Reactor{Int}
             @test IonicEfus.getvalue(lazy_reactor) == 30
             @test !IonicEfus.isfouled(lazy_reactor)
 
             IonicEfus.setvalue!(a, 15)
-            
+
             # Should be fouled, but value should not have updated yet
             @test IonicEfus.isfouled(lazy_reactor)
-            @test lazy_reactor.value == 30 
-            
+            @test lazy_reactor.value == 30
+
             # Now, getvalue should trigger the update
             @test IonicEfus.getvalue(lazy_reactor) == 35
             @test !IonicEfus.isfouled(lazy_reactor)
@@ -303,15 +340,15 @@ using Test
         @testset "@radical (Eager Evaluation)" begin
             a = IonicEfus.Reactant(10)
             b = IonicEfus.Reactant(20)
-            
+
             eager_reactor = @radical a' + b'
-            
+
             @test eager_reactor isa IonicEfus.Reactor{Int}
             @test IonicEfus.getvalue(eager_reactor) == 30
             @test !IonicEfus.isfouled(eager_reactor)
 
             IonicEfus.setvalue!(a, 15)
-            
+
             # Should have re-computed immediately
             @test !IonicEfus.isfouled(eager_reactor)
             @test IonicEfus.getvalue(eager_reactor) == 35
@@ -337,9 +374,9 @@ using Test
             writable_reactor = @reactor a' * 2 (v -> IonicEfus.setvalue!(a, v / 2))
 
             @test IonicEfus.getvalue(writable_reactor) == 10
-            
+
             IonicEfus.setvalue!(writable_reactor, 30)
-            
+
             # The reactor's value itself is lazy, so it's fouled
             @test IonicEfus.isfouled(writable_reactor)
             # But the setter should have fired, updating `a`

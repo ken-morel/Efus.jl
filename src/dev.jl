@@ -1,7 +1,7 @@
 """
     module Dev
 
-Development utilities.
+Development utilities to debug code.
 """
 module Dev
 

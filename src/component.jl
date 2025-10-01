@@ -7,6 +7,7 @@ export isdirty, dirty!
 
 The abstract type all efus components must subtype.
 e.g
+
 ```julia
 Base.@kwdef struct MyComponent <: AbstractComponent
     prop1::String = "default"
@@ -35,6 +36,9 @@ function dirty! end
 
 Receives a vector where it filters out all non-`AbstractComponent` entries,
 and splats any nested vectors, returning a flat vector of `AbstractComponent`s.
+
+This function is used by generated code on the children of a componentcall, 
+when it is noticed they contain a codeblock or condition.
 """
 function cleanchildren(children::Vector)::Vector{AbstractComponent}
     children isa Vector{<:AbstractComponent} && return children

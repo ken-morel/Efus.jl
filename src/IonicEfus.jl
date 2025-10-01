@@ -1,5 +1,9 @@
 """
-IonicEfus.jl is a Julia module that provides the Efus language, a pug-like declarative syntax for building reactive components. It features an 'ionic' reactive programming model, allowing for the creation of dynamic and modular systems that compile directly to native Julia code.
+IonicEfus.jl is a Julia module that provides the Efus language,
+a pug-like declarative syntax for building reactive components.
+It features an 'ionic' reactive programming model, allowing
+for the creation of dynamic and modular systems that compile
+directly to native Julia code.
 """
 module IonicEfus
 
