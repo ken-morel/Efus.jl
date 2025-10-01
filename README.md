@@ -80,7 +80,7 @@ Frame
 
 The for generates a list comprehension and an if statement
 to check if the iterable is `empty` when given an else block.
-And some more code
+And Efus.cleanchildren is called to remove any `nothing` and
 flattens the children list before passing it to the parent.
 
 ### Generator macros
@@ -191,7 +191,7 @@ computer or set via methods to other reactants or not.
 Efus uses that internally if you create an [ionic]
 expression like `("I love" + react')`.
 
-```
+```julia
 c = 5
 r = Reactor{Int}(
   () -> c,
