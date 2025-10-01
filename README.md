@@ -6,7 +6,7 @@
 > This is not very stable, but it works.
 
 Efus.jl julia module combines a language parser for `efus` language
-(created with the module), converter for `ionic`, and abit more
+(created with the module), converter for [ionic], and abit more
 to help you build component based ui's using an easy to read
 language with concepts idiomatic to julia.
 
@@ -63,7 +63,7 @@ even more.
 
 efus suports if and for control flow structures, each with meant
 to capture the most of the usual julia syntax.
-For expressions, efus allows any `ionic` expression, which
+For expressions, efus allows any [ionic] expression, which
 will be translated to julia.
 
 ```julia
@@ -188,7 +188,7 @@ denature!(catalyst)
 A reactor is an `AbstractReactive{T}` subtype which aim
 to permit you create reactive objects whose value are
 computer or set via methods to other reactants or not.
-Efus uses that internally if you create an ionic
+Efus uses that internally if you create an [ionic]
 expression like `("I love" + react')`.
 
 ```
@@ -210,7 +210,7 @@ and will sibscribe and update when they change.
 
 ## Ionic Syntax and Utilities
 
-Efus adds tools mini language it calls `ionic` it is actually julia
+Efus adds tools mini language it calls [ionic] it is actually julia
 code, where you don't have the burden of calling getvalue and setvalue!
 Again. You can directly assign or use the reactives if you prepend
 their name or getter with an apostrophe(`'`).
@@ -227,7 +227,7 @@ Label(text = getvalue(my_reactive_var) * " is active!")
 ### `@ionic` Macro
 
 The `@ionic` macro is a low-level utility that translates Efus's
-ionic syntax into standard Julia code, specifically `getvalue`
+[ionic] syntax into standard Julia code, specifically `getvalue`
 and `setvalue!` calls.
 
 ```julia
