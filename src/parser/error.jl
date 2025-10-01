@@ -57,7 +57,7 @@ function Base.showerror(io::IO, e::EfusSyntaxError)
     print(io, ":\n")
 
     if !isnothing(e.parser)
-        ln = split(e.location.file, "\n")[e.location.start[1]]
+        ln = split(e.parser.text, "\n")[e.location.start[1]]
 
         print(io, ln, "\n")
 
