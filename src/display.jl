@@ -76,16 +76,16 @@ function show_ast(io::IO, expr::Ast.Expression; indent = 0, context = IdDict())
     end
 end
 
-function show_ast(io::IO, fuss::Ast.Fuss; indent = 0, context = IdDict())
+function show_ast(io::IO, ionic::Ast.Ionic; indent = 0, context = IdDict())
     print(io, " "^indent)
-    printstyled(io, "Fuss", color = :blue)
+    printstyled(io, "Ionic", color = :blue)
 
-    if fuss.type !== nothing
+    if ionic.type !== nothing
         printstyled(io, " type=", color = :light_black)
-        printstyled(io, fuss.type, color = :cyan)
+        printstyled(io, ionic.type, color = :cyan)
     end
 
-    expr_str = string(fuss.expr)
+    expr_str = string(ionic.expr)
     if occursin('\n', expr_str)
         # Drop the final newline from the header line to start the multiline block
         println(io)

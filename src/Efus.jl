@@ -8,6 +8,7 @@ include("./component.jl")
 
 
 include("./Ast.jl")
+include("./Ionic.jl")
 
 
 include("./objects.jl")

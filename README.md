@@ -45,25 +45,37 @@ ast(prints directly, does not return a string).
 ```julia
 Efus.codegen_string(
     """
-    Frame padding=3x3
-      Scale size=20x20 value=4 val=(hello' * "friend") args...
+    Frame padding=(3, 3)
+      Scale size=(20, 20) value=4 val=(hello' * "friend") args...
     """, true
 ) |> println
 
 Ast.Block
   ComponentCall(:Frame)
     Arguments:
-      Argument(:padding, value=Main.Efus.Size{Int64})
+      Argument name=:padding
+        Value:
+          Vect
+            Numeric val=3
+            Numeric val=3
     Children:
       ComponentCall(:Scale)
         Arguments:
-          Argument(:size, value=Main.Efus.Size{Int64})
-          Argument(:value, value=4)
-          Argument(:val, value=hello' * "friend")
+          Argument name=:size
+            Value:
+              Vect
+                Numeric val=20
+                Numeric val=20
+          Argument name=:value
+            Value:
+              Numeric val=4
+          Argument name=:val
+            Value:
+              Ionic expr=(hello' * "friend")
         Splats:
-          Splat(:args)
-Frame(padding = Main.Efus.Size{Int64}(3, 3, nothing), children =
-[Scale(args..., size = Main.Efus.Size{Int64}(20, 20, nothing),
+          Splat name=:args
+Frame(padding = (3, 3), children =
+[Scale(args..., size = (20, 20),
 value = 4, val = (Reactor){Any}((()->getvalue(hello) * "friend"),
 nothing, [hello]))])
 ```
@@ -223,40 +235,106 @@ a reactor with it as dependency.
 Reactor){Any}((()->getvalue(hello) * "friend"), nothing, [hello])
 ```
 
-### Efus values
+## Ionic Syntax and Utilities
 
-Efus accepts few kind of values
+Efus provides a powerful reactive programming model, centered around the 'ionic' syntax (ending a variable name with `'`) and a set of utility macros to simplify working with reactive values.
 
-#### Julia literals
+### Ionic Syntax (`'`)
 
-```julia
-Button text="Hello" symbol=:center callback=print c=4.5
-```
-
-Supports Int64, Float64, Symbols, Strings.
-
-#### Julia expressions
-
-As you've seen earlier efus permits you to write julia
-exporessions in () quotes. or simply to end a variable name
-with a `'`. The Reactivity Sigil!(I learnt a new word!).
-Efus checks, if it sees such a sigil in the code, it
-generates a Reactor(), with no getter and the name
-as dependency, but if it finds none, it simply
-quotes the expression in the generated code.
+The apostrophe (`'`) at the end of a variable name signifies an "ionic expression." This indicates that the variable is a reactive value (an `AbstractReactive` subtype like `Reactant` or `Reactor`), and Efus will automatically expand it to `getvalue(variable)` when used in an expression, or `setvalue!(variable, ...)` when used in an assignment.
 
 ```julia
-Button code=("Constant expression") name=reactive' text=("A reactor " * here')
+# In Efus code:
+Label text=(my_reactive_var' * " is active!")
+
+# Expands to something like:
+Label(text = getvalue(my_reactive_var) * " is active!")
 ```
 
-#### Abit more
+### `@ionic` Macro
 
-- **Efus.Size**: writes like `12x45`, or `585.48x485.5px`. The object
-  has .x, .y and .unit attributes.
-- **Efus.Geometry**: This is abit more than size. It constitutes
-  of parts like `183x38.45px`, linked via `+` or `-`.
-  e.g `+12px+23px+34x48px`. The structure has .signs, .parts, and .units
-  array which store vectors of characters, lists of numbers or symbols|nothing respectively.
+The `@ionic` macro is a low-level utility that translates Efus's ionic syntax into standard Julia code, specifically `getvalue` and `setvalue!` calls. It's primarily used internally by other macros but can be useful for debugging or when you need precise control over the translation.
+
+```julia
+using Efus
+my_reactant = Efus.Reactant(10)
+
+# Translates the ionic expression into Julia code
+julia_expr = @macroexpand Efus.@ionic my_reactant' * 2
+# julia_expr will be something like: :(Efus.getvalue(my_reactant) * 2)
+
+result = @ionic my_reactant' * 2
+@test result == 20
+
+@ionic my_reactant' = 50
+@test Efus.getvalue(my_reactant) == 50
+```
+
+### `@radical` Macro
+
+The `@radical` macro is designed to create a piece of Julia code that automatically re-evaluates whenever any of its reactive dependencies change. It's conceptually similar to reactive statements in frameworks like Svelte (e.g., `$: {}` or `$effect`). The primary goal is the side-effect of re-evaluation, making it ideal for triggering updates, logging, or performing computations that need to stay synchronized with reactive state.
+
+Internally, `@radical` creates an _eagerly evaluated_ `Reactor`. While it returns this `Reactor` object, its main purpose is to establish the reactive link that drives the re-evaluation.
+
+```julia
+using Efus
+a = Efus.Reactant(1)
+b = Efus.Reactant(2)
+
+# This block will re-run whenever `a` or `b` changes
+my_effect = @radical begin
+    sum_val = a' + b'
+    println("Current sum: ", sum_val)
+    sum_val # The value of the radical itself
+end
+
+# Initial run
+# Output: Current sum: 3
+@test Efus.getvalue(my_effect) == 3
+
+Efus.setvalue!(a, 10)
+# Output: Current sum: 12 (re-evaluated automatically)
+@test Efus.getvalue(my_effect) == 12
+
+Efus.setvalue!(b, 20)
+# Output: Current sum: 30 (re-evaluated automatically)
+@test Efus.getvalue(my_effect) == 30
+```
+
+### `@reactor` Macro
+
+The `@reactor` macro provides a convenient and type-inferring way to create a `Reactor` object. A `Reactor` is a reactive value whose content is derived from other reactive (or non-reactive) sources. By default, `@reactor` creates a _lazily evaluated_ `Reactor`, meaning its value is only re-computed when explicitly requested via `getvalue` after its dependencies have changed.
+
+This macro simplifies the creation of derived reactive state, allowing you to define complex reactive computations with a clean syntax.
+
+```julia
+using Efus
+x = Efus.Reactant(5)
+y = Efus.Reactant(10)
+
+# Create a lazy reactor that computes x' * y'
+product_reactor = @reactor x' * y'
+
+@test product_reactor isa Efus.Reactor{Int}
+@test Efus.getvalue(product_reactor) == 50
+
+Efus.setvalue!(x, 2)
+# The reactor is now fouled, but its value hasn't updated yet
+@test Efus.isfouled(product_reactor)
+@test product_reactor.value == 50 # Still the old value
+
+@test Efus.getvalue(product_reactor) == 20 # Forces re-computation
+@test !Efus.isfouled(product_reactor)
+
+# You can also provide a setter function
+counter = Efus.Reactant(0)
+increment_reactor = @reactor counter' + 1 (val -> Efus.setvalue!(counter, val - 1))
+
+@test Efus.getvalue(increment_reactor) == 1
+Efus.setvalue!(increment_reactor, 5)
+@test Efus.getvalue(counter) == 4
+@test Efus.getvalue(increment_reactor) == 5
+```
 
 Well, that's what it is to try to have a handwritten documentation I guess. I'm really
 bad at it :-(. Whatever, hope you have a fun time!

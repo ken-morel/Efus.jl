@@ -65,24 +65,21 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     const catalyst::Catalyst
     value::T
     fouled::Bool
+    eager::Bool
 
-    Reactor{T}(getter::REACTOR_GETTER{T}, setter::Union{REACTOR_SETTER{T}, Nothing}, val::T) where {T} = new{T}(
-        getter,
-        setter,
-        [],
-        [],
-        Catalyst(),
-        val,
-        false
-    )
-    function Reactor{T}(getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive})::Reactor{T} where {T}
+    function Reactor{T}(
+            getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive};
+            eager::Bool = false, initial = nothing,
+        )::Reactor{T} where {T}
         getter = REACTOR_GETTER{T}(getter)
         setter = if !isnothing(setter)
             REACTOR_SETTER{T}(setter)
         end
-        r = Reactor{T}(getter, setter, getter())
+        initial = isnothing(initial) ? getter() : convert(T, initial)
+        r = new{T}(getter, setter, [], [], Catalyst(), initial, false, eager)
         callback = (_) -> begin
             r.fouled = true
+            eager && getvalue(r)
             notify!(r)
         end
         for reactant in content
@@ -91,7 +88,19 @@ mutable struct Reactor{T} <: AbstractReactive{T}
         end
         return r
     end
-    Reactor(::Type{T}, getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive}) where {T} = Reactor{T}(getter, setter, content)
+    Reactor(
+        ::Type{T}, getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive};
+        eager::Bool = false,
+    ) where {T} = Reactor{T}(getter, setter, content; eager)
+
+    function Reactor(
+            getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive};
+            eager::Bool = false,
+        )
+        initial = getter()
+        type = typeof(initial)
+        return Reactor{type}(getter, setter, content; eager, initial)
+    end
 end
 
 isfouled(r::Reactor) = r.fouled
@@ -110,9 +119,9 @@ function getvalue(r::Reactor{T})::T where {T}
     end
     return r.value
 end
-function setvalue!(r::Reactor{T}, new_value::T) where {T}
+function setvalue!(r::Reactor{T}, new_value) where {T}
     r.fouled = true
-    isnothing(r.setter) || r.setter(new_value)
+    isnothing(r.setter) || r.setter(convert(T, new_value))
     return
 end
 
@@ -135,8 +144,8 @@ function getvalue(r::Reactant{T})::T where {T}
     return r.value
 end
 
-function setvalue!(r::Reactant{T}, new_value::T) where {T}
-    r.value = new_value
+function setvalue!(r::Reactant{T}, new_value) where {T}
+    r.value = convert(T, new_value)
     for reaction in copy(r.reactions)
         reaction.callback(r)
     end

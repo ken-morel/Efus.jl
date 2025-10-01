@@ -1,4 +1,4 @@
-export @efus_str
+export @efus_str, parseandgenerate, @radical, @reactor, @ionic
 
 function parseandgenerate(code::String; file::String = "<efus_macro>")
     parser = Parser.EfusParser(code, file)
@@ -16,4 +16,36 @@ macro efus_str(code::String)
         $(LineNumberNode(__source__.line, __source__.file))
         $(esc(generated))
     end
+end
+
+macro ionic(expr)
+    return Ionic.translate(expr)[1]
+end
+
+macro reactor(expr, setter = nothing, usedeps = nothing)
+    getter, ionicdeps = Ionic.translate(expr)
+    deps = something(usedeps, Expr(:vect, ionicdeps...))
+    return esc(
+        :(
+            $Reactor(
+                () -> $getter,
+                $setter,
+                $deps
+            )
+        )
+    )
+end
+macro radical(expr, usedeps = nothing)
+    getter, ionicdeps = Ionic.translate(expr)
+    deps = something(usedeps, Expr(:vect, ionicdeps...))
+    return esc(
+        :(
+            $Reactor(
+                () -> $getter,
+                nothing,
+                $deps;
+                eager = true
+            )
+        )
+    )
 end

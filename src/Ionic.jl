@@ -1,4 +1,8 @@
-function fussubstitute(orig::Any)
+module Ionic
+
+using ..Efus
+
+function translate(orig::Any)::Tuple{Any, Vector{Symbol}}
     !isa(orig, Expr) && return orig, []
     expr = copy(orig)
     todo = Set{Expr}([expr])
@@ -28,19 +32,4 @@ function fussubstitute(orig::Any)
     return expr, dependencies
 end
 
-function generate(fuss::Ast.Fuss)
-    expr, dependencies = fussubstitute(fuss.expr)
-    type = something(fussubstitute(fuss.type)[1], Any)
-
-    return if isempty(dependencies)
-        Expr(:(::), expr, type)
-    else
-        quote
-            $(Efus.Reactor){$type}(
-                () -> $expr,
-                nothing,
-                $(Expr(:vect, dependencies...))
-            )
-        end
-    end
 end
