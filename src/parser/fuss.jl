@@ -34,12 +34,12 @@ function parse_fuss!(p::EfusParser)::Union{Ast.Fuss, AbstractParseError, Nothing
                 !inbounds(p) || p.text[p.index] != ':' && return EfusSyntaxError("Invalid type assert", current_char(p))
                 p.index += 1
                 try
-                    code = Meta.parse(@zig! skip_julia!(p, r" |\n|,"))
+                    type_expr = Meta.parse(@zig! skip_julia!(p, r" |\n|,"))
                 catch e
                     return EfusSyntaxError("Invalid type in type assert: $(e.msg)", current_char(p))
                 else
                     p.index -= 1
-                    code
+                    type_expr
                 end
             end
 

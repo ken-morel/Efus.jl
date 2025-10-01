@@ -23,7 +23,6 @@ function parse_vect!(p::EfusParser)::Union{Ast.Vect, AbstractParseError, Nothing
                 return EfusSyntaxError("Unterminated vector", current_char(p, -1))
             end
             if p.text[p.index] == ','
-                push!(values, nextvalue)
                 p.index += 1
                 continue
             elseif p.text[p.index] == ']'
