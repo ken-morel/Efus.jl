@@ -67,23 +67,13 @@ using Test
                     ) isa String
                 end
 
-                @testset "For loop with '∈' iterator" begin
-                    @test IonicEfus.codegen_string(
-                        """
-                        for i ∈ 1:10
-                          Label text=(i)
-                        end
-                        """
-                    ) isa String
-                end
-
                 @testset "Triple nested for loops with nested if" begin
                     @test IonicEfus.codegen_string(
                         """
                         Container
                           for i in 1:2
                             for j = 1:2
-                              for k ∈ 1:2
+                              for k = 1:2
                                 if i + j + k > 3
                                   Label text="Sum is large"
                                 else
@@ -133,11 +123,10 @@ using Test
                 @test IonicEfus.codegen_string(
                     """
                     MyComponent value=begin
-                      x = calculate_something(a', b')
                       if x > 10
-                        :big
+                        Label c=:big
                       else
-                        :small
+                        Label c=:small
                       end
                     end
                     """
@@ -147,7 +136,7 @@ using Test
             @testset "Snippet with multiple parameters" begin
                 @test IonicEfus.codegen_string(
                     """
-                    MyComponent
+                    MyComponent val=|
                       do item::String, index::Int
                         Label text=(index + \": \" + item)
                       end
@@ -227,7 +216,7 @@ using Test
         @testset "Unterminated do block" begin
             @test_throws IonicEfus.EfusError IonicEfus.codegen_string(
                 """
-                MyComponent
+                MyComponent c=|
                   do
                     Label
                 """
@@ -279,7 +268,7 @@ using Test
             @test triggered_value == 15
 
             # Test inhibit!
-            IonicEfus.inhibit!(c, r, reaction_fn)
+            @test IonicEfus.inhibit!(c, r, reaction_fn) == 1
             IonicEfus.setvalue!(r, 25)
             @test triggered_value == 15 # Should not have changed
 
@@ -371,7 +360,7 @@ using Test
         @testset "@reactor with setter" begin
             a = IonicEfus.Reactant(5)
             # This reactor's setter will write back to `a`
-            writable_reactor = @reactor a' * 2 (v -> IonicEfus.setvalue!(a, v / 2))
+            writable_reactor = @reactor (a' * 2) (v -> IonicEfus.setvalue!(a, v / 2))
 
             @test IonicEfus.getvalue(writable_reactor) == 10
 

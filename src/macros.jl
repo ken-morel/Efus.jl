@@ -1,4 +1,4 @@
-export @efus_str, parseandgenerate
+export @efus_str, parseandgenerate, @reactor, @ionic, @radical
 
 
 """

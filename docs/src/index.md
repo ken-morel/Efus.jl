@@ -1,4 +1,4 @@
-# IonicEfus's Documentation
+# IonicEfuss Documentation
 
 ```@contents
 Pages = ["index.md"]
@@ -6,6 +6,7 @@ Pages = ["index.md"]
 
 [![CI](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml)
 
+> [!NOTE]
 > This is not very stable, but it works.
 
 ## The language

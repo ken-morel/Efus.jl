@@ -233,11 +233,11 @@ function inhibit! end
 function inhibit!(catalyst::Catalyst, reactant::AbstractReactive, callback::Union{Function, Nothing} = nothing)
     reactions_to_inhibit = if isnothing(callback)
         filter(catalyst.reactions) do sub
-            sub.reactant === reactant
+            sub.reactant == reactant
         end
     else
         filter(catalyst.reactions) do sub
-            sub.reactant === reactant && sub.callback.func === callback
+            sub.reactant == reactant && sub.callback == callback
         end
     end
 
