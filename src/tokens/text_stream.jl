@@ -174,3 +174,8 @@ eol(ts::TextStream) = eof(ts) || peek(ts) === '\n'
 
 "Get the current loc (ln, col) tuple of the text stream"
 loc(ts::TextStream) = Loc(ts.ln, ts.col)
+
+"Get if the text stream is at the begining of the file"
+bof(ts::TextStream) = isnothing(ts.prev)
+"Get if the stream is at the begining of a line, or of the file"
+bol(ts::TextStream) = bof(ts) || ts.prev === '\n'
