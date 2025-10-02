@@ -1,16 +1,33 @@
+"""
+    module Parser
+
+Holds parser utilities for parsing efus string 
+literal into Ast nodes.
+"""
 module Parser
 export EfusParser, try_parse!, parse!
 export efus_parse, try_parse
 
-using ...Efus: EfusError
+using ...IonicEfus: EfusError
 import ..Ast
 
+"""
+    mutable struct EfusParser
+
+Efus language parser, supports 
+the parse! and try_parse!.
+"""
 mutable struct EfusParser
     text::String
     file::String
     index::UInt
     stack::Vector{Tuple{Int, Ast.AbstractStatement}}
 
+    """
+       EfusParser(text::String, file::String)
+
+       Creates a parser from string and given file name.
+    """
     EfusParser(text::String, file::String) = new(text * "\n", file, 1, [(-1, Ast.Block([]))])
 end
 
@@ -31,6 +48,12 @@ include("./expression.jl")
 include("./snippet.jl")
 
 
+"""
+    function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
+
+Parses the code in the parser starting from it's current index,
+returning a code block or an error.
+"""
 function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
     root_block = p.stack[1][2]
     @assert root_block isa Ast.Block "Parser stack was not initialized with a root Block."
@@ -56,10 +79,24 @@ function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
     end
     return root_block
 end
+
+"""
+    function efus_parse(code::String, file::String = "<string>")::Union{Ast.Block, AbstractParseError}
+
+A utility which parses the given code.
+"""
 function efus_parse(code::String, file::String = "<string>")::Union{Ast.Block, AbstractParseError}
     return parse!(EfusParser(code, file))
 end
-function try_parse!(p::EfusParser)
+
+
+"""
+    function try_parse!(p::EfusParser)::Ast.Block
+
+A helper which attempts to parse the parser content, 
+but throws the error returned in case of failure.
+"""
+function try_parse!(p::EfusParser)::Ast.Block
     content = parse!(p)
     if content isa EfusError
         throw(content)
@@ -67,13 +104,22 @@ function try_parse!(p::EfusParser)
     return content
 end
 
+"""
+    function try_parse(code::String, file::String = "<string>")
+
+A helper for try_parse! which accepts a string.
+"""
 function try_parse(code::String, file::String = "<string>")
     return try_parse!(EfusParser(code, file))
 end
+
+"""
+    function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
+
+Parses the given code in a new parser, created from the current parser.
+"""
 function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
-    code = parse!(
-        EfusParser(code, p.file * "; " * loc),
-    )
+    code = efus_parse(code, p.file * "; " * loc)
     return if code isa AbstractParseError
         posindices = (getindex(p, code.location.start), getindex(p, code.location.stop)) .+ starting
         positions = current_char.((p,), posindices .- p.index)
@@ -90,6 +136,7 @@ function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
         code
     end
 end
+
 getindex(p::EfusParser, loc::NTuple{2, UInt})::UInt =
     (0, findall(==('\n'), p.text)...)[loc[1]] + loc[2]
 

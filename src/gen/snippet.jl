@@ -11,6 +11,6 @@ function generate(snippet::Ast.Snippet)
         Expr(:(::), name, type)
     end
     fn = Expr(:->, Expr(:tuple, params...), Expr(:block, generate(snippet.content, true)))
-    typeassert = Expr(:curly, Efus.Snippet, Expr(:curly, :Tuple, types...))
+    typeassert = Expr(:curly, IonicEfus.Snippet, Expr(:curly, :Tuple, types...))
     return Expr(:call, typeassert, fn)
 end

@@ -20,10 +20,8 @@ function generate(node::Ast.IfStatement)
     return result
 end
 
-# just to see what it will look like, and for debugging :-)
 function generate(node::Ast.ForStatement)
-    name = gensym("efus")
-
+    name = gensym("__efus_for__")
     return if isnothing(node.elseblock)
         quote
             [$(generate(node.block)) for $(generate(node.item)) in $(generate(node.iterator))]

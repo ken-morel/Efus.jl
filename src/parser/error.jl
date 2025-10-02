@@ -38,6 +38,12 @@ macro zig!r(expression::Union{Expr, Symbol})
 end
 
 
+"""
+    struct EfusSyntaxError <: AbstractParseError
+
+A parse syntax error returned by the parser methods.
+Stores location, message and the ogirinal parser.
+"""
 struct EfusSyntaxError <: AbstractParseError
     parser::Union{Nothing, EfusParser}
     message::String
