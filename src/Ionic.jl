@@ -27,18 +27,23 @@ function translate(orig::Any)::Tuple{Any, Vector}
             if current.args[1] isa Expr && current.args[1].head == Symbol("'")
                 current.args = current.args[1].args
                 # double quote escape
+                # check inside quote itself
+                current.args[1] isa Expr && push!(todo, current.args[1])
                 continue
             end
             push!(dependencies, current.args[1])
             current.head = :call
             current.args = [IonicEfus.getvalue, current.args[1]]
-
+            current.args[1] isa Expr && push!(todo, current.args[1])
         elseif current.head == Symbol("=") && length(current.args) == 2  && current.args[1] isa Expr && current.args[1].head == Symbol("'")
             # it is an assignment to a reactive variable
             reactive_var = current.args[1].args[1]
             value_expr = current.args[2]
             current.head = :call
             current.args = [IonicEfus.setvalue!, reactive_var, value_expr]
+
+            reactive_var isa Expr && push!(todo, reactive_var)
+            value_expr isa Expr && push!(todo, value_expr)
         else
             push!.((todo,), filter(x -> x isa Expr, current.args))
         end

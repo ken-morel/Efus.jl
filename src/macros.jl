@@ -38,7 +38,7 @@ Converts the given `ionic` expression to
 the julia getter code.
 """
 macro ionic(expr)
-    return IonicEfus.Ionic.translate(expr)[1]
+    return esc(IonicEfus.Ionic.translate(expr)[1])
 end
 
 """
