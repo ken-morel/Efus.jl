@@ -26,6 +26,9 @@ const ReactiveCallback{T} = FunctionWrapper{Any, Tuple{<:AbstractReactive{T}}}
 """
 Setvalue set's the value of a given AbstractReactive{T}
 object.
+It accepts a `notify` optional keyword argument which if 
+set to false, prevents it from notifying subscribed values 
+about it's change
 """
 function setvalue! end
 
@@ -86,7 +89,7 @@ mutable struct Reactor{T} <: AbstractReactive{T}
         callback = (_) -> begin
             r.fouled = true
             eager && getvalue(r)
-            notify!(r)
+            notify(r)
         end
         for reactant in content
             push!(r.content, reactant)
@@ -125,12 +128,26 @@ function getvalue(r::Reactor{T})::T where {T}
     end
     return r.value
 end
-function setvalue!(r::Reactor{T}, new_value) where {T}
+function setvalue!(r::Reactor{T}, new_value; notify::Bool = true) where {T}
+    if isnothing(r.setter)
+        r.value = convert(T, new_value)
+    else
+        r.setter(convert(T, new_value))
+    end
     r.fouled = true
-    isnothing(r.setter) || r.setter(convert(T, new_value))
+    notify && for reaction in copy(r.reactions)
+        reaction.callback(r)
+    end
     return
 end
 
+"""
+    mutable struct Reactant{T} <: AbstractReactive{T}
+
+Reactants are the builtin base for reactivity. They 
+contain a value of type `T`, a list of reactions and 
+notified all catalysts when it's setvalue! is called
+"""
 mutable struct Reactant{T} <: AbstractReactive{T}
     value::T
     reactions::Vector{AbstractReaction{T}}
@@ -139,6 +156,15 @@ mutable struct Reactant{T} <: AbstractReactive{T}
     Reactant(value::T) where {T} = new{T}(value, [])
 end
 
+"""
+    struct Reaction{T} <: AbstractReaction{T}
+
+A reaction are internaly used by catalysts and 
+instances of [AbstractReactive](@ref).
+They store the catalyst, reactive and callback.
+They are returned when [catalyze!](@ref) is called 
+and can be [inhibit!](@ref)-ed.
+"""
 struct Reaction{T} <: AbstractReaction{T}
     reactant::AbstractReactive{T}
     catalyst::Catalyst
@@ -146,18 +172,42 @@ struct Reaction{T} <: AbstractReaction{T}
 end
 
 
-function getvalue(r::Reactant{T})::T where {T}
-    return r.value
-end
+getvalue(r::Reactant{T}) where {T} = r.value::T
 
-function setvalue!(r::Reactant{T}, new_value) where {T}
+function setvalue!(r::Reactant{T}, new_value; notify::Bool = true) where {T}
     r.value = convert(T, new_value)
-    for reaction in copy(r.reactions)
+    notify && for reaction in copy(r.reactions)
         reaction.callback(r)
     end
     return r
 end
 
+
+"""
+    function catalyze!(c::Catalyst, r::AbstractReactive{T}, callback::Function)::Reaction{T} where {T}
+    catalyze!(fn::Function, c::Catalyst, r::AbstractReactive{T}) where {T}
+
+Subscribes and calls `callback` everytime `r` notifies.
+r should be a function which takes a single argument, the 
+AbstractReactive instance which was subscribed, and 
+it can then call [getvalue](@ref), on it.
+Not that this should preferably not be done here, 
+since the getvalue may trigger a computation, usualy
+you may instead want to notify ui components that 
+something changed, and compute the result only 
+when updating, so as to limit unnecesarry computations.
+
+## Example
+
+```julia
+c = Catalyst()
+r = Reactant(1)
+catalyze!(c, r) do reactant
+    println(getvalue(reactant))
+end
+```
+"""
+function catalyze! end
 
 function catalyze!(c::Catalyst, r::AbstractReactive{T}, callback::Function)::Reaction{T} where {T}
     wrapped_callback = ReactiveCallback{T}(callback)
@@ -171,26 +221,30 @@ end
 
 catalyze!(fn::Function, c::Catalyst, r::AbstractReactive{T}) where {T} = catalyze!(c, r, fn)
 
-function inhibit!(catalyst::Catalyst, reactant::AbstractReactive, callback::Function)
-    reactions_to_inhibit = filter(catalyst.reactions) do sub
-        sub.reactant === reactant && sub.callback.func === callback
+"""
+    function inhibit!(catalyst::Catalyst, reactant::AbstractReactive, callback::Union{Function, Nothing} = nothing)
+
+Searches and inhibit all reactions between the catalyst and reactant, if a callback is 
+passed, it checks for a reaction which has that callback.
+returns the number of inhibited reactions.
+"""
+function inhibit! end
+
+function inhibit!(catalyst::Catalyst, reactant::AbstractReactive, callback::Union{Function, Nothing} = nothing)
+    reactions_to_inhibit = if isnothing(callback)
+        filter(catalyst.reactions) do sub
+            sub.reactant === reactant
+        end
+    else
+        filter(catalyst.reactions) do sub
+            sub.reactant === reactant && sub.callback.func === callback
+        end
     end
 
     for reaction in reactions_to_inhibit
         inhibit!(reaction)
     end
-    return
-end
-
-function inhibit!(catalyst::Catalyst, reactant::AbstractReactive)
-    reactions_to_inhibit = filter(catalyst.reactions) do sub
-        sub.reactant === reactant
-    end
-
-    for reaction in reactions_to_inhibit
-        inhibit!(reaction)
-    end
-    return
+    return length(reactions_to_inhibit)
 end
 
 """
@@ -219,7 +273,8 @@ function denature!(c::Catalyst)
     return
 end
 
-function notify!(r::Reactor)
+
+function notify(r::Reactor)
     for reaction in copy(r.reactions)
         reaction.callback(r)
     end
@@ -230,7 +285,10 @@ end
 """
     const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
-A builtin helper to filter for reactive values.
+Use this in cases you deal with values like component
+arguments which may be an instance of abstract reactive.
+
+You can then call resolve() on them which 
 """
 const MayBeReactive{T} = Union{AbstractReactive{T}, T}
 
@@ -251,14 +309,13 @@ public converter
 
 
 """
-    function resolve(::Type{T}, r::MayBeReactive) where {T}
+    resolve(r::MayBeReactive{T}) where {T}
+    resolve(::Type{T}, r::MayBeReactive) where {T}
 
-Resolve returns r if it is of type T, else calls getvalue on it.
+Resolve returns r if it is of type T, else calls getvalue on it,
+use to get the actual value of a [MayBeReactive](@ref).
 """
-function resolve(::Type{T}, r::MayBeReactive) where {T}
-    return if r isa T
-        r
-    else
-        getvalue(r)
-    end
-end
+function resolve end
+
+resolve(r::MayBeReactive{T}) where {T} = resolve(T, r)
+resolve(::Type{T}, r::MayBeReactive) where {T} = r isa T ? r : getvalue(r)

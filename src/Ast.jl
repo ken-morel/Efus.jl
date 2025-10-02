@@ -38,8 +38,8 @@ end
 """
     struct Numeric <: AbstractValue
 
-Holds a numeric value, returned by [Meta.parse](@ref).
-Can be a plain subtype of [Number](@ref) or 
+Holds a numeric value, returned by `Meta.parse`.
+Can be a plain subtype of `Number` or 
 an expression.
 
 ## Examples
@@ -164,6 +164,7 @@ Base.@kwdef struct Snippet <: AbstractValue
 end
 
 
+"The branch of an if statement, holds a condition and a code block"
 struct IfBranch
     condition::Union{Expression, Nothing}
     block::Block
@@ -173,8 +174,6 @@ end
     Base.@kwdef mutable struct IfStatement <: ControlFlow
 
 An efus if statement, containing a vector of [IfBranch](@ref).
-Every branch holds a `.condition`, whic may be nothing(for the 
-else block), and a `.block`.
 The expressions support ionic syntax.
 
 ## Examples

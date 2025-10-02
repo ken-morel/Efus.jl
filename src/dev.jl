@@ -27,10 +27,9 @@ Frame(children = [Label()])
 \"""
 ```
 """
-function codegen_string(code::String, showast::Bool = false)
+function codegen_string(code::String)
     parser = Parser.EfusParser(code, "<string>")
     ast = Parser.try_parse!(parser)
-    showast && show(stdout, MIME("text/plain"), ast)
     expr = Gen.generate(ast)
     pretty_expr = MacroTools.prettify(expr)
     return string(pretty_expr)

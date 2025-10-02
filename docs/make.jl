@@ -8,10 +8,12 @@ makedocs(;
         assets = [],
         highlights = ["yaml"],
         ansicolor = true,
+        edit_link = "dev",
     ),
     pages = [
         "index.md",
-        "Reference" => "reference/index.md",
+        "language.md",
+        "reference/index.md",
         "Examples" => [],
     ]
 )
