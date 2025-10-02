@@ -1,12 +1,26 @@
+"""
+    module Ionic
+
+Stores utility functions for processing ionic expressions.
+"""
 module Ionic
 
-using ..Efus
+using ..IonicEfus
 
-function translate(orig::Any)::Tuple{Any, Vector{Symbol}}
+"""
+    function translate(orig::Any)::Tuple{Any, Vector{Symbol}}
+
+Translate an ionic expression by replacing all occurrences of 
+`var'` with `IonicEfus.getvalue(var)` and all assignments to 
+`var'` = value` with `IonicEfus.setvalue!(var, value)` and 
+returning the new code and all dependencies.
+Where a double '' in gets translated to a single ' and ignored.
+"""
+function translate(orig::Any)::Tuple{Any, Vector}
     !isa(orig, Expr) && return orig, []
     expr = copy(orig)
     todo = Set{Expr}([expr])
-    dependencies = Symbol[]
+    dependencies = []
     while !isempty(todo)
         current = pop!(todo)
         if current.head == Symbol("'")
@@ -17,14 +31,14 @@ function translate(orig::Any)::Tuple{Any, Vector{Symbol}}
             end
             push!(dependencies, current.args[1])
             current.head = :call
-            current.args = [Efus.getvalue, current.args[1]]
+            current.args = [IonicEfus.getvalue, current.args[1]]
 
         elseif current.head == Symbol("=") && length(current.args) == 2  && current.args[1] isa Expr && current.args[1].head == Symbol("'")
             # it is an assignment to a reactive variable
             reactive_var = current.args[1].args[1]
             value_expr = current.args[2]
             current.head = :call
-            current.args = [Efus.setvalue!, reactive_var, value_expr]
+            current.args = [IonicEfus.setvalue!, reactive_var, value_expr]
         else
             push!.((todo,), filter(x -> x isa Expr, current.args))
         end

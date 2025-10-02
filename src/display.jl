@@ -59,7 +59,7 @@ function show_ast(io::IO, expr::Ast.Expression; indent = 0, context = IdDict())
     printstyled(io, "Expression", color = :blue)
 
     expr_str = string(expr.expr)
-    if occursin('\n', expr_str)
+    return if occursin('\n', expr_str)
         println(io)
         print(io, " "^(indent + 2))
         printstyled(io, "expr:", color = :light_black)
@@ -86,7 +86,7 @@ function show_ast(io::IO, ionic::Ast.Ionic; indent = 0, context = IdDict())
     end
 
     expr_str = string(ionic.expr)
-    if occursin('\n', expr_str)
+    return if occursin('\n', expr_str)
         # Drop the final newline from the header line to start the multiline block
         println(io)
         print(io, " "^(indent + 2))
@@ -289,4 +289,3 @@ function Base.show(io::IO, ::MIME"text/plain", node::Ast.AbstractExpression)
 end
 
 end # module Display
-

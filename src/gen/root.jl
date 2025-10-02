@@ -12,5 +12,5 @@ function generate(node::Ast.InlineBlock)
 end
 
 function generate(node::Ast.JuliaBlock)
-    return generate(node.code; acceptreactive = false)
+    return generate(node.code)
 end
