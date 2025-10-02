@@ -50,7 +50,7 @@ It accpets ionic expressions for both.
 macro reactor(expr, setter = nothing, usedeps = nothing)
     getter, ionicdeps = IonicEfus.Ionic.translate(expr)
     setter = if !isnothing(setter)
-        IonicEfus.Ionic.translate(expr)[1]
+        IonicEfus.Ionic.translate(setter)[1]
     end
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
