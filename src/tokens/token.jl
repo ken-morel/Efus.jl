@@ -1,8 +1,63 @@
 @enum TokenType begin
+    ERROR
+
     INDENT
+    DEDENT
+
+    EOF
+    EOL
+
+    END
+
+    IDENTIFIER
+
+    IONIC
+    NUMERIC
+    STRING
+    CHAR
+    SYMBOL
+
+    EQUAL
+    COMMA
+
+    SQOPEN
+    SQCLOSE
+
+    BEGIN
+    END
+    DO
+    FOR
+    IF
+    ELSE
+    ELSEIF
+
+    IN
+
+    TYPEASSERT
 end
 
+const CHARTOKENS = Dict{Char, TokenType}(
+    '=' => EQUAL,
+    '[' => SQOPEN,
+    ']' => SQCLOSE,
+    ',' => COMMA,
+)
+const KEYWORDS = Dict{String, TokenType}(
+    "begin" => BEGIN,
+    "end" => END,
+    "do" => DO,
+    "for" => FOR,
+    "if" => IF,
+    "else" => ELSE,
+    "elseif" => ELSEIF,
+
+    "in" => IN,
+    "∈" => IN,
+)
+
+
 const Loc = NamedTuple{(:ln, :col), Tuple{UInt, UInt}}
+loc(a::Integer, b::Integer) = Loc((a, b))
 
 struct Location
     start::Loc
@@ -11,5 +66,8 @@ struct Location
 end
 
 Base.:*(a::Location, b::Location) = Location(a.start, b.stop, a.file)
+Base.:*(a::Loc, b::Location) = Location(a, b.stop, b.file)
+Base.:*(a::Location, b::Loc) = Location(a.start, b, a.file)
 
 const Token = NamedTuple{(:type, :token, :location), Tuple{TokenType, AbstractString, Location}}
+token(t::TokenType, s::AbstractString, l::Location) = Token((t, s, l))

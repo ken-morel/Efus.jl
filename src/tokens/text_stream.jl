@@ -115,7 +115,7 @@ function next!(ts::TextStream)::Union{Char, Nothing}
 end
 
 """
-    take!(ts::TextStream, expected::Char)::Union{Char, Nothing}
+    Base.take!(ts::TextStream, expected::Char)::Union{Char, Nothing}
 
 Return the next character if the current character is `expected`.
 """
@@ -126,7 +126,7 @@ function Base.take!(ts::TextStream, expected::Char)::Union{Char, Nothing}
 end
 
 """
-    take_while!(ts::TextStream, predicate::Function)::String
+    take_while!(ts::TextStream, predicate::Function)::Tuple{String, Location}
     take_while!(fn::Function, ts::TextStream)
 
 Collects the next character and return them as a string as 
@@ -134,16 +134,21 @@ long as predicate is true, and return the collected string.
 
 See also [`skip_while!`](@ref)
 """
-function take_while!(ts::TextStream, predicate::Function)::String
+function take_while!(ts::TextStream, predicate::Function)::Tuple{String, Location}
     buffer = IOBuffer()
+    start = loc(ts)
+    stop = start
     while true
         char = peek(ts)
         if !isnothing(char) && predicate(char)
             write(buffer, char)
+            stop = loc(ts)
             next!(ts)
+        else
+            break
         end
     end
-    return String(take!(buffer))
+    return String(take!(buffer)), Location(start, stop, ts.file)
 end
 take_while!(fn::Function, ts::TextStream) = take_while!(ts, fn)
 
@@ -160,6 +165,8 @@ function skip_while!(ts::TextStream, predicate::Function)
         char = peek(ts)
         if !isnothing(char) && predicate(char)
             next!(ts)
+        else
+            break
         end
     end
     return
@@ -172,10 +179,45 @@ eof(ts::TextStream) = isnothing(peek(ts))
 "Returns true if the text stream is on a newline or end of input"
 eol(ts::TextStream) = eof(ts) || peek(ts) === '\n'
 
-"Get the current loc (ln, col) tuple of the text stream"
-loc(ts::TextStream) = Loc(ts.ln, ts.col)
+"Get the current location of the stream as a [`Loc`](@ref)"
+loc(ts::TextStream) = loc(ts.ln, ts.col)
+
+"Get the current location of a file as a [`Location`](@ref)"
+location(ts::TextStream) = Location(loc(ts), loc(ts), ts.file)
 
 "Get if the text stream is at the begining of the file"
 bof(ts::TextStream) = isnothing(ts.prev)
 "Get if the stream is at the begining of a line, or of the file"
 bol(ts::TextStream) = bof(ts) || ts.prev === '\n'
+
+"Call's the function `fn` on the current char"
+test(fn::Function, ts::TextStream) = fn(peek(ts))
+test(ts::TextStream, fn::Function) = test(fn, ts)
+
+"""
+    stack_while!(ts::TextStream, predicate::Function)::Union{String, Loc}
+    stack_while!(fn::Function, ts::TextStream)
+
+Creates a string with the current character, and 
+continues taking and appending to the string as 
+long as predicate returns true. And returns the location
+containing the taken string.
+"""
+function stack_while!(ts::TextStream, predicate::Function)::Tuple{String, Location}
+    #PERF: May be a buffer will be better.
+    # But it involves simply creating new strings, so...
+    final = ""
+    temp = string(ts.current)
+    start = loc(ts)
+    stop = start
+    while predicate(temp)
+        final = temp
+        stop = loc(ts)
+        nx = next!(ts)
+        isnothing(nx) && break
+        temp *= nx
+    end
+    return final, Location(start, stop, ts.file)
+end
+
+stack_while!(fn::Function, ts::TextStream) = stack_while!(ts, fn)

@@ -9,5 +9,9 @@ using FunctionWrappers: FunctionWrapper
 include("./token.jl")
 include("./text_stream.jl")
 include("./tokenizer.jl")
+include("./is.jl")
+include("./ionic.jl")
+include("./string.jl")
+include("./macros.jl")
 
 end
