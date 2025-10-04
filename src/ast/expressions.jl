@@ -4,7 +4,7 @@ end
 
 struct Ionic <: Expression
     expr::Expr
-    type::Union{Nothing, Some}
+    type::Any
 end
 
 struct Vect

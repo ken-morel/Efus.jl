@@ -6,7 +6,7 @@ Base.@kwdef struct Block <: Statement
 end
 
 Base.@kwdef struct ComponentCall <: Statement
-    parent::Union{Statement, Nothing} = nothing
+    parent::Union{Statement, Nothing}
     componentname::Symbol
     arguments::Vector{Tuple{Symbol, Union{Symbol, Nothing}, <:Expression}} = []
     splats::Vector{Symbol} = []

@@ -79,7 +79,7 @@ function take_one!(tz::Tokenizer)::Token
         token(EOL, "", pos)
     elseif isindent(ch)
         skip_while!(tz.stream, isindent)
-        take!(tz)
+        return take_one!(tz)
     elseif Meta.isidentifier(string(ch))
         identifier = take_identifier!(tz)
         identifier.type === ERROR && return identifier
@@ -120,7 +120,7 @@ function take_one!(tz::Tokenizer)::Token
         if ch === ':' # Type assert
             next!(tz.stream)
             super = take_identifier!(tz)
-            super.type === ERROR && return tz
+            super.type === ERROR && return super
             value = super.token
             pos = start * super.location
             if peek(tz.stream) === '{'

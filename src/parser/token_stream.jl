@@ -7,7 +7,7 @@ mutable struct TokenStream
     TokenStream(taker::Channel{Token}) = new(taker, nothing, nothing)
     TokenStream(fn::Function) = new(Channel{Token}(fn), nothing, nothing)
 end
-function peek(ts::TokenStream)::Union{Ast.Statement, Nothing}
+function peek(ts::TokenStream)::Union{Tokens.Token, Nothing}
     if isnothing(ts.current)
         ts.current = try
             take!(ts.channel)
@@ -20,17 +20,27 @@ function peek(ts::TokenStream)::Union{Ast.Statement, Nothing}
     return ts.current
 end
 
-function next!(ts::TokenStream)::Union{Ast.Statement, Nothing}
+function next!(ts::TokenStream)::Union{Tokens.Token, Nothing}
     st = peek(ts)
     return if !isnothing(st)
         ts.prev = st
         ts.current = try
-            take!(ts.channel)
+            c = take!(ts.channel)
+            !isnothing(c) && c.type === Tokens.ERROR && error(c.token)
+            c
         catch e
             if !isa(e, InvalidStateException)
                 rethrow(e)
             end
         end
-        !isnothing(ts.current) && ts.current.type == Tokens.ERROR && error(ts.current.token)
+    end
+end
+
+function Base.take!(ts::TokenStream, amongst::Vector{Tokens.TokenType}, wh::String)
+    nxt = next!(ts)
+    return if nxt.type ∈ amongst
+        nxt
+    else
+        throw(ParseError("Unexpected token $wh", nxt.location))
     end
 end

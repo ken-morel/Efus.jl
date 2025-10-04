@@ -41,6 +41,7 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     COMMENT
 end
 
+
 const CHARTOKENS = Dict{Char, TokenType}(
     '=' => EQUAL,
     '[' => SQOPEN,
