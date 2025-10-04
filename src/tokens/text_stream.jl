@@ -1,3 +1,5 @@
+export TextStream
+
 """
     mutable struct TextStream
 
@@ -207,7 +209,7 @@ function stack_while!(ts::TextStream, predicate::Function)::Tuple{String, Locati
     #PERF: May be a buffer will be better.
     # But it involves simply creating new strings, so...
     final = ""
-    temp = string(ts.current)
+    temp = string(peek(ts))
     start = loc(ts)
     stop = start
     while predicate(temp)

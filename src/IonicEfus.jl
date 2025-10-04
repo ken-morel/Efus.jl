@@ -42,5 +42,7 @@ export codegen_string
 using .Parser
 export EfusError, EfusParser, try_parse!, try_parse, efus_parse
 
+using .Tokens
+
 
 end # module IonicEfus

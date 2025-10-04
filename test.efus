@@ -5,7 +5,7 @@ end
       1, 2
     )
     Box orient=:horizontal side=v'
-      for (index, child) in (children.split())
+      for (index, child) in children.split()
         Frame
           Label text=(child.name)
       end

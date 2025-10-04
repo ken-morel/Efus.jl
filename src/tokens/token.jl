@@ -1,3 +1,4 @@
+export TokenType, Token, Tokenizer, token, Loc, Location
 @enum TokenType begin
     ERROR
 
@@ -6,6 +7,7 @@
 
     EOF
     EOL
+    NEXTLINE
 
 
     IDENTIFIER
@@ -35,6 +37,8 @@
     IN
 
     TYPEASSERT
+
+    COMMENT
 end
 
 const CHARTOKENS = Dict{Char, TokenType}(
@@ -42,6 +46,7 @@ const CHARTOKENS = Dict{Char, TokenType}(
     '[' => SQOPEN,
     ']' => SQCLOSE,
     ',' => COMMA,
+    '|' => NEXTLINE
 )
 const KEYWORDS = Dict{String, TokenType}(
     "begin" => BEGIN,
@@ -66,7 +71,10 @@ struct Location
     file::AbstractString
 end
 
-Base.:*(a::Location, b::Location) = Location(a.start, b.stop, a.file)
+function Base.:*(a::Location, b::Location)
+    @assert(a.file == b.file, "Cannot combine locations in different files $(a) and $(b)")
+    return Location(a.start, b.stop, a.file)
+end
 Base.:*(a::Loc, b::Location) = Location(a, b.stop, b.file)
 Base.:*(a::Location, b::Loc) = Location(a.start, b, a.file)
 

@@ -1,3 +1,5 @@
+export Tokenizer
+
 """
     Base.@kwdef struct Tokenizer
 
@@ -82,7 +84,14 @@ function Base.take!(tz::Tokenizer)
             identifier = take_identifier!(tz)
             identifier.type === ERROR && return identifier
             if identifier.token ∈ keys(KEYWORDS)
-                token(KEYWORDS[identifier.token], "", identifier.location)
+                tk = token(KEYWORDS[identifier.token], "", identifier.location)
+                if tk.token == "in" || tk.token == "if" # take in iterating
+                    skip_while!(tz.stream, isindent)
+                    cond = take_ionic!(tz, ["\n"])
+                    cond.type == ERROR && return cond
+                    push!(tz.pending, cond)
+                    tk
+                end
             elseif peek(tz.stream) == '''
                 pos = loc(tz.stream)
                 next!(tz.stream)
@@ -135,6 +144,11 @@ function Base.take!(tz::Tokenizer)
             take_string!(tz)
         elseif ch === '('
             take_ionic!(tz)
+        elseif ch === '#'
+            startlocation = location(tz.stream)
+            next!(tz.stream)
+            text, stoploc = take_while!(tz.stream, !=('\n'))
+            token(COMMENT, text, startlocation * stoploc)
         else
             tk = token(ERROR, "Unexpected token '$ch'", location(tz.stream))
             next!(tz.stream)
