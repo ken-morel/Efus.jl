@@ -80,3 +80,5 @@ Base.:*(a::Location, b::Loc) = Location(a.start, b, a.file)
 
 const Token = NamedTuple{(:type, :token, :location), Tuple{TokenType, AbstractString, Location}}
 token(t::TokenType, s::AbstractString, l::Location) = Token((t, s, l))
+
+Base.show(io::IO, t::Token) = print(io, string(t.type, "(", t.token, ")"))

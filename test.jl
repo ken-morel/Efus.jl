@@ -7,7 +7,7 @@ open("./test.efus") do io
     tz = Tokens.Tokenizer(Tokens.TextStream(io))
     while true
         tk = take!(tz)
-        println(tk.type, "(", tk.token, ")")
+        println(tk)
         tk.type == Tokens.EOF && break
     end
 end
