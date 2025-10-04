@@ -2,9 +2,11 @@ const ESCAPABLE = "\"\'ntrfa\\"
 
 function take_string!(tz::Tokenizer)::Token
     ts = tz.stream
-    buffer = IOBuffer("\"")
+    buffer = IOBuffer()
     @assert peek(ts) === '"' "Cannot take string if not at \""
     startloc = loc(ts)
+    next!(ts)
+    write(buffer, "\"")
 
     lastloc = loc(ts)
     while true
@@ -22,11 +24,11 @@ function take_string!(tz::Tokenizer)::Token
                 location(ts)
             )
         elseif ch === '"'
-            push!(buffer, ch)
-            next!(ch)
+            write(buffer, ch)
+            next!(ts)
             break
         end
-        push!(buffer, ch)
+        write(buffer, ch)
         lastloc = loc(ts)
         next!(ts)
     end
@@ -46,8 +48,8 @@ function take_char!(tz::Tokenizer)::Token
     endloc = loc(ts)
     return if closing === '''
         next!(ts)
-        Token(CHAR, "'$content'", Location(startloc, endloc, ts.file))
+        token(CHAR, "'$content'", Location(startloc, endloc, ts.file))
     else
-        Token(ERROR, "Expected closing ''' at end of character literal", location(ts))
+        token(ERROR, "Expected closing ''' at end of character literal", location(ts))
     end
 end

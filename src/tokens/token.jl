@@ -7,7 +7,6 @@
     EOF
     EOL
 
-    END
 
     IDENTIFIER
 
@@ -24,12 +23,14 @@
     SQCLOSE
 
     BEGIN
-    END
     DO
     FOR
     IF
     ELSE
     ELSEIF
+
+
+    END
 
     IN
 

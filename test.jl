@@ -4,17 +4,10 @@ using .Tokens
 
 
 open("./test.efus") do io
-    tz = Tokens.Tokenizer(
-        Tokens.TextStream(
-            """
-            Frame label=ama'
-              Lalel text=ama
-                    """
-        )
-    )
-    tk = take!(tz)
-    while tk.type != Tokens.EOF
+    tz = Tokens.Tokenizer(Tokens.TextStream(io))
+    while true
         tk = take!(tz)
         println(tk.type, "(", tk.token, ")")
+        tk.type == Tokens.EOF && break
     end
 end

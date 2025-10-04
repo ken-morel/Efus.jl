@@ -2,30 +2,15 @@ const BRACES = ("([{", ")]}")
 const QUOTES = "'\""
 
 
-function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = [])::Token
+function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
     bytetokens = codeunits.(endtokens)
     bytetokenlengths = length.(bytetokens)
-    maxbytetokenlength = max(bytetokenlengths...)
+    maxbytetokenlength = max(0, bytetokenlengths...)
     endtokensizes = zip(bytetokens, bytetokenlengths)
     ts = tz.stream
     startloc = loc(ts)
     buffer = IOBuffer()
 
-    delimiters = nothing
-    ch = peek(ts)
-    push!(buffer, ch)
-    if ch == '('
-        delimiters = ('(', ')')
-        next!(ts)
-    elseif ch == '['
-        delimiters = ('[', ']')
-        next!(ts)
-    elseif ch == '{'
-        delimiters = ('{', '}')
-        next!(ts)
-    else
-        pop!(buffer)
-    end
     brackets = Char[]
 
     stoploc = startloc
@@ -33,12 +18,14 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = [])::Token
     while !eof(ts)
         ch = peek(ts)
         if ch ∈ BRACES[1]
-            push!(brackets, ch)
+            push!(brackets, BRACES[2][findfirst(ch, BRACES[1])])
         elseif ch ∈ BRACES[2]
-            isempty(brackets) && return token(ERROR, "Unmatched closing '$ch'", stoploc)
-            brackets[end] !== ch && return token(ERROR, "Unexpected quote '$ch', expected '$(brackets[end])'", stoploc)
+            stoplocation = Location(stoploc, stoploc, tz.stream.file)
+            isempty(brackets) && return token(ERROR, "Unmatched closing '$ch', no brace was open :-(", stoplocation)
+            brackets[end] !== ch && return token(ERROR, "Unexpected quote '$ch', expected '$(brackets[end])'", stoplocation)
             pop!(brackets)
             if isempty(brackets) && isempty(endtokens)
+                write(buffer, ch)
                 next!(ts)
                 break
             end
@@ -48,7 +35,7 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = [])::Token
                 # We are surely at a character
                 ch = take_char!(tz)
                 ch.type === ERROR && return ch
-                push!(buffer, ch.token)
+                write(buffer, ch.token)
                 continue
             else
                 # We are at the end of a reactive variable
@@ -58,7 +45,7 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = [])::Token
             tk = take_string!(tz)
             tk.type === ERROR && return tk
         end
-        push!(buffer, ch)
+        write(buffer, ch)
         stoploc = loc(ts)
         next!(ts)
 
@@ -82,5 +69,5 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = [])::Token
         startloc,
     )
 
-    return Token(IONIC, String(take!(buffer)), Location(startloc, stoploc, ts.file))
+    return token(IONIC, String(take!(buffer)), Location(startloc, stoploc, ts.file))
 end

@@ -79,10 +79,10 @@ function Base.take!(tz::Tokenizer)
             skip_while!(tz.stream, isindent)
             take!(tz)
         elseif Meta.isidentifier(string(ch))
-            identifier = take_identifier!(tz.stream)
+            identifier = take_identifier!(tz)
             identifier.type === ERROR && return identifier
             if identifier.token ∈ keys(KEYWORDS)
-                token(KEYWORDS[identifier.token], identifier.token, identifier.location)
+                token(KEYWORDS[identifier.token], "", identifier.location)
             elseif peek(tz.stream) == '''
                 pos = loc(tz.stream)
                 next!(tz.stream)
@@ -111,14 +111,14 @@ function Base.take!(tz::Tokenizer)
                 super = take_identifier!(tz)
                 super.type === ERROR && return tz
                 value = super.token
-                loc = start * super.location
+                pos = start * super.location
                 if peek(tz.stream) === '{'
                     params = take_ionic!(tz)
                     params.type === ERROR && return params
                     value *= params.token
-                    loc = loc * params.location
+                    pos = pos * params.location
                 end
-                token(TYPEASSERT, value, loc)
+                token(TYPEASSERT, value, pos)
             else
                 iden = take_identifier!(tz)
                 iden.type === ERROR && return iden
@@ -135,6 +135,10 @@ function Base.take!(tz::Tokenizer)
             take_string!(tz)
         elseif ch === '('
             take_ionic!(tz)
+        else
+            tk = token(ERROR, "Unexpected token '$ch'", location(tz.stream))
+            next!(tz.stream)
+            tk
         end
     end
 end
