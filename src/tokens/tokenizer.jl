@@ -1,4 +1,5 @@
-export Tokenizer
+export Tokenizer, tokenize!
+
 
 """
     Base.@kwdef struct Tokenizer
@@ -9,7 +10,7 @@ wrap channels, IO, or strings and outputs
 by calling an output function.
 """
 struct Tokenizer
-    out::Union{Function, Nothing}
+    out::Channel{Token}
     stream::TextStream
     pending::Vector{Token}
     indents::Vector{UInt}
@@ -17,28 +18,29 @@ struct Tokenizer
     Tokenizer(out::Union{Function, Nothing}, stream::TextStream)
 
     # Arguments
-    - `out::Function`: The output function which will be called with every new 
+    - `out::Channel{Token}`: The output channel which will be called with every new 
       [`Token`](@ref).
     - `stream::TextStream`: The [`TextStream`](@ref) for the tokenizer to read from.
 
     See also [`tokenize!`](@ref).
     """
-    Tokenizer(out::Union{Function, Nothing}, stream::TextStream) = new(out, stream, [], [0x00])
-    Tokenizer(stream::TextStream) = Tokenizer(nothing, stream)
+    Tokenizer(out::Channel{Token}, stream::TextStream) = new(out, stream, [], [0x00])
 end
 
-Tokenizer(
-    out::Channel{Token}, stream::TextStream,
-) = Tokenizer(stream) do token
-    put!(out, token)
-end
-function Base.take!(tz::Tokenizer; put = true)::Token
-    tk = _take!(tz)
-    put && !isnothing(tz.out) && tz.out(tk)
-    return tk
+Tokenizer(fn::Function, stream::TextStream) = Tokenizer(Channel{Token}(fn), stream)
+
+function tokenize!(tz::Tokenizer)
+    tk = nothing
+    while tk !== EOF
+        tk = take!(tz).type
+    end
+    return
 end
 
-function _take!(tz::Tokenizer)::Token
+
+Base.take!(tz::Tokenizer) = put!(tz.out, take_one!(tz))
+
+function take_one!(tz::Tokenizer)::Token
     if !isempty(tz.pending)
         return popfirst!(tz.pending)
     end
@@ -86,7 +88,6 @@ function _take!(tz::Tokenizer)::Token
             if tk.type == IN || tk.type == IF # take in iterating
                 skip_while!(tz.stream, isindent)
                 cond = take_ionic!(tz, ["\n"])
-                println(peek(tz.stream))
                 cond.type == ERROR && return cond
                 push!(tz.pending, token(IONIC, cond.token[begin:(end - 1)], cond.location))
                 tk

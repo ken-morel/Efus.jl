@@ -1,15 +1,15 @@
 for i in :ama(
     is my name
   ) == 4
+    LabelFrame padding=(2, 5)::Tuple{UInt} label=do foo, frm::LabelFrame, bar = -65_45.34e-2px
+      Label text="Frame $(frm.id)'s label"
+    end
+        Label text="Your things" value=(
+          1, 2
+        )
+        Box orient=:horizontal side=v'
+          for (index, child) in children.split()
+            Frame
+              Label text=(child.name)
+          end
 end
-# LabelFrame padding=(2, 5)::Tuple{UInt} label=do foo, frm::LabelFrame, bar = -65_45.34e-2px
-#   Label text="Frame $(frm.id)'s label"
-# end
-#     Label text="Your things" value=(
-#       1, 2
-#     )
-#     Box orient=:horizontal side=v'
-#       for (index, child) in children.split()
-#         Frame
-#           Label text=(child.name)
-#       end
