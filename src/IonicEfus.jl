@@ -15,32 +15,31 @@ abstract type EfusError <: Exception end
 include("./component.jl")
 
 
-include("./Ast.jl")
-include("./Ionic.jl")
-
-
-include("./objects.jl")
-include("./snippet.jl")
-
 include("./reactants.jl")
 
-include("./gen/Gen.jl")
+
+include("./tokens/Tokens.jl")
+
+
+include("./ast/Ast.jl")
+
+
+include("./Ionic.jl")
 
 include("./parser/Parser.jl")
 
+
+include("./gen/Gen.jl")
+
 include("./macros.jl")
-include("./display.jl")
 
 include("./dev.jl")
-
-include("./tokens/Tokens.jl")
 
 
 using .Dev
 export codegen_string
 
 using .Parser
-export EfusError, EfusParser, try_parse!, try_parse, efus_parse
 
 using .Tokens
 

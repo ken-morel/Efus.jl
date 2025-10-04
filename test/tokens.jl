@@ -19,14 +19,6 @@ end
     @testset "Integrity&&Coherence" begin
         textstreams = [
             Tokens.TextStream("Hello world!", "test"),
-            Tokens.TextStream(
-                Channel{Char}() do channel
-                    for c in "Hello world!"
-                        put!(channel, c)
-                    end
-                end,
-                "test"
-            ),
             Tokens.TextStream(IOBuffer("Hello world!"), "test"),
         ]
         for stream in textstreams

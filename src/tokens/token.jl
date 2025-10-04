@@ -17,6 +17,7 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     STRING
     CHAR
     SYMBOL
+    SPLAT
 
     EQUAL
     COMMA
@@ -30,7 +31,6 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     IF
     ELSE
     ELSEIF
-
 
     END
 

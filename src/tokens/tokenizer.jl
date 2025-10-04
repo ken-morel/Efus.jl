@@ -150,6 +150,16 @@ function _take!(tz::Tokenizer)::Token
         next!(tz.stream)
         text, stoploc = take_while!(tz.stream, !=('\n'))
         token(COMMENT, text, startlocation * stoploc)
+    elseif ch == '.'
+        startloc = location(tz.stream)
+        for _ in 1:2
+            '.' === @next(tz.stream, "In splat") || return token(
+                ERROR, "Invalid splat", startloc * loc(tz.stream),
+            )
+        end
+        stoploc = loc(tz.stream)
+        next!(tz.stream)
+        token(SPLAT, "", startloc * stoploc)
     else
         tk = token(ERROR, "Unexpected token '$ch'", location(tz.stream))
         next!(tz.stream)
