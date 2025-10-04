@@ -44,6 +44,7 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
         elseif ch === '"'
             tk = take_string!(tz)
             tk.type === ERROR && return tk
+            write(buffer, tk.token[begin:(end - 1)])
         end
         write(buffer, ch)
         stoploc = loc(ts)

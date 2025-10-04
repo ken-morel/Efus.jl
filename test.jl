@@ -8,19 +8,22 @@ using .IonicEfus.Ast
 tokenstream = Channel{Tokens.Token}()
 exprstream = Channel{Ast.Statement}()
 
-@async open("./test.efus") do io
-    tz = Tokens.Tokenizer(tokenstream, Tokens.TextStream(io))
-    Tokens.tokenize!(tz)
+errormonitor(
+    @async open("./test.efus") do io
+        tz = Tokens.Tokenizer(tokenstream, Tokens.TextStream(io))
+        Tokens.tokenize!(tz)
+    end
+)
+
+errormonitor(
+    @async let pr = Parser.EfusParser(Parser.TokenStream(tokenstream), exprstream)
+        Parser.parse!(pr)
+    end
+)
+parent = take!(exprstream)
+for expr in exprstream
+    Ast.affiliate!(expr)
 end
-pr = Parser.EfusParser(Parser.TokenStream(tokenstream), exprstream)
-
-errormonitor(@async take!(pr))
-
-println(take!(exprstream))
-
-
-errormonitor(@async take!(pr))
-println(take!(exprstream))
-
+println(parent)
 
 # println.(filter!(!isnothing, tokens))

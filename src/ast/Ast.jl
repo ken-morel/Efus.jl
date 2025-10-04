@@ -10,6 +10,11 @@ abstract type Expression end
 
 abstract type Statement <: Expression end
 
+Base.@kwdef struct Block <: Statement
+    children::Vector{Statement} = []
+end
+
+
 include("./expressions.jl")
 include("./statements.jl")
 

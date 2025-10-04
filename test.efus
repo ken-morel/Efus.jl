@@ -1,4 +1,2 @@
-Frame text:ama=4 c... ama=(
-  Hello * world'
-) c=5
-  Label
+Frame text=frm
+  Label ama=4
