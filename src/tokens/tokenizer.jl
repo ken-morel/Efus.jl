@@ -153,7 +153,7 @@ function take_one!(tz::Tokenizer)::Token
             length(iden.token) === 0 && return token(
                 ERROR,
                 "Expected valid identifier name in symbol",
-                Location(loc, loc, tz.stream.file)
+                Location(start, start, tz.stream.file),
             )
             token(SYMBOL, ":" * iden.token, start * iden.location)
         end

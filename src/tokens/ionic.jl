@@ -26,6 +26,7 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
             pop!(brackets)
             if isempty(brackets) && isempty(endtokens)
                 write(buffer, ch)
+                stoploc = loc(ts)
                 next!(ts)
                 break
             end

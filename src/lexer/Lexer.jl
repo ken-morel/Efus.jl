@@ -12,7 +12,7 @@ const EMPTY_THEME = Theme()
 const EMPTY_STYLE = Style()
 
 const DEFAULT_THEME = Theme(
-    Tokens.ERROR => Style(:bold => true, :color => :red),
+    Tokens.ERROR => Style(:bold => true, :color => :red, :underline => true),
 
     # Unstyled
     Tokens.INDENT => EMPTY_STYLE,
