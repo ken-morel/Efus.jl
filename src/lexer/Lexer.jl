@@ -14,45 +14,43 @@ const EMPTY_STYLE = Style()
 const DEFAULT_THEME = Theme(
     Tokens.ERROR => Style(:bold => true, :color => :red),
 
-    Tokens.INDENT => Style(),
-    Tokens.DEDENT => Style(),
+    # Unstyled
+    Tokens.INDENT => EMPTY_STYLE,
+    Tokens.DEDENT => EMPTY_STYLE,
+    Tokens.EOF => EMPTY_STYLE,
+    Tokens.EOL => EMPTY_STYLE,
+    Tokens.NONE => EMPTY_STYLE,
 
-    Tokens.EOF => Style(),
-    Tokens.EOL => Style(),
-
-    Tokens.IDENTIFIER => Style(:color => :blue),
-
-    Tokens.IONIC => Style(:color => :yellow),
-    Tokens.NUMERIC => Style(:color => :magenta),
-    Tokens.STRING => Style(:color => :magenta),
-    Tokens.CHAR => Style(:color => :magenta),
+    # From AST styles & more distinct colors
+    Tokens.IDENTIFIER => Style(:color => :light_blue),
+    Tokens.IONIC => Style(:color => :green, :underline => true),
+    Tokens.NUMERIC => Style(:color => :light_red),
+    Tokens.STRING => Style(:color => :green),
+    Tokens.CHAR => Style(:color => :green),
     Tokens.SYMBOL => Style(:color => :yellow),
-    Tokens.SPLAT => Style(:color => :blue),
+    Tokens.SPLAT => Style(:color => :light_blue),
 
+    # Operators/Signs
     Tokens.EQUAL => Style(:color => :cyan),
     Tokens.COMMA => Style(:color => :cyan),
-
     Tokens.SQOPEN => Style(:color => :cyan),
     Tokens.SQCLOSE => Style(:color => :cyan),
+    Tokens.TYPEASSERT => Style(:color => :yellow),
 
-    Tokens.BEGIN => Style(:bold => true, :color => :green),
-    Tokens.DO => Style(:bold => true, :color => :green),
-    Tokens.FOR => Style(:bold => true, :color => :green),
-    Tokens.IF => Style(:bold => true, :color => :green),
-    Tokens.ELSE => Style(:bold => true, :color => :green),
-    Tokens.ELSEIF => Style(:bold => true, :color => :green),
 
-    Tokens.SNIPPET => Style(:bold => true, :color => :green),
+    # Keywords
+    Tokens.BEGIN => Style(:bold => true, :color => :magenta),
+    Tokens.DO => Style(:bold => true, :color => :magenta),
+    Tokens.FOR => Style(:bold => true, :color => :magenta),
+    Tokens.IF => Style(:bold => true, :color => :magenta),
+    Tokens.ELSE => Style(:bold => true, :color => :magenta),
+    Tokens.ELSEIF => Style(:bold => true, :color => :magenta),
+    Tokens.SNIPPET => Style(:bold => true, :color => :magenta),
+    Tokens.END => Style(:bold => true, :color => :magenta),
+    Tokens.IN => Style(:bold => true, :color => :magenta),
 
-    Tokens.END => Style(:bold => true, :color => :green),
-
-    Tokens.IN => Style(:bold => true, :color => :green),
-
-    Tokens.TYPEASSERT => Style(:color => :cyan),
-
+    # Other
     Tokens.COMMENT => Style(:italic => true, :color => :light_black),
-
-    Tokens.NONE => EMPTY_STYLE
 )
 @enum TokenType begin
     ERROR

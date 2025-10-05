@@ -1,7 +1,6 @@
 Ama test=ama
-  snippet label do a::Substring{String}, b::Int
+  snippet label o a::Substring{String}, b::Int
     Label text=4
-    Text ama=
   end
   snippet label do
   end
