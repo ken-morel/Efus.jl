@@ -1,6 +1,18 @@
 export Tokenizer, tokenize!
 
 
+const RESERVED_WORDS = Set(
+    [
+        "baremodule", "begin", "break", "catch", "const", "continue", "do", "else",
+        "elseif", "end", "export", "false", "finally", "for", "function", "global",
+        "if", "import", "in", "isa", "let", "local", "macro", "module", "outer",
+        "quote", "return", "struct", "true", "try", "using", "where", "while",
+    ]
+)
+
+is_julia_name(s::String) = s in RESERVED_WORDS || Meta.isidentifier(s)
+
+
 """
     Base.@kwdef struct Tokenizer
 
@@ -80,7 +92,7 @@ function take_one!(tz::Tokenizer)::Token
     elseif isindent(ch)
         skip_while!(tz.stream, isindent)
         return take_one!(tz)
-    elseif Meta.isidentifier(string(ch))
+    elseif is_julia_name(string(ch))
         identifier = take_identifier!(tz)
         identifier.type === ERROR && return identifier
         if identifier.token ∈ keys(KEYWORDS)
@@ -168,10 +180,9 @@ function take_one!(tz::Tokenizer)::Token
     end
 end
 
-_stacker(s::String) = Meta.isidentifier(s) || isletter(s[end])
 
 function take_identifier!(tz::Tokenizer)::Token
     startloc = location(tz.stream)
-    identifier, lc = stack_while!(tz.stream, Meta.isidentifier)
+    identifier, lc = stack_while!(tz.stream, is_julia_name)
     return token(IDENTIFIER, identifier, startloc * lc)
 end
