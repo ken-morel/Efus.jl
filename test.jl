@@ -20,10 +20,22 @@ errormonitor(
         Parser.parse!(pr)
     end
 )
-parent = take!(exprstream)
-for expr in exprstream
-    Ast.affiliate!(expr)
+parent = nothing
+while true
+    try
+        ex = take!(exprstream)
+        Ast.affiliate!(ex)
+        if ex.parent === nothing
+            global parent = ex
+        end
+    catch e
+        if !isa(e, InvalidStateException)
+            rethrow()
+        end
+        break
+    finally
+        Ast.show_ast(stdout, parent)
+        println("\n", "-"^20)
+    end
 end
-println(parent)
-
 # println.(filter!(!isnothing, tokens))

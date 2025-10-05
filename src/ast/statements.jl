@@ -9,23 +9,25 @@ Base.@kwdef struct ComponentCall <: Statement
     children::Vector{Statement} = []
 end
 
-function Base.show(io::IO, cc::ComponentCall; context::IdDict = IdDict([(:indent, 0)]))
+function show_ast(io::IO, cc::ComponentCall; context::IdDict = IdDict())
+    :indent ∉ keys(context) && push!(context, :indent => 0)
     ind = "  "^context[:indent]
-    printstyled(io, ind, cc.componentname; color = :blue, bold = true)
+    printstyled(io, ind, cc.componentname; STYLE[:compname]...)
     for splat in cc.splats
-        print(io, " ", splat, "...")
+        printstyled(io, " ", splat; STYLE[:splat]...)
+        printstyled(io, "..."; STYLE[:sign]...)
     end
     for (name, sub, val) in cc.arguments
         if !isnothing(sub)
             name = "$name:$sub"
         end
-        print(io, " ", name, "=")
-        print(io, val)
+        printstyled(io, " ", name, "="; STYLE[:identifier]...)
+        show_ast(io, val)
     end
     context[:indent] += 1
     for child in cc.children
         println()
-        show(io, child; context = context)
+        show_ast(io, child; context = context)
     end
     context[:indent] -= 1
     return
@@ -39,7 +41,34 @@ affiliate!(p::IfBranch, c::Statement) = affiliate!(p.block, c)
 
 Base.@kwdef struct If <: Statement
     parent::Union{Statement, Nothing} = nothing
-    branches::Vector{IfBranch}
+    branches::Vector{IfBranch} = []
+end
+
+function show_ast(io::IO, node::If; context = IdDict())
+    :indent ∉ keys(context) && push!(context, :indent => 0)
+    ind = "  "^context[:indent]
+    started = false
+    for branch in node.branches
+        if !started
+            printstyled(io, ind, "if"; STYLE[:keyword]...)
+            print(io, " ")
+            show_ast(io, branch.condition)
+            started = true
+        elseif !isnothing(branch.condition)
+            printstyled(io, ind, "elseif"; STYLE[:keyword]...)
+            print(io, " ")
+            show_ast(io, branch.condition)
+        else
+            printstyled(io, ind, "else"; STYLE[:keyword]...)
+        end
+        println()
+        context[:indent] += 1
+        show_ast(io, branch.block; context)
+        println()
+        context[:indent] -= 1
+        printstyled(ind, "end"; STYLE[:keyword]...)
+    end
+    return
 end
 
 Base.@kwdef struct For <: Statement

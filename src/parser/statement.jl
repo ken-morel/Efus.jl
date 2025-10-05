@@ -61,6 +61,7 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
             end
             s
         elseif tk.type === Tokens.IF
+            statement = Ast.If(; parent)
             loc = next!(ts)
             condition = take_expression!(p)
             isnothing(condition) && throw(
@@ -69,13 +70,34 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                     loc.location,
                 )
             )
-            !isending(next!(ts)) && throw(
+            !isending(peek(ts)) && throw(
                 ParseError(
-                    "Expected EOL after condition",
+                    "Expected EOL after condition, got $(peek(ts))",
                     peek(ts).location,
                 )
             )
             next!(ts)
+            branch = Ast.IfBranch(; condition)
+            push!(statement.branches, branch)
+            p.last_statement = branch
+            push!(p.stack, statement)
+            return statement
+        elseif tk.type === Tokens.END
+            if !isempty(p.stack)
+                statement = p.stack[end]
+                if statement isa Ast.If
+                    eof = next!(ts)
+                    isending(eof) || throw(
+                        ParseError(
+                            "Unexpected token after END: $eof", eof.location
+                        )
+                    )
+                    pop!(p.stack)
+                    next!(ts)
+                    continue
+                end
+            end
+            throw(ParseError("Unexpected end", tk.location))
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
         end

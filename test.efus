@@ -1,2 +1,4 @@
 Frame text=frm
-  Label ama=4
+  if true
+    Label text=3
+  end
