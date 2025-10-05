@@ -3,7 +3,7 @@ struct Julia <: Expression
 end
 
 function show_ast(io::IO, j::Julia)
-    return printstyled(io, j.value; STYLE[:expr]...)
+    return printstyled(io, repr(j.value); STYLE[:expr]...)
 end
 
 struct Ionic <: Expression
@@ -12,10 +12,10 @@ struct Ionic <: Expression
 end
 
 function show_ast(io::IO, i::Ionic)
-    printstyled(io, i.expr; STYLE[:ionic]...)
+    printstyled(io, repr(i.expr); STYLE[:ionic]...)
     if !isnothing(i.type)
         printstyled(io, "::"; STYLE[:sign]...)
-        printstyled(io, i.type; STYLE[:ionic]...)
+        printstyled(io, repr(i.type); STYLE[:ionic]...)
     end
     return
 end

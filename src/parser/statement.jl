@@ -1,6 +1,7 @@
 function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
     ts = p.stream
 
+
     while true
         tk = peek(ts)
 
@@ -60,8 +61,19 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                 push!(s.arguments, (paramname, paramsub, paramvalue))
             end
             s
-        elseif tk.type === Tokens.IF
-            statement = Ast.If(; parent)
+        elseif tk.type === Tokens.IF || tk.type === Tokens.ELSEIF
+            isif = tk.type === Tokens.IF
+            statement = if isif
+                s = Ast.If(; parent)
+                push!(p.stack, s)
+                s
+            else
+                if isempty(p.stack) || !isa(p.stack[end], Ast.If)
+                    throw(ParseError("Unexpected elseif", tk.location))
+                else
+                    p.stack[end]
+                end
+            end
             loc = next!(ts)
             condition = take_expression!(p)
             isnothing(condition) && throw(
@@ -80,8 +92,23 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
             branch = Ast.IfBranch(; condition)
             push!(statement.branches, branch)
             p.last_statement = branch
-            push!(p.stack, statement)
-            return statement
+            if isif
+                return statement
+            else
+                return take_one!(p)
+            end
+        elseif tk.type === Tokens.ELSE
+            statement = if isempty(p.stack) || !isa(p.stack[end], Ast.If)
+                throw(ParseError("Unexpected else", tk.location))
+            else
+                p.stack[end]
+            end
+            branch = Ast.IfBranch(; condition = nothing)
+            push!(statement.branches, branch)
+            p.last_statement = branch
+            isending(next!(p.stream)) || throw(ParseError("Expected EOL after else, got $(peek(p.stream))", peek(p.stream).location))
+            next!(p.stream)
+            return take_one!(p)
         elseif tk.type === Tokens.END
             if !isempty(p.stack)
                 statement = p.stack[end]
@@ -94,6 +121,7 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                     )
                     pop!(p.stack)
                     next!(ts)
+                    p.last_statement = nothing
                     continue
                 end
             end

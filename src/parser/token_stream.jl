@@ -26,7 +26,7 @@ function next!(ts::TokenStream)::Union{Tokens.Token, Nothing}
         ts.prev = st
         ts.current = try
             c = take!(ts.channel)
-            !isnothing(c) && c.type === Tokens.ERROR && error(c.token)
+            !isnothing(c) && c.type === Tokens.ERROR && throw(ParseError(c.token, c.location))
             c
         catch e
             if !isa(e, InvalidStateException)

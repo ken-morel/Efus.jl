@@ -66,8 +66,8 @@ function show_ast(io::IO, node::If; context = IdDict())
         show_ast(io, branch.block; context)
         println()
         context[:indent] -= 1
-        printstyled(ind, "end"; STYLE[:keyword]...)
     end
+    printstyled(ind, "end"; STYLE[:keyword]...)
     return
 end
 
