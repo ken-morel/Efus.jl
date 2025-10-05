@@ -110,32 +110,38 @@ function lex(code::AbstractString)::Lexed
         for (type, _, loc) in channel
             start = loc2index(code, loc.start)
             stop = loc2index(code, loc.stop)
+
             if index < start
-                push!(lexed, (code[index:(start - 1)], Tokens.NONE))
-                index = start
+                push!(lexed, (code[index:start - 1], Tokens.NONE))
             end
-            push!(lexed, (code[start:stop], type))
-            index = stop + 1
+            
+            if type == Tokens.EOF
+                index = start
+                break
+            end
+
+            if start > lastindex(code)
+                index = start
+                continue
+            end
+
+            clamped_stop = min(stop, lastindex(code))
+            
+            push!(lexed, (code[start:clamped_stop], type))
+            index = clamped_stop + 1
         end
-        if index < lastindex(code)
+        if index <= lastindex(code)
             push!(lexed, (code[index:end], Tokens.NONE))
         end
     end
-    try
-        Tokens.tokenize!(Tokens.Tokenizer(tokens, Tokens.TextStream(code)))
-    catch e
-        Base.showerror(stdout, e)
-        rethrow()
-    end
-
+    Tokens.tokenize!(Tokens.Tokenizer(tokens, Tokens.TextStream(code)))
     return lexed
 end
 
 function loc2index(txt::String, loc::Tokens.Loc)::UInt
+    loc.ln == 1 && return loc.col
     newlines = findall('\n', txt)
-    pushfirst!(newlines, 1)
-    index = newlines[loc.ln]
-    return min(index + loc.col - 1, lastindex(txt))
+    return newlines[loc.ln - 1] + loc.col
 end
 
 function print_lexed(io::IO, lexed::Lexed, theme::Theme = DEFAULT_THEME)

@@ -58,21 +58,26 @@ function take_one!(tz::Tokenizer)::Token
     end
 
     if bol(tz.stream)
-        current_indent = length(take_while!(tz.stream, isindent)[1])
+        indent_str, indent_loc = take_while!(tz.stream, isindent)
+        current_indent = length(indent_str)
 
         last_indent = tz.indents[end]
 
         if current_indent > last_indent
             push!(tz.indents, current_indent)
-            return token(INDENT, "", location(tz.stream))
+            return token(INDENT, "", indent_loc)
         elseif current_indent < last_indent
             while current_indent < tz.indents[end]
                 pop!(tz.indents)
                 # An indent was skept e.g 0 -> 4 -> 2
                 if current_indent > tz.indents[end]
-                    return token(ERROR, "Invalid deindent, expected $(tz.indents[end]), got $current_indent", location(tz.stream))
+                    return token(
+                        ERROR,
+                        "Invalid deindent, expected $(tz.indents[end]), got $current_indent",
+                        location(tz.stream),
+                    )
                 end
-                push!(tz.pending, token(DEDENT, "", location(tz.stream)))
+                push!(tz.pending, token(DEDENT, "", indent_loc))
             end
             return popfirst!(tz.pending)
         end
