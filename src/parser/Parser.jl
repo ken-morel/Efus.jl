@@ -1,156 +1,45 @@
-"""
-    module Parser
-
-Holds parser utilities for parsing efus string 
-literal into Ast nodes.
-"""
 module Parser
-export EfusParser, try_parse!, parse!
-export efus_parse, try_parse
 
-using ...IonicEfus: EfusError
+using ..Tokens: Tokens, Token, Location, Loc, location, loc, TokenType
 import ..Ast
-
-"""
-    mutable struct EfusParser
-
-Efus language parser, supports 
-the parse! and try_parse!.
-"""
-mutable struct EfusParser
-    text::String
-    file::String
-    index::UInt
-    stack::Vector{Tuple{Int, Ast.AbstractStatement}}
-
-    """
-       EfusParser(text::String, file::String)
-
-       Creates a parser from string and given file name.
-    """
-    EfusParser(text::String, file::String) = new(text * "\n", file, 1, [(-1, Ast.Block([]))])
-end
+import ..IonicEfus
+import ..Lexer
 
 
 include("./error.jl")
-include("./location.jl")
-include("./utils.jl")
+include("./token_stream.jl")
 
-include("./compcall.jl")
-include("./control.jl")
-
-include("./number.jl")
-include("./string.jl")
-include("./vect.jl")
-include("./jexpr.jl")
-include("./ionic.jl")
-include("./expression.jl")
-include("./snippet.jl")
+const ENDING = Set{TokenType}([Tokens.EOF, Tokens.EOL])
+isending(t::Token) = t.type ∈ ENDING
 
 
-"""
-    function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
+const StatementChannel = Channel{Ast.Statement}
 
-Parses the code in the parser starting from it's current index,
-returning a code block or an error.
-"""
-function parse!(p::EfusParser)::Union{Ast.Block, AbstractParseError}
-    root_block = p.stack[1][2]
-    @assert root_block isa Ast.Block "Parser stack was not initialized with a root Block."
+mutable struct EfusParser
+    stream::TokenStream
+    out::StatementChannel
+    stack::Vector{Ast.Statement}
+    last_statement::Union{Ast.Statement, Nothing}
+    EfusParser(input::TokenStream, output::StatementChannel) = new(input, output, [], nothing)
+    EfusParser(input::Channel{Tokens.Token}, output::StatementChannel) = new(TokenStream(input), output, [], nothing)
+    EfusParser(tokengetter::Function, output::StatementChannel) = new(TokenStream(tokengetter), output, [], nothing)
+end
 
+Base.take!(p::EfusParser) = put!(p.out, take_one!(p))
+
+function parse!(p::EfusParser)
     while true
-        skip_emptylines!(p) || break
-
-        statement = @zig! parse_statement!(p)
+        statement = take_one!(p)
         isnothing(statement) && break
-        indent, statement = statement
-
-        while length(p.stack) > 1 && p.stack[end][1] >= indent
-            pop!(p.stack)
-        end
-
-        (_, parent) = p.stack[end]
-        if parent !== root_block
-            statement.parent = parent
-        end
-        push!(parent.children, statement)
-
-        push!(p.stack, (indent, statement))
+        put!(p.out, statement)
     end
-    return root_block
+    close(p.out)
+    return
 end
 
-"""
-    function efus_parse(code::String, file::String = "<string>")::Union{Ast.Block, AbstractParseError}
+include("./utils.jl")
+include("./expression.jl")
+include("./statement.jl")
 
-A utility which parses the given code.
-"""
-function efus_parse(code::String, file::String = "<string>")::Union{Ast.Block, AbstractParseError}
-    return parse!(EfusParser(code, file))
-end
-
-
-"""
-    function try_parse!(p::EfusParser)::Ast.Block
-
-A helper which attempts to parse the parser content, 
-but throws the error returned in case of failure.
-"""
-function try_parse!(p::EfusParser)::Ast.Block
-    content = parse!(p)
-    if content isa EfusError
-        throw(content)
-    end
-    return content
-end
-
-"""
-    function try_parse(code::String, file::String = "<string>")
-
-A helper for try_parse! which accepts a string.
-"""
-function try_parse(code::String, file::String = "<string>")
-    return try_parse!(EfusParser(code, file))
-end
-
-"""
-    function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
-
-Parses the given code in a new parser, created from the current parser.
-"""
-function subparse!(p::EfusParser, code::String, loc::String, starting::UInt)
-    code = efus_parse(code, p.file * "; " * loc)
-    return if code isa AbstractParseError
-        posindices = (getindex(p, code.location.start), getindex(p, code.location.stop)) .+ starting
-        positions = current_char.((p,), posindices .- p.index)
-        EfusSyntaxError(
-            p,
-            code.message,
-            Ast.Location(
-                code.location.file,
-                positions[1].start,
-                positions[2].stop,
-            ),
-        )
-    else
-        code
-    end
-end
-
-getindex(p::EfusParser, loc::NTuple{2, UInt})::UInt =
-    (0, findall(==('\n'), p.text)...)[loc[1]] + loc[2]
-
-function parse_statement!(p::EfusParser)::Union{Tuple{UInt, Ast.AbstractStatement}, Nothing, AbstractParseError}
-    return ereset(p) do
-        indent = skip_spaces!(p)
-        control = @zig! parse_controlflow!(p)
-        !isnothing(control) && return (indent, control)
-        statement = @zig! parse_juliablock!(p)
-        !isnothing(statement) && return (indent, statement)
-        statement = @zig! parse_componentcall!(p)
-        !isnothing(statement) && return (indent, statement)
-        return
-    end
-end
 
 end

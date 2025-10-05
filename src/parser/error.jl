@@ -1,76 +1,29 @@
-abstract type AbstractParseError <: EfusError end
-
-macro zig!(expression::Union{Expr, Symbol})
-    var = gensym(:__zig_value__)
-    return quote
-        $(LineNumberNode(__source__.line, __source__.file))
-        let $(esc(var)) = $(esc(expression))
-            if $(esc(var)) isa $AbstractParseError
-                return $(esc(var))
-            end
-            $(esc(var))
-        end
-    end
-end
-macro zig!n(expression::Union{Expr, Symbol})
-    var = gensym(:__zig!n_value__)
-    return quote
-        $(LineNumberNode(__source__.line, __source__.file))
-        let $(esc(var)) = $(esc(expression))
-            if $(esc(var)) isa $AbstractParseError || isnothing($(esc(var)))
-                return $(esc(var))
-            end
-            $(esc(var))
-        end
-    end
-end
-macro zig!r(expression::Union{Expr, Symbol})
-    var = gensym(:__zig!r_value__)
-    return quote
-        $(LineNumberNode(__source__.line, __source__.file))
-        let $(esc(var)) = $(esc(expression))
-            if $(esc(var)) isa $AbstractParseError || !isnothing($(esc(var)))
-                return $(esc(var))
-            end
-            $(esc(var))
-        end
-    end
-end
-
-
-"""
-    struct EfusSyntaxError <: AbstractParseError
-
-A parse syntax error returned by the parser methods.
-Stores location, message and the ogirinal parser.
-"""
-struct EfusSyntaxError <: AbstractParseError
-    parser::Union{Nothing, EfusParser}
+mutable struct ParseError <: IonicEfus.EfusError
     message::String
-    location::Ast.Location
+    location::Location
+    line::Union{String, Nothing}
+    ParseError(msg::String, loc::Location) = new(msg, loc, nothing)
 end
 
-function Base.showerror(io::IO, e::EfusSyntaxError)
-    printstyled(io, "EfusSyntaxError", color = :red, bold = true)
-    print(io, ": ", e.message, "\n")
-
-    print(io, "In ")
-    printstyled(io, e.location.file, color = :blue, bold = true)
-    print(io, " at line ")
-    print(io, e.location.start[1])
-    printstyled(io, ", column ")
-    printstyled(io, e.location.start[2])
-    print(io, ":\n")
-
-    if !isnothing(e.parser)
-        ln = split(e.parser.text, "\n")[e.location.start[1]]
-
-        print(io, ln, "\n")
-
-        start = e.location.start[2]
-        stop = e.location.start[1] == e.location.stop[1] ? e.location.stop[2] : length(ln)
-        print(io, " "^(start - 1))
-        printstyled(io, "^"^(stop - start + 1); color = :red, bold = true)
+function Base.showerror(io::IO, err::ParseError)
+    printstyled(io, "IonicEfus.Parser.ParseError: "; color = :red, bold = true)
+    println(io, err.message)
+    Tokens.show_location(io, err.location)
+    println(io)
+    if !isnothing(err.line)
+        Lexer.print_lexed(err.line; fallback = false)
+    else
+        printstyled(io, "Traceback line unknown"; color = :yellow, italic = true)
     end
+    println()
+    printstyled(
+        io,
+        " "^(err.location.start.col - 1),
+        "^"^(err.location.stop.col - err.location.start.col + 1);
+        color = :light_red,
+        bold = :true,
+        blink = :true,
+    )
+    # println(err)
     return
 end

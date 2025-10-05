@@ -1,30 +1,20 @@
-function parse_jlsymbol!(p::EfusParser)::Union{Ast.LiteralValue, AbstractParseError, Nothing}
-    return ereset(p) do
-        !inbounds(p) && return nothing
-
-        start_char = p.text[p.index]
-        start_loc = current_char(p)
-
-        if start_char != ':'
-            return nothing
+const DIRECT_EVAL = [Tokens.IDENTIFIER, Tokens.NUMERIC, Tokens.STRING, Tokens.CHAR, Tokens.SYMBOL]
+function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Expression, Nothing}
+    tk = peek(p.stream)
+    ts = p.stream
+    return if tk.type === Tokens.IONIC
+        nx = next!(ts)
+        expr = Meta.parse(tk.token)
+        type = if nx.type === Tokens.TYPEASSERT
+            next!(ts)
+            Meta.parse(nx.token)
         end
-
-        p.index += 1
-
-
-        symb = parse_symbol!(p)
-        isnothing(symb) &&
-            return EfusSyntaxError(p, "Expected symbol after ':'", start_loc * current_char(p))
-        return Ast.LiteralValue(symb)
+        Ast.Ionic(expr, type)
+    elseif tk.type ∈ DIRECT_EVAL
+        next!(ts)
+        expr = Meta.parse(tk.token)
+        Ast.Julia(expr)
+    elseif mustbe
+        throw(ParseError("Expected expression, got $tk", tk.location))
     end
-end
-function parse_expression!(p::EfusParser)::Union{AbstractParseError, Ast.AbstractExpression, Nothing}
-    @zig!r parse_block!(p)
-    @zig!r parse_snippet!(p)
-    @zig!r parse_string!(p)
-    @zig!r parse_jlsymbol!(p)
-    @zig!r parse_number!(p)
-    @zig!r parse_vect!(p)
-    @zig!r parse_ionic!(p)
-    return
 end
