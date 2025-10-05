@@ -3,6 +3,7 @@ module Parser
 using ..Tokens: Tokens, Token, Location, Loc, location, loc, TokenType
 import ..Ast
 import ..IonicEfus
+import ..Lexer
 
 
 include("./error.jl")
