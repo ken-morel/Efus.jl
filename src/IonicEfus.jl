@@ -21,6 +21,9 @@ include("./reactants.jl")
 include("./tokens/Tokens.jl")
 
 
+include("./lexer/Lexer.jl")
+
+
 include("./ast/Ast.jl")
 
 
@@ -43,5 +46,6 @@ using .Parser
 
 using .Tokens
 
+include("./utils.jl")
 
 end # module IonicEfus

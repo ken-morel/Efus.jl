@@ -16,7 +16,7 @@ const STYLE = Dict{Symbol, Dict{Symbol, Any}}(
     :compname => Dict(:color => :light_magenta),
     :expr => Dict(:color => :green),
     :ionic => Dict(:color => :green, :underline => true),
-    :unknown => Dict(:color => :gray),
+    :unknown => Dict(:color => :yellow),
     :splat => Dict(:color => :light_blue),
     :identifier => Dict(:color => :light_blue)
 )

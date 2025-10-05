@@ -22,11 +22,11 @@ function show_ast(io::IO, cc::ComponentCall; context::IdDict = IdDict())
             name = "$name:$sub"
         end
         printstyled(io, " ", name, "="; STYLE[:identifier]...)
-        show_ast(io, val)
+        show_ast(io, val; context)
     end
     context[:indent] += 1
     for child in cc.children
-        println()
+        println(io)
         show_ast(io, child; context = context)
     end
     context[:indent] -= 1
@@ -52,22 +52,22 @@ function show_ast(io::IO, node::If; context = IdDict())
         if !started
             printstyled(io, ind, "if"; STYLE[:keyword]...)
             print(io, " ")
-            show_ast(io, branch.condition)
+            show_ast(io, branch.condition; context)
             started = true
         elseif !isnothing(branch.condition)
             printstyled(io, ind, "elseif"; STYLE[:keyword]...)
             print(io, " ")
-            show_ast(io, branch.condition)
+            show_ast(io, branch.condition; context)
         else
             printstyled(io, ind, "else"; STYLE[:keyword]...)
         end
-        println()
+        println(io)
         context[:indent] += 1
         show_ast(io, branch.block; context)
-        println()
+        println(io)
         context[:indent] -= 1
     end
-    printstyled(ind, "end"; STYLE[:keyword]...)
+    printstyled(io, ind, "end"; STYLE[:keyword]...)
     return
 end
 
@@ -83,19 +83,64 @@ function show_ast(io::IO, node::For; context = IdDict())
     :indent ∉ keys(context) && push!(context, :indent => 0)
     ind = "  "^context[:indent]
     printstyled(io, ind, "for "; STYLE[:keyword]...)
-    show_ast(io, node.iterating)
-    printstyled(" in "; STYLE[:keyword]...)
-    show_ast(io, node.iterator)
-    println()
+    show_ast(io, node.iterating; context)
+    printstyled(io, " in "; STYLE[:keyword]...)
+    show_ast(io, node.iterator; context)
+    println(io)
     context[:indent] += 1
     show_ast(io, node.block; context)
-    println()
+    println(io)
     if node.elseblock !== nothing
         printstyled(io, ind, "else\n"; STYLE[:keyword]...)
         show_ast(io, node.elseblock; context)
-        println()
+        println(io)
     end
     context[:indent] -= 1
     printstyled(io, ind, "end"; STYLE[:keyword]...)
+    return
+end
+
+
+Base.@kwdef struct Snippet <: Statement
+    parent::Statement
+    name::Symbol
+    args::Vector{Tuple{Symbol, Any}} = []
+    block::Block = Block()
+end
+
+function show_ast(io::IO, sn::Snippet; context = IdDict())
+    :indent ∉ keys(context) && push!(context, :indent => 0)
+    ind = "  "^context[:indent]
+    printstyled(io, ind, "snippet"; STYLE[:keyword]...)
+    printstyled(io, " ", sn.name; STYLE[:identifier]...)
+    printstyled(io, " do"; STYLE[:keyword]...)
+    started = false
+    for (arg, type) in sn.args
+        if started
+            printstyled(io, ", "; STYLE[:sign]...)
+        else
+            started = true
+            print(io, " ")
+        end
+        printstyled(io, arg; STYLE[:identifier]...)
+        if !isnothing(type)
+            printstyled(io, "::"; STYLE[:sign]...)
+            printstyled(io, type; STYLE[:expr]...)
+        end
+    end
+    println(io)
+    context[:indent] += 1
+    show_ast(io, sn.block; context)
+    context[:indent] -= 1
+    println(io)
+    printstyled(io, ind, "end"; STYLE[:keyword]...)
+    return
+end
+
+
+function show_ast(io::IO, s::Statement; context = IdDict())
+    :indent ∉ keys(context) && push!(context, :indent => 0)
+    ind = "  "^context[:indent]
+    printstyled(io, ind, s; STYLE[:unknown]...)
     return
 end

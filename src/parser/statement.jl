@@ -1,4 +1,4 @@
-function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
+function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement, Nothing, Missing}
     ts = p.stream
 
 
@@ -113,7 +113,7 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                 throw(ParseError("Unexpected else", tk.location))
             end
             isending(next!(p.stream)) || throw(ParseError("Expected EOL after else, got $(peek(p.stream))", peek(p.stream).location))
-            next!(p.stream) |> println
+            next!(p.stream)
             return take_one!(p)
         elseif tk.type === Tokens.FOR
             next!(ts)
@@ -134,7 +134,7 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
         elseif tk.type === Tokens.END
             if !isempty(p.stack)
                 statement = p.stack[end]
-                if statement isa Ast.If || statement isa Ast.For
+                if statement isa Ast.If || statement isa Ast.For || statement isa Ast.Snippet
                     eof = next!(ts)
                     isending(eof) || throw(
                         ParseError(
@@ -147,7 +147,61 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                     continue
                 end
             end
-            throw(ParseError("Unexpected end", tk.location))
+            if expect_end
+                eof = next!(ts)
+                isending(eof) || throw(
+                    ParseError(
+                        "Unexpected token after END: $eof", eof.location
+                    )
+                )
+                next!(ts)
+                p.last_statement = nothing
+                return missing
+            else
+                throw(ParseError("Unexpected end", tk.location))
+            end
+        elseif tk.type === Tokens.SNIPPET
+            nx = next!(ts)
+            nx.type === Tokens.IDENTIFIER || throw(
+                ParseError(
+                    "Unexpected token after snippet",
+                    nx.location
+                )
+            )
+            name = Symbol(nx.token)
+            shouldbe(next!(ts), [Tokens.DO], "in snippet, expected do")
+            next!(ts)
+            snippet = Ast.Snippet(; parent, name)
+            while !isending(peek(ts))
+                shouldbe(peek(ts), [Tokens.IDENTIFIER], "in snippet parameters")
+                name = Symbol(peek(ts).token)
+                nx = next!(ts)
+                type = if nx.type === Tokens.TYPEASSERT
+                    assert = Meta.parse(nx.token)
+                    nx = next!(ts)
+                    assert
+                end
+                push!(snippet.args, (name, type))
+                if nx.type === Tokens.COMMA
+                    tk = next!(ts)
+                    while tk.type ∈ (Tokens.EOL, Tokens.COMMA, Tokens.INDENT, Tokens.DEDENT)
+                        # skip emtys and newlines
+                        tk = next!(ts)
+                    end
+                    continue
+                elseif isending(nx)
+                    break
+                else
+                    throw(
+                        ParseError(
+                            "Unexpected token $nx, expected comma or newline", nx.location,
+                        )
+                    )
+                end
+            end
+            push!(p.stack, snippet)
+            p.last_statement = snippet.block
+            return snippet
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
         end

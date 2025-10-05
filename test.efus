@@ -1,5 +1,7 @@
-for x in y
-  Has ama=yes
-else
-  Empty yes=true
-end
+Ama test=ama
+  snippet label do a::Substring{String}, b::Int
+    Label text=4
+    Text ama=4
+  end
+  snippet label do
+  end

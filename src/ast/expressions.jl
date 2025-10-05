@@ -2,7 +2,7 @@ struct Julia <: Expression
     value::Any
 end
 
-function show_ast(io::IO, j::Julia)
+function show_ast(io::IO, j::Julia; _...)
     return printstyled(io, repr(j.value); STYLE[:expr]...)
 end
 
@@ -11,7 +11,7 @@ struct Ionic <: Expression
     type
 end
 
-function show_ast(io::IO, i::Ionic)
+function show_ast(io::IO, i::Ionic; _...)
     printstyled(io, repr(i.expr); STYLE[:ionic]...)
     if !isnothing(i.type)
         printstyled(io, "::"; STYLE[:sign]...)
@@ -24,7 +24,20 @@ struct Vect
     items::Vector{Expression}
 end
 
-struct Snippet <: Expression
-    args::Vector{Tuple{Symbol, Any}}
-    block::Block
+function show_ast(io::IO, v::Vect; context = IdDict())
+    :indent ∉ keys(context) && push!(context, :indent => 0)
+    ind = "  "^context[:indent]
+    printstyled(io, ind, "[\n"; STYLE[:sign]...)
+    context[:indent] += 1
+    for item in v.items
+        show_ast(io, item; context = context)
+        println(io, ",\n"; STYLE[:sign]...)
+    end
+    context[:indent] -= 1
+    return
+end
+
+function show_ast(io::IO, e::Expression; _...)
+    printstyled(io, e; STYLE[:unknown]...)
+    return
 end

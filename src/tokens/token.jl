@@ -32,6 +32,8 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     ELSE
     ELSEIF
 
+    SNIPPET
+
     END
 
     IN
@@ -39,6 +41,8 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     TYPEASSERT
 
     COMMENT
+
+    NONE
 end
 
 
@@ -57,6 +61,7 @@ const KEYWORDS = Dict{String, TokenType}(
     "if" => IF,
     "else" => ELSE,
     "elseif" => ELSEIF,
+    "snippet" => SNIPPET,
 
     "in" => IN,
     "∈" => IN,
@@ -70,6 +75,21 @@ struct Location
     start::Loc
     stop::Loc
     file::AbstractString
+end
+
+function show_location(io::IO, loc::Location)
+    if loc.start.ln === loc.stop.ln
+        print(io, "At line $(loc.start.ln)")
+    else
+        print(io, "Between lines $(loc.start.ln) and $(loc.stop.ln)")
+    end
+    if loc.start.col === loc.stop.col
+        print(io, ", column $(loc.start.col)")
+    else
+        print(io, ", between columns $(loc.start.col) and $(loc.stop.col)")
+    end
+    print(", in file $(loc.file)")
+    return
 end
 
 function Base.:*(a::Location, b::Location)

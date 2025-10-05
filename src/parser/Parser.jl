@@ -20,6 +20,8 @@ mutable struct EfusParser
     stack::Vector{Ast.Statement}
     last_statement::Union{Ast.Statement, Nothing}
     EfusParser(input::TokenStream, output::StatementChannel) = new(input, output, [], nothing)
+    EfusParser(input::Channel{Tokens.Token}, output::StatementChannel) = new(TokenStream(input), output, [], nothing)
+    EfusParser(tokengetter::Function, output::StatementChannel) = new(TokenStream(tokengetter), output, [], nothing)
 end
 
 Base.take!(p::EfusParser) = put!(p.out, take_one!(p))
