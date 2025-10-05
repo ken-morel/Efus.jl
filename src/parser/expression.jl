@@ -1,5 +1,5 @@
 const DIRECT_EVAL = [Tokens.IDENTIFIER, Tokens.NUMERIC, Tokens.STRING, Tokens.CHAR, Tokens.SYMBOL]
-function take_expression!(p::EfusParser)::Ast.Expression
+function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Expression, Nothing}
     tk = peek(p.stream)
     ts = p.stream
     return if tk.type === Tokens.IONIC
@@ -14,5 +14,7 @@ function take_expression!(p::EfusParser)::Ast.Expression
         next!(ts)
         expr = Meta.parse(tk.token)
         Ast.Julia(expr)
+    elseif mustbe
+        throw(ParseError("Expected expression, got $tk", tk.location))
     end
 end

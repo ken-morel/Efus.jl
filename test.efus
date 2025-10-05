@@ -1,15 +1,5 @@
-Frame text=frm
-  if true
-    Label text=3
-  elseif 45
-    Label bar=4
-  else
-    Foo bar=5
-    if Foo + Bar - (
-      Foo - Bar
-    )
-      Bnana
-    else
-      Cofee
-    end
-  end
+for x in y
+  Has ama=yes
+else
+  Empty yes=true
+end

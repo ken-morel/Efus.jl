@@ -71,10 +71,31 @@ function show_ast(io::IO, node::If; context = IdDict())
     return
 end
 
-Base.@kwdef struct For <: Statement
+Base.@kwdef mutable struct For <: Statement
     parent::Union{Statement, Nothing} = nothing
     elseblock::Union{Nothing, Block} = nothing
-    iterator::Ionic
-    iterating::Julia
+    iterator::Expression
+    iterating::Expression
     block::Block
+end
+
+function show_ast(io::IO, node::For; context = IdDict())
+    :indent ∉ keys(context) && push!(context, :indent => 0)
+    ind = "  "^context[:indent]
+    printstyled(io, ind, "for "; STYLE[:keyword]...)
+    show_ast(io, node.iterating)
+    printstyled(" in "; STYLE[:keyword]...)
+    show_ast(io, node.iterator)
+    println()
+    context[:indent] += 1
+    show_ast(io, node.block; context)
+    println()
+    if node.elseblock !== nothing
+        printstyled(io, ind, "else\n"; STYLE[:keyword]...)
+        show_ast(io, node.elseblock; context)
+        println()
+    end
+    context[:indent] -= 1
+    printstyled(io, ind, "end"; STYLE[:keyword]...)
+    return
 end

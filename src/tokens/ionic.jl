@@ -8,12 +8,12 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
     maxbytetokenlength = max(0, bytetokenlengths...)
     endtokenandsizes = zip(bytetokens, bytetokenlengths)
     ts = tz.stream
-    startloc = loc(ts)
+    startloc = location(ts)
     buffer = IOBuffer()
 
     brackets = Char[]
 
-    stoploc = startloc
+    stoploc = startloc.stop
     foundendtoken = false
     while !eof(ts)
         ch = peek(ts)
@@ -44,7 +44,9 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
         elseif ch === '"'
             tk = take_string!(tz)
             tk.type === ERROR && return tk
-            write(buffer, tk.token[begin:(end - 1)])
+            write(buffer, tk.token[begin:end])
+            stoploc = loc(ts)
+            continue
         end
         write(buffer, ch)
         stoploc = loc(ts)
@@ -73,5 +75,5 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
         startloc,
     )
 
-    return token(IONIC, String(take!(buffer)), Location(startloc, stoploc, ts.file))
+    return token(IONIC, String(take!(buffer)), startloc * stoploc)
 end

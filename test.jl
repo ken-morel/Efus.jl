@@ -34,8 +34,8 @@ while true
         end
         break
     finally
-        Ast.show_ast(stdout, parent)
-        println("\n", "-"^20)
+        # Ast.show_ast(stdout, parent)
+        # println("\n", "-"^20)
     end
 end
 # println.(filter!(!isnothing, tokens))

@@ -168,6 +168,7 @@ function take_one!(tz::Tokenizer)::Token
     end
 end
 
+_stacker(s::String) = Meta.isidentifier(s) || isletter(s[end])
 
 function take_identifier!(tz::Tokenizer)::Token
     startloc = location(tz.stream)

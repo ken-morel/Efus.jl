@@ -54,7 +54,7 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                     Symbol(n[2:end])
                 end
 
-                shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal, got '$(nx.token)'")
+                shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
                 next!(ts)
                 paramvalue = take_expression!(p)
                 isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
@@ -98,21 +98,43 @@ function take_one!(p::EfusParser)::Union{Ast.Statement, Nothing}
                 return take_one!(p)
             end
         elseif tk.type === Tokens.ELSE
-            statement = if isempty(p.stack) || !isa(p.stack[end], Ast.If)
+            statement = if isempty(p.stack)
                 throw(ParseError("Unexpected else", tk.location))
             else
                 p.stack[end]
             end
-            branch = Ast.IfBranch(; condition = nothing)
-            push!(statement.branches, branch)
-            p.last_statement = branch
+            p.last_statement = if statement isa Ast.If
+                branch = Ast.IfBranch(; condition = nothing)
+                push!(statement.branches, branch)
+                branch
+            elseif statement isa Ast.For
+                statement.elseblock = Ast.Block()
+            else
+                throw(ParseError("Unexpected else", tk.location))
+            end
             isending(next!(p.stream)) || throw(ParseError("Expected EOL after else, got $(peek(p.stream))", peek(p.stream).location))
-            next!(p.stream)
+            next!(p.stream) |> println
             return take_one!(p)
+        elseif tk.type === Tokens.FOR
+            next!(ts)
+            iterating = take_expression!(p)
+            shouldbe(peek(ts), [Tokens.IN], "In for loop, expected in")
+            next!(ts)
+            iterator = take_expression!(p)
+            isending(peek(ts)) || throw(
+                ParseError(
+                    "Expected EOL after for loop",
+                    peek(ts).location
+                )
+            )
+            statement = Ast.For(; parent, iterating, iterator, block = Ast.Block())
+            push!(p.stack, statement)
+            p.last_statement = statement.block
+            return statement
         elseif tk.type === Tokens.END
             if !isempty(p.stack)
                 statement = p.stack[end]
-                if statement isa Ast.If
+                if statement isa Ast.If || statement isa Ast.For
                     eof = next!(ts)
                     isending(eof) || throw(
                         ParseError(
