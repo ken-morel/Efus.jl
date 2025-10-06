@@ -60,7 +60,6 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
                 if view(buffer.data, (bflen - endtokensize + 1):bflen) == endtoken
                     # Yeah, we got an endtoken
                     foundendtoken = true
-
                     break
                 end
             end

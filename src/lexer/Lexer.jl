@@ -52,52 +52,6 @@ const DEFAULT_THEME = Theme(
     # Other
     Tokens.COMMENT => Style(:italic => true, :color => :light_black),
 )
-@enum TokenType begin
-    ERROR
-
-    INDENT
-    DEDENT
-
-    EOF
-    EOL
-    NEXTLINE
-
-
-    IDENTIFIER
-
-    IONIC
-    NUMERIC
-    STRING
-    CHAR
-    SYMBOL
-    SPLAT
-
-    EQUAL
-    COMMA
-
-    SQOPEN
-    SQCLOSE
-
-    BEGIN
-    DO
-    FOR
-    IF
-    ELSE
-    ELSEIF
-
-    SNIPPET
-
-    END
-
-    IN
-
-    TYPEASSERT
-
-    COMMENT
-
-    NONE
-end
-
 
 getstyle(theme::Theme, tk::Tokens.TokenType) = tk in keys(theme) ? theme[tk] : EMPTY_STYLE
 

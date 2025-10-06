@@ -16,5 +16,7 @@ ast = @time IonicEfus.parse_efus(CODE, FILE)
 @info "Showing ast..."
 @time Ast.show_ast(stdout, ast)
 
+@info "lexing text"
+lexed = @time Lexer.lex(CODE)
 @info "showing lexed"
-@time Lexer.print_lexed(CODE)
+@time Lexer.print_lexed(lexed)
