@@ -6,6 +6,4 @@ function Snippet{T}(fn::Function) where {T}
     return Snippet(SnippetFunction{T}(fn))
 end
 
-function (sn::Snippet)(args...)
-    return sn.fn(args) # I hope kwargs are internally represented as NamedTuple
-end
+(sn::Snippet)(args...) = sn.fn(args) # I hope kwargs are internally represented as NamedTuple

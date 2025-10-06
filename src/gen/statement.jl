@@ -64,21 +64,39 @@ function generate(node::Ast.For)
 end
 
 function generate(snippet::Ast.Snippet)
-    names = keys(snippet.params)
-    types = map(values(snippet.params)) do p
-        if isnothing(p)
-            :Any
+    names = Symbol[]
+    types = []
+    for param in snippet.params
+        push!(names, QuoteNode(param.name))
+        if isnothing(param.type)
+            push!(types, Any)
         else
-            generate(p)
+            push!(types, param.type.value)
         end
     end
-    params = map(zip(names, types)) do (name, type)
-        Expr(:(::), name, type)
+    namedtupletype = Expr(
+        :curly,
+        NamedTuple,
+        Expr(:tuple, QuoteNode.(names)),
+        Expr(:curly, Tuple, types...),
+    )
+    signature = Expr(:tuple, generate.(snippet.params))
+    content = generate(snippet.block)
+
+    snippettype = Expr(:curly, IonicEfus.Snippet, namedtupletype)
+    functiondef = Expr(:->, signature, content)
+    return Expr(:call, snippettype, functiondef)
+end
+
+function generate(param::Ast.SnippetParameter)
+    expr = param.name
+    if !isnothing(param.type)
+        expr = Expr(:(::), expr, param.type.value)
     end
-    fn = Expr(:->, Expr(:tuple, params...), Expr(:block, generate(snippet.block)))
-    typeassert = Expr(:curly, IonicEfus.Snippet, Expr(:curly, :Tuple, types...))
-    return Expr(:call, typeassert, fn)
-    return
+    if !isnothing(param.default)
+        expr = Expr(:(=), expr, param.default.value)
+    end
+    return expr
 end
 
 

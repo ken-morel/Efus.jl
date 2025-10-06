@@ -76,6 +76,7 @@ Base.@kwdef struct Snippet <: Statement
     params::Vector{SnippetParameter}
     block::Block = Block()
 end
+
 function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
     params = SnippetParameter[]
     expr.head !== :tuple && error(
