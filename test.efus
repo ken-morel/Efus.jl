@@ -1,6 +1,22 @@
-Ama test=ama
-  snippet label do a:Substring{String}, b::Int
-    Label text=4
+Ama test=ama reactive_snappshot=ama' reactive_expression=("I am " * name')
+  label(a::Substring{String}, b::Int)
+    Label text="67$unit"
   end
-  snippet label do
-  end
+  # This is a comment
+  Box orient=:v padding=(1, 2)
+    Diagram contents=["67$units",
+      ("Reactive expr" * name'),
+      (1, 2),
+      ["inner array"],
+      :hoo!
+    ]
+    for (index, name) in enumerate(names)
+      if index % 2 == 0
+        Label text=name
+      elseif index == 1
+        Label text="first"
+      else
+        Label text="odd"
+      end
+    end
+

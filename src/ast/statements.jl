@@ -17,6 +17,7 @@ function show_ast(io::IO, cc::ComponentCall; context::IdDict = IdDict())
         printstyled(io, " ", splat; STYLE[:splat]...)
         printstyled(io, "..."; STYLE[:sign]...)
     end
+    context[:indent] += 1
     for (name, sub, val) in cc.arguments
         if !isnothing(sub)
             name = "$name:$sub"
@@ -24,7 +25,6 @@ function show_ast(io::IO, cc::ComponentCall; context::IdDict = IdDict())
         printstyled(io, " ", name, "="; STYLE[:identifier]...)
         show_ast(io, val; context)
     end
-    context[:indent] += 1
     for child in cc.children
         println(io)
         show_ast(io, child; context = context)
@@ -104,31 +104,15 @@ end
 Base.@kwdef struct Snippet <: Statement
     parent::Statement
     name::Symbol
-    args::Vector{Tuple{Symbol, Any}} = []
+    params::Expr
     block::Block = Block()
 end
 
 function show_ast(io::IO, sn::Snippet; context = IdDict())
     :indent ∉ keys(context) && push!(context, :indent => 0)
     ind = "  "^context[:indent]
-    printstyled(io, ind, "snippet"; STYLE[:keyword]...)
-    printstyled(io, " ", sn.name; STYLE[:identifier]...)
-    printstyled(io, " do"; STYLE[:keyword]...)
-    started = false
-    for (arg, type) in sn.args
-        if started
-            printstyled(io, ", "; STYLE[:sign]...)
-        else
-            started = true
-            print(io, " ")
-        end
-        printstyled(io, arg; STYLE[:identifier]...)
-        if !isnothing(type)
-            printstyled(io, "::"; STYLE[:sign]...)
-            printstyled(io, type; STYLE[:expr]...)
-        end
-    end
-    println(io)
+    printstyled(io, ind, sn.name; STYLE[:identifier]...)
+    printstyled(io, sn.params, "\n"; STYLE[:ionic]...)
     context[:indent] += 1
     show_ast(io, sn.block; context)
     context[:indent] -= 1

@@ -10,7 +10,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             continue
         elseif tk.type === Tokens.INDENT
             if isnothing(p.last_statement)
-                throw(ParseError("Unexpected indent", tk.location))
+                throw(ParseError("Unexpected indent, no preceding parent or sibling component", tk.location))
             end
             push!(p.stack, p.last_statement)
             p.last_statement = nothing
@@ -33,34 +33,56 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
 
         parent = isempty(p.stack) ? nothing : p.stack[end]
 
-        statement = if tk.type === Tokens.IDENTIFIER
-            s = Ast.ComponentCall(; parent, componentname = Symbol(tk.token))
+        statement = if tk.type === Tokens.COMMENT
             next!(ts)
-            while !isending(peek(ts))
-                arg_tk = peek(ts)
-                shouldbe(arg_tk, [Tokens.IDENTIFIER], "In component call, expected argument name")
-                paramname = Symbol(arg_tk.token)
-                nx = next!(ts)
-
-                if nx.type === Tokens.SPLAT
-                    push!(s.splats, paramname)
-                    next!(ts)
-                    continue
+            next!(ts)
+            take_one!(p)
+        elseif tk.type === Tokens.IDENTIFIER
+            nx = next!(ts)
+            if nx.type === Tokens.IONIC
+                name = Symbol(tk.token)
+                params = try
+                    Meta.parse("($(nx.token)) -> nothing").args[1]
+                catch e
+                    errmsg = e isa Meta.ParseError ? e.msg : string(e)
+                    throw(ParseError("Error parsing arguments for snippet $name: $errmsg", nx.location))
                 end
+                shouldbe(next!(ts), [Tokens.EOL], "Expected EOL after snippet definition")
 
-                paramsub = if nx.type === Tokens.SYMBOL
-                    n = nx.token
+                snippet = Ast.Snippet(; parent, name, params)
+
+                push!(p.stack, snippet)
+                p.last_statement = snippet.block
+                return snippet
+            else
+                s = Ast.ComponentCall(; parent, componentname = Symbol(tk.token))
+                while !isending(peek(ts))
+                    arg_tk = peek(ts)
+                    shouldbe(arg_tk, [Tokens.IDENTIFIER], "In component call, expected argument name")
+                    paramname = Symbol(arg_tk.token)
                     nx = next!(ts)
-                    Symbol(n[2:end])
-                end
 
-                shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
-                next!(ts)
-                paramvalue = take_expression!(p)
-                isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
-                push!(s.arguments, (paramname, paramsub, paramvalue))
+                    if nx.type === Tokens.SPLAT
+                        push!(s.splats, paramname)
+                        next!(ts)
+                        continue
+                    end
+
+                    paramsub = if nx.type === Tokens.SYMBOL
+                        n = nx.token
+                        nx = next!(ts)
+                        Symbol(n[2:end])
+                    end
+
+                    shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
+                    next!(ts)
+                    paramvalue = take_expression!(p)
+                    isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
+                    push!(s.arguments, (paramname, paramsub, paramvalue))
+                end
+                s
             end
-            s
+
         elseif tk.type === Tokens.IF || tk.type === Tokens.ELSEIF
             isif = tk.type === Tokens.IF
             statement = if isif
@@ -160,48 +182,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             else
                 throw(ParseError("Unexpected end", tk.location))
             end
-        elseif tk.type === Tokens.SNIPPET
-            nx = next!(ts)
-            nx.type === Tokens.IDENTIFIER || throw(
-                ParseError(
-                    "Unexpected token after snippet",
-                    nx.location
-                )
-            )
-            name = Symbol(nx.token)
-            shouldbe(next!(ts), [Tokens.DO], "in snippet, expected do")
-            next!(ts)
-            snippet = Ast.Snippet(; parent, name)
-            while !isending(peek(ts))
-                shouldbe(peek(ts), [Tokens.IDENTIFIER], "in snippet parameters")
-                name = Symbol(peek(ts).token)
-                nx = next!(ts)
-                type = if nx.type === Tokens.TYPEASSERT
-                    assert = Meta.parse(nx.token)
-                    nx = next!(ts)
-                    assert
-                end
-                push!(snippet.args, (name, type))
-                if nx.type === Tokens.COMMA
-                    tk = next!(ts)
-                    while tk.type ∈ (Tokens.EOL, Tokens.COMMA, Tokens.INDENT, Tokens.DEDENT)
-                        # skip emtys and newlines
-                        tk = next!(ts)
-                    end
-                    continue
-                elseif isending(nx)
-                    break
-                else
-                    throw(
-                        ParseError(
-                            "Unexpected token $nx, expected comma or newline", nx.location,
-                        )
-                    )
-                end
-            end
-            push!(p.stack, snippet)
-            p.last_statement = snippet.block
-            return snippet
+
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
         end
