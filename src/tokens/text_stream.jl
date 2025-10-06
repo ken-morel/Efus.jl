@@ -1,4 +1,38 @@
-export TextStream
+export TextStream, LineIndex, loc2index
+
+"""
+    struct LineIndex
+
+Pre-calculates and stores the starting index of each line in a text,
+allowing for O(1) conversion from (line, column) to a direct index.
+"""
+struct LineIndex
+    # Array where each element is the starting index of that line.
+    line_starts::Vector{UInt}
+end
+
+function LineIndex(text::AbstractString)
+    line_starts = [UInt(1)]
+    # This is faster than findall
+    for i in eachindex(text)
+        if text[i] == '\n'
+            # The next line starts at the character after the newline.
+            push!(line_starts, UInt(i + 1))
+        end
+    end
+    return LineIndex(line_starts)
+end
+
+"""
+    loc2index(li::LineIndex, loc::Tokens.Loc)::UInt
+
+Converts a `Loc` (line, column) to a string index using the pre-calculated
+`LineIndex`. This is an O(1) operation.
+"""
+function loc2index(li::LineIndex, loc::Tokens.Loc)::UInt
+    # The index is the start of the line plus the column number (minus 1, since columns are 1-based).
+    return li.line_starts[loc.ln] + loc.col - 1
+end
 
 """
     mutable struct TextStream

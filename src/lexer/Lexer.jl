@@ -57,11 +57,12 @@ getstyle(theme::Theme, tk::Tokens.TokenType) = tk in keys(theme) ? theme[tk] : E
 
 function lex(code::AbstractString)::Lexed
     lexed = Lexed()
+    line_index = Tokens.LineIndex(code)
     tokens = Channel{Tokens.Token}() do channel
         index = 1
         for (type, content, loc) in channel
-            start = loc2index(code, loc.start)
-            stop = loc2index(code, loc.stop)
+            start = loc2index(line_index, loc.start)
+            stop = loc2index(line_index, loc.stop)
 
             if index < start
                 push!(lexed, (code[index:(start - 1)], Tokens.NONE))
@@ -91,12 +92,6 @@ function lex(code::AbstractString)::Lexed
     end
     Tokens.tokenize!(Tokens.Tokenizer(tokens, Tokens.TextStream(code)))
     return lexed
-end
-
-function loc2index(txt::String, loc::Tokens.Loc)::UInt
-    loc.ln == 1 && return loc.col
-    newlines = findall('\n', txt)
-    return newlines[loc.ln - 1] + loc.col
 end
 
 function print_lexed(io::IO, lexed::Lexed, theme::Theme = DEFAULT_THEME)
