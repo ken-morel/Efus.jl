@@ -25,8 +25,8 @@ function take_string!(tz::Tokenizer)::Token
             )
         elseif ch === '"'
             write(buffer, ch)
-            next!(ts)
             lastloc = loc(ts)
+            next!(ts)
             break
         end
         write(buffer, ch)
