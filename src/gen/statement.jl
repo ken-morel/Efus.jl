@@ -2,7 +2,7 @@ function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
     shouldclean = !all(isa.(node.children, Ast.ComponentCall))
 
-    kwargs = [Expr(:kw, arg.name, generate(arg.value)) for arg in node.arguments]
+    kwargs = [Expr(:kw, arg[1], generate(arg[3])) for arg in node.arguments]
 
     splats = Expr(:parameters, [Expr(:..., splat.name) for splat in node.splats]...)
 
@@ -67,7 +67,7 @@ function generate(snippet::Ast.Snippet)
     names = Symbol[]
     types = []
     for param in snippet.params
-        push!(names, QuoteNode(param.name))
+        push!(names, param.name)
         if isnothing(param.type)
             push!(types, Any)
         else
@@ -77,14 +77,26 @@ function generate(snippet::Ast.Snippet)
     namedtupletype = Expr(
         :curly,
         NamedTuple,
-        Expr(:tuple, QuoteNode.(names)),
+        Expr(:tuple, QuoteNode.(names)...),
         Expr(:curly, Tuple, types...),
     )
-    signature = Expr(:parameters, [Expr(:kw, generate(param)) for param in snippet.params]...)
+    exprs = []
+    for param in snippet.params
+        expr = param.name
+        if param.type !== nothing
+            expr = Expr(:(::), expr, param.type.value)
+        end
+        if param.default !== nothing
+            expr = Expr(:kw, expr, param.default.value)
+        end
+        push!(exprs, expr)
+    end
+    signature = Expr(:parameters, exprs...)
     content = generate(snippet.block)
 
     snippettype = Expr(:curly, IonicEfus.Snippet, namedtupletype)
-    functiondef = Expr(:->, signature, content)
+    functiondef = Expr(:->, Expr(:tuple, signature), content)
+    println(functiondef)
     return Expr(:call, snippettype, functiondef)
 end
 
