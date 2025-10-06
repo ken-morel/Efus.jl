@@ -23,6 +23,7 @@ const DEFAULT_THEME = Theme(
 
     # From AST styles & more distinct colors
     Tokens.IDENTIFIER => Style(:color => :light_blue),
+    Tokens._UPPER_IDENTIFIER => Style(:color => :light_green),
     Tokens.IONIC => Style(:color => :green, :underline => true),
     Tokens.NUMERIC => Style(:color => :light_red),
     Tokens.STRING => Style(:color => :green),
@@ -31,7 +32,7 @@ const DEFAULT_THEME = Theme(
     Tokens.SPLAT => Style(:color => :light_blue),
 
     # Operators/Signs
-    Tokens.EQUAL => Style(:color => :cyan),
+    Tokens.EQUAL => Style(:color => :light_cyan),
     Tokens.COMMA => Style(:color => :cyan),
     Tokens.SQOPEN => Style(:color => :cyan),
     Tokens.SQCLOSE => Style(:color => :cyan),
@@ -40,14 +41,13 @@ const DEFAULT_THEME = Theme(
 
     # Keywords
     Tokens.BEGIN => Style(:bold => true, :color => :magenta),
-    Tokens.DO => Style(:bold => true, :color => :magenta),
     Tokens.FOR => Style(:bold => true, :color => :magenta),
     Tokens.IF => Style(:bold => true, :color => :magenta),
     Tokens.ELSE => Style(:bold => true, :color => :magenta),
     Tokens.ELSEIF => Style(:bold => true, :color => :magenta),
-    Tokens.SNIPPET => Style(:bold => true, :color => :magenta),
     Tokens.END => Style(:bold => true, :color => :magenta),
-    Tokens.IN => Style(:bold => true, :color => :magenta),
+    Tokens.IN => Style(:bold => true, :color => :light_magenta),
+
 
     # Other
     Tokens.COMMENT => Style(:italic => true, :color => :light_black),
@@ -105,14 +105,14 @@ function lex(code::AbstractString)::Lexed
     lexed = Lexed()
     tokens = Channel{Tokens.Token}() do channel
         index = 1
-        for (type, _, loc) in channel
+        for (type, content, loc) in channel
             start = loc2index(code, loc.start)
             stop = loc2index(code, loc.stop)
 
             if index < start
-                push!(lexed, (code[index:start - 1], Tokens.NONE))
+                push!(lexed, (code[index:(start - 1)], Tokens.NONE))
             end
-            
+
             if type == Tokens.EOF
                 index = start
                 break
@@ -124,7 +124,10 @@ function lex(code::AbstractString)::Lexed
             end
 
             clamped_stop = min(stop, lastindex(code))
-            
+
+            if type === Tokens.IDENTIFIER && length(content) > 0 && isuppercase(content[1])
+                type = Tokens._UPPER_IDENTIFIER
+            end
             push!(lexed, (code[start:clamped_stop], type))
             index = clamped_stop + 1
         end

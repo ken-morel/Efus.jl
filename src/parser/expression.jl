@@ -15,19 +15,32 @@ function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Express
         expr = Meta.parse(tk.token)
         Ast.Julia(expr)
     elseif tk.type === Tokens.SQOPEN
-        contents = Ast.Expression[]
         next!(ts)
+        contents = Ast.Expression[]
         while true
-            tk = peek(ts)
-            if tk.type ∈ (Tokens.COMMA, Tokens.EOL, Tokens.INDENT, Tokens.DEDENT)
+            while peek(ts).type ∈ (Tokens.EOL, Tokens.INDENT, Tokens.DEDENT)
                 next!(ts)
-                continue
-            elseif tk.type === Tokens.SQCLOSE
+            end
+            if peek(ts).type === Tokens.SQCLOSE
+                next!(ts)
                 break
             end
             push!(contents, take_expression!(p; mustbe = true))
+
+            while peek(ts).type ∈ (Tokens.EOL, Tokens.INDENT, Tokens.DEDENT)
+                next!(ts)
+            end
+
+            tk_after = peek(ts)
+            if tk_after.type === Tokens.SQCLOSE
+                next!(ts)
+                break # Yeah twice, but those just two line though
+            elseif tk_after.type === Tokens.COMMA
+                next!(ts)
+            else
+                throw(ParseError("Expected comma or ']' in vector, got $(tk_after.type)", tk_after.location))
+            end
         end
-        next!(ts)
         Ast.Vect(contents)
     elseif mustbe
         throw(ParseError("Expected expression, got $tk", tk.location))

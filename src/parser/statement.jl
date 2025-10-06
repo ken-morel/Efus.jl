@@ -33,14 +33,19 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
 
         parent = isempty(p.stack) ? nothing : p.stack[end]
 
-        statement = if tk.type === Tokens.IDENTIFIER
+        statement = if tk.type === Tokens.COMMENT
+            next!(ts)
+            next!(ts)
+            take_one!(p)
+        elseif tk.type === Tokens.IDENTIFIER
             nx = next!(ts)
             if nx.type === Tokens.IONIC
                 name = Symbol(tk.token)
                 params = try
                     Meta.parse("($(nx.token)) -> nothing").args[1]
                 catch e
-                    throw(ParseError("Error parsing arguments for snippet $name: $e", nx.location))
+                    errmsg = e isa Meta.ParseError ? e.msg : string(e)
+                    throw(ParseError("Error parsing arguments for snippet $name: $errmsg", nx.location))
                 end
                 shouldbe(next!(ts), [Tokens.EOL], "Expected EOL after snippet definition")
 

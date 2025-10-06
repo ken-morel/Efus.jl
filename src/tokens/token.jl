@@ -11,6 +11,7 @@ export TokenType, Token, Tokenizer, token, Loc, Location
 
 
     IDENTIFIER
+    _UPPER_IDENTIFIER
 
     IONIC
     NUMERIC
@@ -26,13 +27,10 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     SQCLOSE
 
     BEGIN
-    DO
     FOR
     IF
     ELSE
     ELSEIF
-
-    SNIPPET
 
     END
 
@@ -56,12 +54,10 @@ const CHARTOKENS = Dict{Char, TokenType}(
 const KEYWORDS = Dict{String, TokenType}(
     "begin" => BEGIN,
     "end" => END,
-    "do" => DO,
     "for" => FOR,
     "if" => IF,
     "else" => ELSE,
     "elseif" => ELSEIF,
-    "snippet" => SNIPPET,
 
     "in" => IN,
     "∈" => IN,

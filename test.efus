@@ -2,6 +2,7 @@ Ama test=ama reactive_snappshot=ama' reactive_expression=("I am " * name')
   label(a::Substring{String}, b::Int)
     Label text="67$unit"
   end
+  # This is a comment
   Box orient=:v padding=(1, 2)
     Diagram contents=["67$units",
       ("Reactive expr" * name'),
