@@ -1,9 +1,12 @@
-const SnippetFunction{T} = FunctionWrapper{Vector{Component, Tuple{T}}}
+const SnippetFunction = FunctionWrapper{Vector{Component}, Tuple{}}
+
 struct Snippet{T} where {T <: NamedTuple}
-    fn::SnippetFunction{T}
-end
-function Snippet{T}(fn::Function) where {T}
-    return Snippet(SnippetFunction{T}(fn))
+    fn::SnippetFunction
 end
 
-(sn::Snippet)(args...) = sn.fn(args) # I hope kwargs are internally represented as NamedTuple
+function Snippet{T}(fn::Function) where {T}
+    return Snippet(SnippetFunction(fn))
+end
+
+# I hope kwargs are internally represented as NamedTuple
+(sn::Snippet)(args...) = sn.fn(args...)

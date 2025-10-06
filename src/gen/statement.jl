@@ -80,7 +80,7 @@ function generate(snippet::Ast.Snippet)
         Expr(:tuple, QuoteNode.(names)),
         Expr(:curly, Tuple, types...),
     )
-    signature = Expr(:tuple, generate.(snippet.params))
+    signature = Expr(:parameters, [Expr(:kw, generate(param)) for param in snippet.params]...)
     content = generate(snippet.block)
 
     snippettype = Expr(:curly, IonicEfus.Snippet, namedtupletype)

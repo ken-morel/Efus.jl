@@ -79,25 +79,34 @@ end
 
 function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
     params = SnippetParameter[]
+    # This function should handle keyword arguments, which are under the :parameters key
+    # for a tuple expression. For now, we assume the args are directly in the tuple.
     expr.head !== :tuple && error(
-        "Expected a typle of arguments as expr"
+        "Expected a tuple of arguments as expr"
     )
     for arg in expr.args
         if arg isa Symbol
+            # e.g., `item`
             push!(params, SnippetParameter(arg, nothing, nothing))
             continue
         elseif arg isa Expr
             if arg.head === :(::)
+                # e.g., `item::String`
                 push!(params, SnippetParameter(arg.args[1], Some(arg.args[2]), nothing))
                 continue
             elseif arg.head === :(=)
+                # e.g., `index=0` or `item::String="default"`
                 value = arg.args[2]
-                if arg.args[1] isa Expr && arg.args[1].head === :(::)
-                    nametype = arg.args[1]
-                    push!(params, SnippetParameter(nametype.args[1], nametype.args[2], value))
+                lhs = arg.args[1]
+                if lhs isa Expr && lhs.head === :(::)
+                    # `item::String = "default"`
+                    name = lhs.args[1]
+                    type = lhs.args[2]
+                    push!(params, SnippetParameter(name, Some(type), Some(value)))
                     continue
-                elseif arg.args[1] isa Symbol
-                    push!(params, SnippetParameter(arg.args[1], nothing, Some(arg.args[2])))
+                elseif lhs isa Symbol
+                    # `index = 0`
+                    push!(params, SnippetParameter(lhs, nothing, Some(value)))
                     continue
                 end
             end
@@ -105,7 +114,6 @@ function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
         error(
             "Invalid snippet parameters, wrong left hand side to equal, in: $(arg)"
         )
-
     end
     return params
 end
