@@ -38,8 +38,3 @@ function show_ast(io::IO, v::Vect; context = IdDict())
     printstyled(io, ind, "]"; STYLE[:sign]...)
     return
 end
-
-function show_ast(io::IO, e::Expression; _...)
-    printstyled(io, e; STYLE[:unknown]...)
-    return
-end

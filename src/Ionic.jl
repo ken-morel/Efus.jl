@@ -8,7 +8,7 @@ module Ionic
 using ..IonicEfus
 
 """
-    function translate(orig::Any)::Tuple{Any, Vector{Symbol}}
+    function transcribe(orig::Any)::Tuple{Any, Vector{Symbol}}
 
 Translate an ionic expression by replacing all occurrences of 
 `var'` with `IonicEfus.getvalue(var)` and all assignments to 
@@ -16,7 +16,7 @@ Translate an ionic expression by replacing all occurrences of
 returning the new code and all dependencies.
 Where a double '' in gets translated to a single ' and ignored.
 """
-function translate(orig::Any)::Tuple{Any, Vector}
+function transcribe(orig)::Tuple{Any, Vector}
     !isa(orig, Expr) && return orig, []
     expr = copy(orig)
     todo = Set{Expr}([expr])

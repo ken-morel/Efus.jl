@@ -38,6 +38,8 @@ include("./macros.jl")
 
 include("./dev.jl")
 
+include("./snippet.jl")
+
 
 using .Dev
 export codegen_string

@@ -1,0 +1,88 @@
+function generate(node::Ast.ComponentCall)
+    # literally: not all children are ComponentCalls
+    shouldclean = !all(isa.(node.children, Ast.ComponentCall))
+
+    kwargs = [Expr(:kw, arg.name, generate(arg.value)) for arg in node.arguments]
+
+    splats = Expr(:parameters, [Expr(:..., splat.name) for splat in node.splats]...)
+
+    children_exprs = [generate(child) for child in node.children]
+
+    snippets = [Expr(:kw, snippet.name, generate(snippet)) for snippet in node.snippets]
+
+    if !isempty(children_exprs)
+        children = Expr(:vect, children_exprs...)
+        if shouldclean
+            children = Expr(:|>, children, IonicEfus.cleanchildren)
+        end
+        children_kw = Expr(:kw, :children, children)
+        push!(kwargs, children_kw)
+    end
+    return Expr(:call, node.componentname, splats, kwargs..., snippets...)
+end
+
+
+function generate(node::Ast.If)
+    result = :(nothing)
+    for branch in reverse(node.branches)
+        condition = if !isnothing(branch.condition)
+            generate(branch.condition)
+        end
+        statement = generate(branch.block)
+        result = if !isnothing(condition)
+            quote
+                if $condition
+                    $statement
+                else
+                    $result
+                end
+            end
+        else
+            statement
+        end
+    end
+    return result
+end
+
+function generate(node::Ast.For)
+    name = gensym("__efus_for__")
+    return if isnothing(node.elseblock)
+        quote
+            [$(generate(node.block)) for $(generate(node.iterating)) in $(generate(node.iterator))]
+        end
+    else
+        quote
+            let $name = $(generate(node.iterator))
+                if isempty($name)
+                    $(generate(node.elseblock))
+                else
+                    [$(generate(node.block)) for $(generate(node.iterating)) in $name]
+                end
+            end
+        end
+    end
+end
+
+function generate(snippet::Ast.Snippet)
+    names = keys(snippet.params)
+    types = map(values(snippet.params)) do p
+        if isnothing(p)
+            :Any
+        else
+            generate(p)
+        end
+    end
+    params = map(zip(names, types)) do (name, type)
+        Expr(:(::), name, type)
+    end
+    fn = Expr(:->, Expr(:tuple, params...), Expr(:block, generate(snippet.block)))
+    typeassert = Expr(:curly, IonicEfus.Snippet, Expr(:curly, :Tuple, types...))
+    return Expr(:call, typeassert, fn)
+    return
+end
+
+
+function generate(node::Ast.Block)
+    children_exprs = [generate(child) for child in node.children]
+    return Expr(:vect, children_exprs...)
+end

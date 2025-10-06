@@ -42,7 +42,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             if nx.type === Tokens.IONIC
                 name = Symbol(tk.token)
                 params = try
-                    Meta.parse("($(nx.token)) -> nothing").args[1]
+                    Ast.takesnippetparameters(Meta.parse("$(nx.token) -> nothing").args[1])
                 catch e
                     errmsg = e isa Meta.ParseError ? e.msg : string(e)
                     throw(ParseError("Error parsing arguments for snippet $name: $errmsg", nx.location))

@@ -8,6 +8,12 @@ The supertype for all expressions. Expressions
 """
 abstract type Expression end
 
+
+function show_ast(io::IO, e::Expression; _...)
+    printstyled(io, e; STYLE[:unknown]...)
+    return
+end
+
 abstract type Statement <: Expression end
 
 const STYLE = Dict{Symbol, Dict{Symbol, Any}}(
@@ -26,17 +32,12 @@ Base.@kwdef struct Block <: Statement
 end
 
 function show_ast(io::IO, node::Block; context = IdDict())
-    :indent ∉ keys(context) && push!(context, :indent => 0)
-    ind = "  "^context[:indent]
-    printstyled(ind, "begin"; color = :magenta, bold = true)
-    println()
-    context[:indent] += 1
+    started = false
     for statement in node.children
+        started && println()
+        started = true
         show_ast(io, statement; context)
-        println()
     end
-    context[:indent] -= 1
-    printstyled(ind, "end"; color = :magenta, bold = true)
     return
 end
 
