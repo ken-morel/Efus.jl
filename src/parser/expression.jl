@@ -33,8 +33,7 @@ function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Express
 
             tk_after = peek(ts)
             if tk_after.type === Tokens.SQCLOSE
-                next!(ts)
-                break # Yeah twice, but those just two line though
+                continue
             elseif tk_after.type === Tokens.COMMA
                 next!(ts)
             else
