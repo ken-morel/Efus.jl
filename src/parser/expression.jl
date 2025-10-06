@@ -14,6 +14,21 @@ function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Express
         next!(ts)
         expr = Meta.parse(tk.token)
         Ast.Julia(expr)
+    elseif tk.type === Tokens.SQOPEN
+        contents = Ast.Expression[]
+        next!(ts)
+        while true
+            tk = peek(ts)
+            if tk.type ∈ (Tokens.COMMA, Tokens.EOL, Tokens.INDENT, Tokens.DEDENT)
+                next!(ts)
+                continue
+            elseif tk.type === Tokens.SQCLOSE
+                break
+            end
+            push!(contents, take_expression!(p; mustbe = true))
+        end
+        next!(ts)
+        Ast.Vect(contents)
     elseif mustbe
         throw(ParseError("Expected expression, got $tk", tk.location))
     end

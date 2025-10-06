@@ -11,7 +11,7 @@ function Base.showerror(io::IO, err::ParseError)
     Tokens.show_location(io, err.location)
     println(io)
     if !isnothing(err.line)
-        Lexer.print_lexed(err.line; fallback = false)
+        Lexer.print_lexed(err.line)
     else
         printstyled(io, "Traceback line unknown"; color = :yellow, italic = true)
     end

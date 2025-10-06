@@ -20,20 +20,22 @@ function show_ast(io::IO, i::Ionic; _...)
     return
 end
 
-struct Vect
+struct Vect <: Expression
     items::Vector{Expression}
 end
 
 function show_ast(io::IO, v::Vect; context = IdDict())
     :indent ∉ keys(context) && push!(context, :indent => 0)
     ind = "  "^context[:indent]
-    printstyled(io, ind, "[\n"; STYLE[:sign]...)
+    printstyled(io, "[\n"; STYLE[:sign]...)
     context[:indent] += 1
     for item in v.items
+        print(ind * "  ")
         show_ast(io, item; context = context)
-        println(io, ",\n"; STYLE[:sign]...)
+        printstyled(io, ",\n"; STYLE[:sign]...)
     end
     context[:indent] -= 1
+    printstyled(io, ind, "]"; STYLE[:sign]...)
     return
 end
 

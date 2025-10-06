@@ -102,7 +102,7 @@ function take_one!(tz::Tokenizer)::Token
         identifier.type === ERROR && return identifier
         if identifier.token ∈ keys(KEYWORDS)
             tk = token(KEYWORDS[identifier.token], "", identifier.location)
-            if tk.type === IN || tk.type === IF # take in iterating
+            if tk.type ∈ (IN, IF, ELSEIF) # take in iterating
                 skip_while!(tz.stream, isindent)
                 cond = take_ionic!(tz, ["\n"])
                 cond.type == ERROR && return cond
