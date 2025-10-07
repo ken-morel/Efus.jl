@@ -1,6 +1,6 @@
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
-    shouldclean = !all(isa.(node.children, Ast.ComponentCall))
+    println(isa.(node.children, Ast.ComponentCall))
 
     kwargs = [Expr(:kw, arg[1], generate(arg[3])) for arg in node.arguments]
 
@@ -11,10 +11,8 @@ function generate(node::Ast.ComponentCall)
     snippets = [Expr(:kw, snippet.name, generate(snippet)) for snippet in node.snippets]
 
     if !isempty(children_exprs)
-        children = Expr(:vect, children_exprs...)
-        if shouldclean
-            children = Expr(:|>, children, IonicEfus.cleanchildren)
-        end
+        children = Expr(:call, :|>, Expr(:vect, children_exprs...), IonicEfus.cleanchildren)
+
         children_kw = Expr(:kw, :children, children)
         push!(kwargs, children_kw)
     end
@@ -113,10 +111,7 @@ end
 
 function generate(node::Ast.Block)
     children_exprs = [generate(child) for child in node.children]
-    body = Expr(:vect, children_exprs...)
-    if !all(isa.(node.children, Ast.ComponentCall))
-        body = Expr(:call, IonicEfus.cleanchildren, body)
-    end
+    body = Expr(:call, :|>, Expr(:vect, children_exprs...), IonicEfus.cleanchildren)
     return if isempty(node.snippets)
         body
     else

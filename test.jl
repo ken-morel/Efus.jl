@@ -9,12 +9,12 @@ const FILE = "test.efus"
 colors(; args...) = printstyled("HEllo world"; args...)
 
 component = efus"""
-MyLabel(children
+MyLabel(children)
   (println("I am printing $children");)
 end
 
 MyLabel
-  colors
+  colors color=:blue
 """
 
 println(component)
