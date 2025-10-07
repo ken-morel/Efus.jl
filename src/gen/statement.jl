@@ -24,7 +24,7 @@ function generate(node::Ast.If)
     result = :(nothing)
     for branch in reverse(node.branches)
         condition = if !isnothing(branch.condition)
-            generate(branch.condition)
+            Ionic.transcribe(branch.condition)[1]
         end
         statement = generate(branch.block)
         result = if !isnothing(condition)
@@ -46,15 +46,15 @@ function generate(node::Ast.For)
     name = gensym("__efus_for__")
     return if isnothing(node.elseblock)
         quote
-            [$(generate(node.block)) for $(generate(node.iterating)) in $(generate(node.iterator))]
+            [$(generate(node.block)) for $(node.iterating) in $(IonicEfus.transcribe(node.iterator)[1])]
         end
     else
         quote
-            let $name = $(generate(node.iterator))
+            let $name = $(IonicEfus.transcribe(node.iterator)[1])
                 if isempty($name)
                     $(generate(node.elseblock))
                 else
-                    [$(generate(node.block)) for $(generate(node.iterating)) in $name]
+                    [$(generate(node.block)) for $(node.iterating) in $name]
                 end
             end
         end

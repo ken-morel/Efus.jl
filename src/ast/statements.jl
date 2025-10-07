@@ -12,7 +12,7 @@ condition.
 See also [`Expression`](@ref), [`Block`](@ref), [`If`](@ref).
 """
 Base.@kwdef struct IfBranch <: Statement
-    condition::Union{Expression, Nothing}
+    condition
     block::Block = Block()
 end
 affiliate!(p::IfBranch, c::Statement) = affiliate!(p.block, c)
@@ -63,8 +63,8 @@ end
 Base.@kwdef mutable struct For <: Statement
     parent::Union{Statement, Nothing} = nothing
     elseblock::Union{Nothing, Block} = nothing
-    iterator::Expression
-    iterating::Expression
+    iterator
+    iterating
     block::Block
 end
 
@@ -72,7 +72,14 @@ end
 """
     Base.@kwdef struct ComponentCall <: Statement
 
-A component call 
+A component call, is simply a function call,
+it supports splats, and snippets instead of being
+defined as functions(as in other constructs),
+here they are passed as anonymous function arguments 
+to the function being called.
+
+# Syntax
+
 """
 Base.@kwdef struct ComponentCall <: Statement
     parent::Union{Statement, Nothing}

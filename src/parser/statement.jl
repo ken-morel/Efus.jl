@@ -79,7 +79,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                     shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
                     if next!(ts).type === Tokens.NEXTLINE
                         next!(ts)
-                        next!(ts)
+                        endstheline!(p, "After nextline('|') in component call argument")
                     end
                     paramvalue = take_expression!(p)
                     isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
@@ -102,7 +102,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 end
             end
             loc = next!(ts)
-            condition = take_expression!(p)
+            condition = take_ionic!(p).expr
             isnothing(condition) && throw(
                 ParseError(
                     "Expected condition, got $(loc.type)",
@@ -139,10 +139,10 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             return take_one!(p)
         elseif tk.type === Tokens.FOR
             next!(ts)
-            iterating = take_expression!(p)
+            iterating = take_ionic!(p).expr
             shouldbe(peek(ts), [Tokens.IN], "In for loop, expected in")
             next!(ts)
-            iterator = take_expression!(p)
+            iterator = take_ionic!(p).expr
             endstheline!(p, "After for loop iterator")
             statement = Ast.For(; parent, iterating, iterator, block = Ast.Block())
             push!(p.stack, statement)
