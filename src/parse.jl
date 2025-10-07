@@ -1,34 +1,12 @@
+export parse_efus
+
 function parse_efus(code::AbstractString, file::AbstractString = "<string>")::Ast.Block
     io = IOBuffer(code)
-    tokenstream = Channel{Tokens.Token}()
-    aststream = Channel{Ast.Statement}()
+    tokenizer = Tokens.Tokenizer(Tokens.TextStream(io, file))
 
-    tokenizer = Tokens.Tokenizer(tokenstream, Tokens.TextStream(io, file))
-    parser = Parser.EfusParser(Parser.TokenStream(tokenstream), aststream)
+    tokens = Tokens.tokenize!(tokenizer)
 
-
-    toplevels = Ast.Statement[]
-
-    errormonitor(@async Tokens.tokenize!(tokenizer))
-    errormonitor(
-        @async while true
-            try
-                statement = take!(aststream)
-                if isnothing(statement.parent)
-                    push!(toplevels, statement)
-                else
-                    Ast.affiliate!(statement)
-                end
-            catch e
-                if e isa InvalidStateException
-                    break
-                else
-                    rethrow()
-                end
-            end
-        end
-    )
-
+    parser = Parser.EfusParser(tokens)
     try
         Parser.parse!(parser)
     catch err
@@ -42,5 +20,5 @@ function parse_efus(code::AbstractString, file::AbstractString = "<string>")::As
         rethrow(err)
     end
 
-    return Ast.Block(toplevels)
+    return parser.root
 end

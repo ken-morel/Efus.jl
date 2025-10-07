@@ -1,22 +1,20 @@
 include("./src/IonicEfus.jl")
 
 using .IonicEfus
-using .IonicEfus.Tokens
-using .IonicEfus.Parser
 using .IonicEfus.Ast
-using .IonicEfus.Lexer
+using .IonicEfus.Gen
 
 const FILE = "test.efus"
-const CODE = read(FILE, String)
 
+colors(; args...) = printstyled("HEllo world"; args...)
 
-@info "Parsing code..."
-ast = @time IonicEfus.parse_efus(CODE, FILE)
+component = efus"""
+MyLabel(children
+  (println("I am printing $children");)
+end
 
-@info "Showing ast..."
-@time Ast.show_ast(stdout, ast)
+MyLabel
+  colors
+"""
 
-@info "lexing text"
-lexed = @time Lexer.lex(CODE)
-@info "showing lexed"
-@time Lexer.print_lexed(lexed)
+println(component)

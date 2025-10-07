@@ -13,6 +13,7 @@ abstract type EfusError <: Exception end
 
 
 include("./component.jl")
+include("./snippet.jl")
 
 
 include("./reactants.jl")
@@ -26,8 +27,7 @@ include("./lexer/Lexer.jl")
 
 include("./ast/Ast.jl")
 
-
-include("./Ionic.jl")
+include("./ionic/Ionic.jl")
 
 include("./parser/Parser.jl")
 
@@ -36,15 +36,14 @@ include("./gen/Gen.jl")
 
 include("./macros.jl")
 
-include("./dev.jl")
-
-
-using .Dev
-export codegen_string
-
-using .Parser
 
 using .Tokens
+using .Parser
+using .Ionic
+using .Ast
+
+import .Ast: show_ast
+
 
 include("./parse.jl")
 

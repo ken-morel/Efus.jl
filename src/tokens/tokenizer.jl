@@ -22,7 +22,6 @@ wrap channels, IO, or strings and outputs
 by calling an output function.
 """
 struct Tokenizer
-    out::Channel{Token}
     stream::TextStream
     pending::Vector{Token}
     indents::Vector{UInt}
@@ -30,27 +29,37 @@ struct Tokenizer
     Tokenizer(out::Union{Function, Nothing}, stream::TextStream)
 
     # Arguments
-    - `out::Channel{Token}`: The output channel which will be called with every new 
-      [`Token`](@ref).
     - `stream::TextStream`: The [`TextStream`](@ref) for the tokenizer to read from.
 
     See also [`tokenize!`](@ref).
     """
-    Tokenizer(out::Channel{Token}, stream::TextStream) = new(out, stream, [], [0x00])
+    Tokenizer(stream::TextStream) = new(stream, [], [zero(UInt)])
 end
 
-Tokenizer(fn::Function, stream::TextStream) = Tokenizer(Channel{Token}(fn), stream)
 
 function tokenize!(tz::Tokenizer)
-    tk = nothing
-    while tk !== EOF
-        tk = take!(tz).type
+    tokens = Token[]
+    while true
+        tk = take!(tz)
+        push!(tokens, tk)
+        tk.type === EOF && break
+    end
+    return tokens
+end
+function tokenize!(tz::Tokenizer, out::Channel{Token})
+    while true
+        tk = take!(tz)
+        push!(out, tk)
+        tk.type === EOF && break
     end
     return
 end
 
 
-Base.take!(tz::Tokenizer) = put!(tz.out, take_one!(tz))
+Base.take!(tz::Tokenizer, out::Channel{Token}) = put!(out, take_one!(tz))
+
+@inline
+Base.take!(tz::Tokenizer) = take_one!(tz)
 
 function take_one!(tz::Tokenizer)::Token
     if !isempty(tz.pending)
@@ -73,7 +82,7 @@ function take_one!(tz::Tokenizer)::Token
                 if current_indent > tz.indents[end]
                     return token(
                         ERROR,
-                        "Invalid deindent, expected $(tz.indents[end]), got $current_indent",
+                        "Invalid unindent, expected $(tz.indents[end]), got $current_indent",
                         location(tz.stream),
                     )
                 end

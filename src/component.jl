@@ -1,24 +1,24 @@
-export AbstractComponent, mount!, unmount!, remount!
+export Component, mount!, unmount!, remount!
 export update!, render, getchildren, getparent
 export isdirty, dirty!
 
 """
-    abstract type AbstractComponent end
+    abstract type Component end
 
 The abstract type all efus components must subtype.
 e.g
 
 ```julia
-Base.@kwdef struct MyComponent <: AbstractComponent
+Base.@kwdef struct MyComponent <: Component
     prop1::String = "default"
     prop2::Int = 0
-    parent::Union{AbstractComponent, Nothing} = nothing
+    parent::Union{Component, Nothing} = nothing
     dirty::Bool = true
-    children::Vector{AbstractComponent} = AbstractComponent[]
+    children::Vector{Component} = Component[]
 end
 ```
 """
-abstract type AbstractComponent end
+abstract type Component end
 
 function mount! end
 function unmount! end
@@ -32,19 +32,19 @@ function dirty! end
 
 
 """
-    function cleanchildren(children::Vector)::Vector{AbstractComponent}
+    function cleanchildren(children::Vector)::Vector{Component}
 
-Receives a vector where it filters out all non-`AbstractComponent` entries,
-and splats any nested vectors, returning a flat vector of `AbstractComponent`s.
+Receives a vector where it filters out all non-`Component` entries,
+and splats any nested vectors, returning a flat vector of `Component`s.
 
 This function is used by generated code on the children of a componentcall, 
 when it is noticed they contain a codeblock or condition.
 """
-function cleanchildren(children::Vector)::Vector{AbstractComponent}
-    children isa Vector{<:AbstractComponent} && return children
-    final = AbstractComponent[]
+function cleanchildren(children::Vector)::Vector{Component}
+    children isa Vector{<:Component} && return children
+    final = Component[]
     for child in children
-        if child isa AbstractComponent
+        if child isa Component
             push!(final, child)
         elseif child isa AbstractVector
             append!(final, cleanchildren(child))
