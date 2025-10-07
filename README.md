@@ -5,227 +5,100 @@
 > [!NOTE]
 > This is not very stable, but it works.
 
-IonicEfus.jl is a Julia module that combines a language parser for the `efus` language, a converter for [ionic], and a bit more to help you build component-based UIs using an easy-to-read language with concepts idiomatic to Julia.
+IonicEfus.jl is a julia module providing template building language and
+rectivity constructs to help you build structures organised as
+components. It aims for providing the base so that custom libraries
+can define components to be used by a final client, but
+with a set of standards to help debugging, and using
+components:
 
-For a usage example, see the [Gtak.jl](https://github.com/ken-morel/Gtak.jl).
+- _efus_ templating lanugage, not a markup language,
+  but a set of instructions for building a component.
+- Support for streamed parsing via IO and channels(Good luck for
+  error reporting though).
+- macros providing support for code generation at macro-expansion.
+- Reactivity implemented through Reactants, Reactors and Catalysts.
+- Ionic, just a little tool to use reactants withough getvalue and
+  setvalue!.
+- Very experimental error reporting, please if you face issues,
+  githubize them so I can get to fix them, sorry 🤧.
+- Typing support, to help prevent errors and make your code faster.
+- a little bit more...
 
-## Efus language & parser
+## Efus the language
 
-Efus is a pug-like language, with indentation based hierarchy and made to let you know what is done (so you can easily debug your code). The parser itself is stored in the `IonicEfus.Parser.EfusParser` structure which has a simple `parse!` method which returns either an `IonicEfus.Ast.Block` or `IonicEfus.Parser.AbstractParseError`.
+Efus, is actually a construct I had since, and tried to implement
+in python, then zig, and now julia(finally found it! The match!).
+It uses an identation based, pug-like syntax except for control
+flow and other special constructs which are more julia-like end-ended.
+It is built so as to completely integrate with your julia code, and
+actually translates to julia code.
 
 ```julia
 using IonicEfus
-file = "code.efus"
-ast = try_parse(read(file, String), file)
-```
+using MyComponentLib: LabelFrame
 
-## The julia code generator
+const WHAT = "Items"
+const ITEMS = [...]
 
-Under the `IonicEfus.Gen` module live few simple methods which convert Ast objects to julia expressions.
+const itemTile = (;item) -> efus"..."
 
-```julia
-using IonicEfus
-
-code = IonicEfus.Gen.generate(ast)
-```
-
-There's also a `IonicEfus.codegen_string` to help you view the generated code. It has an optional second boolean argument to also show the ast (prints directly, does not return a string).
-
-```julia
-IonicEfus.codegen_string(
-    """
-    Frame padding=(3, 3)
-      Scale size=(20, 20) value=4 val=(hello' * "friend") args...
-    """
-) |> println
-
-Frame(padding = (3, 3), children =
-[Scale(args..., size = (20, 20),
-value = 4, val = (Reactor){Any}((()->getvalue(hello) * "friend"),
-nothing, [hello]))])
-```
-
-Basically just function calls, so you can easily get on with it for even more.
-
-## Control flow
-
-efus suports if and for control flow structures, each with meant to capture the most of the usual julia syntax. For expressions, efus allows any [ionic] expression, which will be translated to julia.
-
-```julia
-Frame
-  if foobar' !== true
-    Label text="hello world"
-    for (name, for) in foes
-      Plaintain name=name
-    else
-      Egg
+const component = efus"""
+LabelFrame padding=(1, 1)
+  label(frm::LabelFrame)
+    Label text="List of $WHAT"
+  end
+  for (idx, item) in items
+    if isnothing(item.idx)
+      # We could also have used something()
+      (item.idx = item.idx;)
     end
+    itemTile item=item
   end
+"""
 ```
 
-The for generates a list comprehension and an if statement to check if the iterable is `empty` when given an else block. And `IonicEfus.cleanchildren` is called to remove any `nothing` and flattens the children list before passing it to the parent.
-
-### Generator macros
-
-To generate code, use the `@efus_str`.
-
-## Components
-
-The main aim of efus is to be used with components in a lifecycle constituting of:
-
-- **creation**: when you call the constructor. Efus gives room for only keyword arguments, making `Base.@kwdef` very usefull. I prefer that nothing should be done here except initial initialization.
-
-  ```julia
-  @Base.@kwdef mutable struct Button
-    text::MayBeReactive{String} = "Button" #a.k.a String, or reactive
-    onclick::Function
-    children::Vector{AbstractComponent} = Button[] # just to show
-  end
-  ```
-
-  This can then be easily used. A standard rule I would like to impose, is that just initialized components should store only parameters data, any other thing, like subscriptions, parents and others should be passed during mounting, and removed when unmounting. To be sure components are fully serialisable, remountable copyable and reusable units.
-
-- **mounting**: Mounting is done via the `mount!` method. IonicEfus is not responsible for implementing this, on to you. This uses the state of the component, catalyzes to reactants and create widgets or so.
-- **unmounting**: This is just the opposite. Done with `unnmount!`.
-- **updating**: This is to update the component when one of it's reactive attributes changed. An option, could be to check for an internal list of dirty attributes, and only update those.
-
-## Composing components
-
-One good things with components, is that they can be composed. All you have to do, is to create a function! You can also add a children keyword parameter to support children.
+I feel depressed looking all I've spent time working on just shows in
+20 lines of code.
 
 ## Reactivity
 
-IonicEfus wants that the backend should be responsible of ui updates. As such, when a reactive's value changes, it notifies directly all it's catalysts, it is their responsibility then to handle that without impacting runtime, like batching them for a future update. In case you did not catch all the grammar, here's some explanation:
+A full pack of nice names, Reactant, Reactor, Catalyst, and few more
+to revive your form 2 chem. Not that I love the subject, it actually
+caused my worst grade
 
-### Reactants
-
-Reactants as all other reactives are subtypes of `AbstractReactive{T}`, where T is the type of the contained value. They store a value, and notifies reacting catalysts when it is changed via `setvalue!`. It's value can be gotten via `getvalue`(or simply getting or setting the .value attribute). Reactants are abit strict in typing, and we advice to only use concrete types when operating with them.
-
-> [!TIP]
-> You can always create a custom reactive type by subtyping `AbstractReactive{T}` and implementing.
-
-> You can also use `MayBeReactive{T}` for you know what.
-
-### Catalysts
-
-To reactants, are catalysts, catalysts are the objects which permits you to get updated of reactants changes. They support a few methods:
-
-- `catalyze!(catalyst, reactant, callback)`: To trigger a callback when reactant value changes. (start a `Reaction`).
-- `denature!(catalyst)`: To inhibit all ongoing `Reactions`.
-
-### Reactions
-
-This is what is returned from `catalyze!` call, it is stored in an internal `.reactions` vector and stores every reactant, catalyst, callback. You can directly `inhibit!` them.
-
-```julia
-reactant = Reactant{Float32}(1)
-reaction = catalyze!(Catalyst(), reactant) do value
-  print(value)
-end
-inhibit!(reaction)
-# OR
-denature!(catalyst)
+```chem
+(salt + funnel + H2O ---pooring--> 😢).
 ```
 
-### Reactors
+In short:
 
-A reactor is an `AbstractReactive{T}` subtype which aim to permit you create reactive objects whose value are computer or set via methods to other reactants or not. IonicEfus uses that internally if you create an [ionic] expression like `("I love" + react')`.
+- A `Reaction`: Links a `Catalyst`, a `Reactant` and a callback. An
+  can be `inhibit!` -ed. Your usually don't have to manage this.
+- A `Catalyst`: `catalyze!` and manage reactions with `Reactants` ,
+  can be `denature!` -ed.
+- a `Reactant` hold a value and notify all ongoing reactions when
+  it's value change.
+- A `Reactor`: holds several catalysts, and acts like a computed
+  reactant whose value depends on other `AbstractReactive` objects
+  and whose value is lazily-computed.
+- `@ionic`: is just a tool, a translater, or something like that,
+  I'm not so good at names, but in fact, it transforms assignments
+  and getting values to ''' prepended values into
+  a `IonicEfus.setvalue` and `IonicEfus.getvalue!` call.
 
-```julia
-c = 5
-r = Reactor{Int}(
-  () -> c,
-  (x::Int) -> c = x,
-)
-#or Reactor(T, get, set)
-```
+## Getting to it
 
-It also allows a last optional argument which is a list of other AbstractReactive objects(even other reactors) it depends on, and will sibscribe and update when they change.
+Well, this was just to briefly describe(🤧) what is there, but
+to learn more about it, you could read the [IonicEfus.jl documentation](https://ionicefus.engon.rbs.cm).
+I will host it there as soon as i get the docs hosted by julia
+General registry docs hosting whatsoever that other modules seem to use.
 
-> [!TIP]
-> Reactors also allow type inferation, or passing the type as first argument.
+If you are looking for examples of usage of this I am also
+having [Gtak.jl](https://github.com/ken-morel/Gtak.jl), which
+provide `IonicEfus.jl` and [Atak.jl](https://github.com/ken-morel/Atak.jl)
+bindings for `Gtk4.jl`.
 
-## Ionic Syntax and Utilities
-
-IonicEfus adds tools mini language it calls [ionic] it is actually julia code, where you don't have the burden of calling getvalue and setvalue! Again. You can directly assign or use the reactives if you prepend their name or getter with an apostrophe(`'`). Doubling the apostrophe(`''`) escapes it, except in assignments.
-
-```julia
-# In Efus code:
-Label text=(my_reactive_var' * " is active!")
-
-# Expands to something like:
-Label(text = getvalue(my_reactive_var) * " is active!")
-```
-
-### `@ionic` Macro
-
-The `@ionic` macro is a low-level utility that translates the [ionic] syntax into standard Julia code, specifically `getvalue` and `setvalue!` calls.
-
-```julia
-using IonicEfus
-my_reactant = IonicEfus.Reactant(10)
-
-# Translates the ionic expression into Julia code
-julia_expr = @macroexpand IonicEfus.@ionic my_reactant' * 2
-# julia_expr will be something like: :(IonicEfus.getvalue(my_reactant) * 2)
-
-result = @ionic my_reactant' * 2
-@test result == 20
-
-@ionic my_reactant' = 50
-@test IonicEfus.getvalue(my_reactant) == 50
-```
-
-### `@radical` Macro
-
-The `@radical` macro is designed to create a piece of Julia code that automatically re-evaluates whenever any of its reactive dependencies change. I wanted something like svelte's $effect. which re-runs when a dependency changes. It internally uses a Reactor, but with `eager = true` keword argument to force re-computation when dependency changes(since reactors by default use lazy evaluation).
-
-```julia
-using IonicEfus
-a = IonicEfus.Reactant(1)
-b = IonicEfus.Reactant(2)
-
-# This block will re-run whenever `a` or `b` changes
-reactor = @radical begin
-    sum_val = a' + b'
-    println("Current sum: ", sum_val)
-    sum_val # The value of the radical itself
-end
-```
-
-### `@reactor` Macro
-
-The `@reactor` macro provides a convenient and type-inferring way to create a `Reactor` object. A `Reactor` is a reactive value whose content is derived from other reactive (or non-reactive) sources. By default, `@reactor` creates a _lazily evaluated_ `Reactor`, meaning its value is only re-computed when explicitly requested via `getvalue` after its dependencies have changed.
-
-This macro simplifies the creation of derived reactive state, allowing you to define complex reactive computations with a clean syntax.
-
-```julia
-using IonicEfus
-x = IonicEfus.Reactant(5)
-y = IonicEfus.Reactant(10)
-
-# Create a lazy reactor that computes x' * y'
-product_reactor = @reactor x' * y'
-
-@test product_reactor isa IonicEfus.Reactor{Int}
-@test IonicEfus.getvalue(product_reactor) == 50
-
-IonicEfus.setvalue!(x, 2)
-# The reactor is now fouled, but its value hasn't updated yet
-@test IonicEfus.isfouled(product_reactor)
-@test product_reactor.value == 50 # Still the old value
-
-@test IonicEfus.getvalue(product_reactor) == 20 # Forces re-computation
-@test !IonicEfus.isfouled(product_reactor)
-
-# You can also provide a setter function
-counter = IonicEfus.Reactant(0)
-increment_reactor = @reactor counter' + 1 (val -> IonicEfus.setvalue!(counter, val - 1))
-
-@test IonicEfus.getvalue(increment_reactor) == 1
-IonicEfus.setvalue!(increment_reactor, 5)
-@test IonicEfus.getvalue(counter) == 4
-@test IonicEfus.getvalue(increment_reactor) == 5
-```
-
-Well, that's what it is to try to have a handwritten documentation I guess. I'm really bad at it :-(. Whatever, hope you have a fun time!
+Well, thanks for reaching up to here, if you want to contribute,
+I recently discovered `git-flow`, and finally started to memorize
+those `gh pr` and `gh issue` commands.
