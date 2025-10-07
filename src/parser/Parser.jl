@@ -9,7 +9,7 @@ import ..Lexer
 include("./error.jl")
 include("./token_stream.jl")
 
-const ENDING = Set{TokenType}([Tokens.EOF, Tokens.EOL])
+const ENDING = Set{TokenType}([Tokens.EOF, Tokens.EOL, Tokens.COMMENT])
 isending(t::Token) = t.type ∈ ENDING
 
 

@@ -10,7 +10,11 @@ end
 function peek(ts::TokenStream)::Union{Tokens.Token, Nothing}
     if isnothing(ts.current)
         ts.current = try
-            take!(ts.channel)
+            tk = take!(ts.channel)
+            while tk.type === Tokens.COMMENT
+                tk = take!(ts.channel)
+            end
+            tk
         catch e
             if !isa(e, InvalidStateException)
                 rethrow(e)
@@ -26,6 +30,9 @@ function next!(ts::TokenStream)::Union{Tokens.Token, Nothing}
         ts.prev = st
         ts.current = try
             c = take!(ts.channel)
+            while !isnothing(c) && c.type === Tokens.COMMENT
+                c = take!(ts.channel)
+            end
             !isnothing(c) && c.type === Tokens.ERROR && throw(ParseError(c.token, c.location))
             c
         catch e

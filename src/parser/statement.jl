@@ -31,15 +31,14 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 throw(ParseError("Unexpected EOF, unclosed blocks.", tk.location))
             end
             return nothing
+        elseif tk.type === Tokens.COMMENT
+            endstheline!(p, "After comment")
+            continue
         end
 
         parent = isempty(p.stack) ? p.root : p.stack[end]
 
-        statement = if tk.type === Tokens.COMMENT
-            next!(ts)
-            next!(ts)
-            take_one!(p)
-        elseif tk.type === Tokens.IDENTIFIER
+        statement = if tk.type === Tokens.IDENTIFIER
             nx = next!(ts)
             if nx.type === Tokens.IONIC
                 name = Symbol(tk.token)
@@ -49,7 +48,8 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                     errmsg = e isa Meta.ParseError ? e.msg : string(e)
                     throw(ParseError("Error parsing arguments for snippet $name: $errmsg", nx.location))
                 end
-                shouldbe(next!(ts), [Tokens.EOL], "Expected EOL after snippet definition")
+                next!(ts)
+                endstheline!(p, "After snippet definition")
 
                 snippet = Ast.Snippet(; parent, name, params)
 
@@ -79,15 +79,15 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                     shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
                     if next!(ts).type === Tokens.NEXTLINE
                         next!(ts)
-                        next!(ts)
+                        endstheline!(p, "After nextline('|') in component call argument")
                     end
                     paramvalue = take_expression!(p)
                     isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
                     push!(s.arguments, (paramname, paramsub, paramvalue))
                 end
+                endstheline!(p, "After component call")
                 s
             end
-
         elseif tk.type === Tokens.IF || tk.type === Tokens.ELSEIF
             isif = tk.type === Tokens.IF
             statement = if isif
@@ -102,20 +102,15 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 end
             end
             loc = next!(ts)
-            condition = take_expression!(p)
+            condition = take_ionic!(p).expr
             isnothing(condition) && throw(
                 ParseError(
                     "Expected condition, got $(loc.type)",
                     loc.location,
                 )
             )
-            !isending(peek(ts)) && throw(
-                ParseError(
-                    "Expected EOL after condition, got $(peek(ts))",
-                    peek(ts).location,
-                )
-            )
-            next!(ts)
+            endstheline!(p, "After if or elseif block condition")
+
             branch = Ast.IfBranch(; condition)
             push!(statement.branches, branch)
             p.last_statement = branch
@@ -139,21 +134,16 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             else
                 throw(ParseError("Unexpected else", tk.location))
             end
-            isending(next!(p.stream)) || throw(ParseError("Expected EOL after else, got $(peek(p.stream))", peek(p.stream).location))
-            next!(p.stream)
+            next!(ts)
+            endstheline!(p, "After else")
             return take_one!(p)
         elseif tk.type === Tokens.FOR
             next!(ts)
-            iterating = take_expression!(p)
+            iterating = take_ionic!(p).expr
             shouldbe(peek(ts), [Tokens.IN], "In for loop, expected in")
             next!(ts)
-            iterator = take_expression!(p)
-            isending(peek(ts)) || throw(
-                ParseError(
-                    "Expected EOL after for loop",
-                    peek(ts).location
-                )
-            )
+            iterator = take_ionic!(p).expr
+            endstheline!(p, "After for loop iterator")
             statement = Ast.For(; parent, iterating, iterator, block = Ast.Block())
             push!(p.stack, statement)
             p.last_statement = statement.block
@@ -162,26 +152,16 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             if !isempty(p.stack)
                 statement = p.stack[end]
                 if statement isa Ast.If || statement isa Ast.For || statement isa Ast.Snippet
-                    eof = next!(ts)
-                    isending(eof) || throw(
-                        ParseError(
-                            "Unexpected token after END: $eof", eof.location
-                        )
-                    )
-                    pop!(p.stack)
                     next!(ts)
+                    endstheline!(p, "After end")
+                    pop!(p.stack)
                     p.last_statement = nothing
                     continue
                 end
             end
             if expect_end
-                eof = next!(ts)
-                isending(eof) || throw(
-                    ParseError(
-                        "Unexpected token after END: $eof", eof.location
-                    )
-                )
                 next!(ts)
+                endstheline!(p, "After end")
                 p.last_statement = nothing
                 return missing
             else
@@ -191,8 +171,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
         elseif tk.type === Tokens.IONIC
             pos = tk.location.stop
             ionic = take_ionic!(p)
-            isending(peek(ts)) || throw(ParseError("Expected end after julia expression, got $(peek(ts))", Location(pos, pos, tk.location.file)))
-            next!(ts)
+            endstheline!(p, "After julia code block")
             Ast.JuliaBlock(; parent, code = ionic.expr, type = ionic.type)
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
