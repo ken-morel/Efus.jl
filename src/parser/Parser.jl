@@ -25,8 +25,13 @@ mutable struct EfusParser
     end
 end
 EfusParser(input::Channel{Tokens.Token}) = EfusParser(TokenStream(input))
-EfusParser(tz::Tokens.Tokenizer) = EfusParser(TokenStream(tz.out))
-
+EfusParser(tokens::Vector{Tokens.Token}) = EfusParser(
+    Channel{Token}() do channel
+        for token in tokens
+            put!(channel, token)
+        end
+    end
+)
 
 Base.take!(p::EfusParser, out::StatementChannel) = put!(out, take!(p))
 Base.take!(p::EfusParser) = take_one!(p)
@@ -38,6 +43,7 @@ function parse!(p::EfusParser, out::Union{StatementChannel, Nothing} = nothing)
             statement = take_one!(p)
             isnothing(statement) && break
             isnothing(out) || put!(out, statement)
+            Ast.affiliate!(statement)
         end
     finally
         isnothing(out) || close(out)

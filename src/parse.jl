@@ -1,10 +1,12 @@
+export parse_efus
+
 function parse_efus(code::AbstractString, file::AbstractString = "<string>")::Ast.Block
     io = IOBuffer(code)
     tokenizer = Tokens.Tokenizer(Tokens.TextStream(io, file))
-    parser = Parser.EfusParser(tokenizer)
 
+    tokens = Tokens.tokenize!(tokenizer)
 
-    errormonitor(@async Tokens.tokenize!(tokenizer))
+    parser = Parser.EfusParser(tokens)
     try
         Parser.parse!(parser)
     catch err

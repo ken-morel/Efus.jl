@@ -90,7 +90,8 @@ function lex(code::AbstractString)::Lexed
             push!(lexed, (code[index:end], Tokens.NONE))
         end
     end
-    Tokens.tokenize!(Tokens.Tokenizer(tokens, Tokens.TextStream(code)))
+    tz = Tokens.Tokenizer(Tokens.TextStream(code))
+    Tokens.tokenize!(tz, tokens)
     return lexed
 end
 
@@ -104,18 +105,13 @@ end
 
 print_lexed(lexed::Lexed, theme::Theme = DEFAULT_THEME) = print_lexed(stdout, lexed, theme)
 
-function print_lexed(io::IO, text::String, theme::Theme = DEFAULT_THEME; fallback::Bool = true)
-    return try
-        lexed = lex(text)
-        print_lexed(io, lexed, theme)
-    catch
-        !fallback && rethrow()
-        print(io, text)
-    end
+function print_lexed(io::IO, text::String, theme::Theme = DEFAULT_THEME)
+    lexed = lex(text)
+    return print_lexed(io, lexed, theme)
 end
 print_lexed(
-    text::String, theme::Theme = DEFAULT_THEME; fallback::Bool = true,
-) = print_lexed(stdout, text, theme; fallback)
+    text::String, theme::Theme = DEFAULT_THEME
+) = print_lexed(stdout, text, theme)
 
 
 end

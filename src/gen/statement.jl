@@ -96,7 +96,6 @@ function generate(snippet::Ast.Snippet)
 
     snippettype = Expr(:curly, IonicEfus.Snippet, namedtupletype)
     functiondef = Expr(:->, Expr(:tuple, signature), content)
-    println(functiondef)
     return Expr(:call, snippettype, functiondef)
 end
 
@@ -115,6 +114,9 @@ end
 function generate(node::Ast.Block)
     children_exprs = [generate(child) for child in node.children]
     body = Expr(:vect, children_exprs...)
+    if !all(isa.(node.children, Ast.ComponentCall))
+        body = Expr(:call, IonicEfus.cleanchildren, body)
+    end
     return if isempty(node.snippets)
         body
     else
@@ -124,4 +126,10 @@ function generate(node::Ast.Block)
             Expr(:block, body)
         )
     end
+end
+
+function generate(node::Ast.JuliaBlock)
+    code = Ionic.transcribe(node.code)[1]
+    type = something(Ionic.transcribe(node.type)[1], :Any)
+    return Expr(:(::), code, type)
 end

@@ -4,6 +4,8 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
 
     while true
         tk = peek(ts)
+        isnothing(tk) && return nothing
+
 
         if tk.type === Tokens.EOL
             next!(ts)
@@ -183,6 +185,12 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 throw(ParseError("Unexpected end", tk.location))
             end
 
+        elseif tk.type === Tokens.IONIC
+            pos = tk.location.stop
+            ionic = take_ionic!(p)
+            isending(peek(ts)) || throw(ParseError("Expected end after julia expression, got $(peek(ts))", Location(pos, pos, tk.location.file)))
+            next!(ts)
+            Ast.JuliaBlock(; parent, code = ionic.expr, type = ionic.type)
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
         end

@@ -27,7 +27,6 @@ include("./lexer/Lexer.jl")
 
 include("./ast/Ast.jl")
 
-
 include("./Ionic.jl")
 
 include("./parser/Parser.jl")
@@ -39,6 +38,8 @@ include("./macros.jl")
 
 
 using .Parser
+
+import .Ast: show_ast
 
 using .Tokens
 

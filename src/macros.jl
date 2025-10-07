@@ -1,8 +1,15 @@
 export @efus_str, @reactor, @ionic, @radical
 
 
+"""
+    macro efus_str(code::String)
+
+Receives the code as argument, then 
+tokenizes, parses and generates julia 
+code.
+"""
 macro efus_str(code::String)
-    file = "<in efus macro at $(__source__.file):$(__source__.line)>"
+    file = "<macro at $(__source__.file):$(__source__.line)>"
 
     generated = Gen.generate(IonicEfus.parse_efus(code, file))
 
