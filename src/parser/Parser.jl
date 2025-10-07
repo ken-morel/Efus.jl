@@ -17,24 +17,32 @@ const StatementChannel = Channel{Ast.Statement}
 
 mutable struct EfusParser
     stream::TokenStream
-    out::StatementChannel
     stack::Vector{Ast.Statement}
+    root::Ast.Block
     last_statement::Union{Ast.Statement, Nothing}
-    EfusParser(input::TokenStream, output::StatementChannel) = new(input, output, [], nothing)
-    EfusParser(input::Channel{Tokens.Token}, output::StatementChannel) = new(TokenStream(input), output, [], nothing)
-    EfusParser(tokengetter::Function, output::StatementChannel) = new(TokenStream(tokengetter), output, [], nothing)
-end
-
-Base.take!(p::EfusParser) = put!(p.out, take_one!(p))
-
-function parse!(p::EfusParser)
-    while true
-        statement = take_one!(p)
-        isnothing(statement) && break
-        put!(p.out, statement)
+    function EfusParser(input::TokenStream)
+        return new(input, [], Ast.Block(), nothing)
     end
-    close(p.out)
-    return
+end
+EfusParser(input::Channel{Tokens.Token}) = EfusParser(TokenStream(input))
+EfusParser(tz::Tokens.Tokenizer) = EfusParser(TokenStream(tz.out))
+
+
+Base.take!(p::EfusParser, out::StatementChannel) = put!(out, take!(p))
+Base.take!(p::EfusParser) = take_one!(p)
+
+function parse!(p::EfusParser, out::Union{StatementChannel, Nothing} = nothing)
+    isnothing(out) || put!(out, p.root)
+    try
+        while true
+            statement = take_one!(p)
+            isnothing(statement) && break
+            isnothing(out) || put!(out, statement)
+        end
+    finally
+        isnothing(out) || close(out)
+    end
+    return p.root
 end
 
 include("./utils.jl")

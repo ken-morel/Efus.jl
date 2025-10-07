@@ -40,6 +40,7 @@ struct Tokenizer
 end
 
 Tokenizer(fn::Function, stream::TextStream) = Tokenizer(Channel{Token}(fn), stream)
+Tokenizer(stream::TextStream) = Tokenizer(Channel{Token}(), stream)
 
 function tokenize!(tz::Tokenizer)
     tk = nothing

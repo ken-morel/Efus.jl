@@ -31,7 +31,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             return nothing
         end
 
-        parent = isempty(p.stack) ? nothing : p.stack[end]
+        parent = isempty(p.stack) ? p.root : p.stack[end]
 
         statement = if tk.type === Tokens.COMMENT
             next!(ts)

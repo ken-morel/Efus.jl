@@ -8,6 +8,8 @@ The supertype for all expressions. Expressions
 """
 abstract type Expression end
 
+import IonicEfus
+
 
 function show_ast(io::IO, e::Expression; _...)
     printstyled(io, e; STYLE[:unknown]...)
@@ -29,7 +31,9 @@ const STYLE = Dict{Symbol, Dict{Symbol, Any}}(
 
 Base.@kwdef struct Block <: Statement
     children::Vector{Statement} = []
+    snippets::Vector{IonicEfus.Snippet} = []
 end
+
 
 function show_ast(io::IO, node::Block; context = IdDict())
     started = false
@@ -46,4 +50,5 @@ include("./expressions.jl")
 include("./statements.jl")
 
 
+affiliate!(p::Block, c::Snippet) = push!(p.snippets, c)
 end

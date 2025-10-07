@@ -77,10 +77,14 @@ Base.@kwdef struct Snippet <: Statement
     block::Block = Block()
 end
 
+takesnippetparameters(name::Symbol) = SnippetParameter[SnippetParameter(name, nothing, nothing)]
 function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
     params = SnippetParameter[]
     # This function should handle keyword arguments, which are under the :parameters key
     # for a tuple expression. For now, we assume the args are directly in the tuple.
+    if expr.head in (:(=), :(::))
+        expr = Expr(:tuple, expr)
+    end
     expr.head !== :tuple && error(
         "Expected a tuple of arguments as expr"
     )
@@ -180,6 +184,10 @@ end
 
 # A special affiliate for snippets, love this
 affiliate!(p::ComponentCall, c::Snippet) = push!(p.snippets, c)
+
+affiliate!(::T, ::Snippet) where {T <: Statement} = error(
+    "Error, container of type $T does not support snippets",
+)
 
 affiliate!(c::Statement) = !isnothing(c.parent) ? affiliate!(c.parent, c) : nothing
 affiliate!(p::Statement, c::Statement) = push!(p.children, c)

@@ -13,6 +13,7 @@ abstract type EfusError <: Exception end
 
 
 include("./component.jl")
+include("./snippet.jl")
 
 
 include("./reactants.jl")
@@ -35,9 +36,6 @@ include("./parser/Parser.jl")
 include("./gen/Gen.jl")
 
 include("./macros.jl")
-
-
-include("./snippet.jl")
 
 
 using .Parser

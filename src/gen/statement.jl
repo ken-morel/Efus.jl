@@ -114,5 +114,14 @@ end
 
 function generate(node::Ast.Block)
     children_exprs = [generate(child) for child in node.children]
-    return Expr(:vect, children_exprs...)
+    body = Expr(:vect, children_exprs...)
+    return if isempty(node.snippets)
+        body
+    else
+        return Expr(
+            :let,
+            Expr(:block, [Expr(:(=), snippet.name, generate(snippet)) for snippet in node.snippets]...),
+            Expr(:block, body)
+        )
+    end
 end

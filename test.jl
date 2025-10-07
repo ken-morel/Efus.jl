@@ -11,7 +11,24 @@ const FILE = "test.efus"
 
 colors(; args...) = printstyled("HEllo world"; args...)
 
+println(
+    Gen.generate(
+        IonicEfus.parse_efus(
+            """
+            snippet(foo)
+              Label bar=4
+            end
+            """
+        )
+    )
+)
 
-efus"""
-colors color=:blue bold=true
+#=
+banana = efus"""
+banana()
+  colors color=:blue bold=true
+end
 """
+
+banana()
+=#
