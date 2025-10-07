@@ -27,7 +27,7 @@ include("./lexer/Lexer.jl")
 
 include("./ast/Ast.jl")
 
-include("./Ionic.jl")
+include("./ionic/Ionic.jl")
 
 include("./parser/Parser.jl")
 
@@ -37,11 +37,13 @@ include("./gen/Gen.jl")
 include("./macros.jl")
 
 
+using .Tokens
 using .Parser
+using .Ionic
+using .Ast
 
 import .Ast: show_ast
 
-using .Tokens
 
 include("./parse.jl")
 

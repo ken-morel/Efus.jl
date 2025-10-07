@@ -4,7 +4,7 @@ function generate(node::Ast.ComponentCall)
 
     kwargs = [Expr(:kw, arg[1], generate(arg[3])) for arg in node.arguments]
 
-    splats = Expr(:parameters, [Expr(:..., splat.name) for splat in node.splats]...)
+    splats = Expr(:parameters, [Expr(:..., splat) for splat in node.splats]...)
 
     children_exprs = [generate(child) for child in node.children]
 

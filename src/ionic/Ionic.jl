@@ -8,7 +8,7 @@ module Ionic
 using ..IonicEfus
 
 """
-    function transcribe(orig::Any)::Tuple{Any, Vector{Symbol}}
+    function transcribe(orig)::Tuple{Any, Vector}
 
 Translate an ionic expression by replacing all occurrences of 
 `var'` with `IonicEfus.getvalue(var)` and all assignments to 
