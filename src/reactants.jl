@@ -279,6 +279,7 @@ function notify(r::Reactor)
         reaction.callback(r)
     end
     #PERF: Trace time and log if too long
+    # But spawning a timer takes some time
     return
 end
 

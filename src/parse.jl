@@ -1,5 +1,14 @@
 export parse_efus
 
+"""
+    parse_efus(code::AbstractString, file::AbstractString = "<string>")::Ast.Block
+
+This function wraps arround efus parser and tokenizer to provide
+a moderately good error reporting and easyness of use.
+
+See also [`Tokens.Tokenizer`](@ref), [`Parser.EfusParser`](@ref), 
+[`Parser.ParseError`](@ref).
+"""
 function parse_efus(code::AbstractString, file::AbstractString = "<string>")::Ast.Block
     io = IOBuffer(code)
     tokenizer = Tokens.Tokenizer(Tokens.TextStream(io, file))

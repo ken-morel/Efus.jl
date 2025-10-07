@@ -42,8 +42,7 @@ using .Parser
 using .Ionic
 using .Ast
 
-import .Ast: show_ast
-
+export show_ast
 
 include("./parse.jl")
 

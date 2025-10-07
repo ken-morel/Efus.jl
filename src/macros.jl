@@ -24,6 +24,9 @@ end
 
 Converts the given `ionic` expression to 
 the julia getter code.
+The code returns the evaluated expression.
+
+See also [`@reactor`](@ref)
 """
 macro ionic(expr)
     return esc(IonicEfus.Ionic.translate(expr)[1])
@@ -33,7 +36,10 @@ end
     macro reactor(expr, setter = nothing, usedeps = nothing)
 
 Shorcut for creating a reactor, with optional setter.
-It accpets ionic expressions for both.
+It accepts ionic expressions for both. The 
+generated expression returns a lazily evaluated [`Reactor`](@ref)
+
+See also [`@radical`](@ref)
 """
 macro reactor(expr, setter = nothing, usedeps = nothing)
     getter, ionicdeps = IonicEfus.Ionic.translate(expr)
@@ -57,7 +63,9 @@ end
 
 Creates an expression which re-evaluates directly when 
 it's dependencies change, agnostic to svelte's \$: {}.
-Returns the underlying Reactor.
+Returns the underlying eagerly evaluated [`Reactor`](@ref).
+
+See also [`@reactor`](@ref)
 """
 macro radical(expr, usedeps = nothing)
     getter, ionicdeps = IonicEfus.Ionic.translate(expr)

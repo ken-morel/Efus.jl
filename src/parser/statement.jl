@@ -77,7 +77,10 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                     end
 
                     shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
-                    next!(ts)
+                    if next!(ts).type === Tokens.NEXTLINE
+                        next!(ts)
+                        next!(ts)
+                    end
                     paramvalue = take_expression!(p)
                     isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
                     push!(s.arguments, (paramname, paramsub, paramvalue))
