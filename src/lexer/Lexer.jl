@@ -24,7 +24,7 @@ const DEFAULT_THEME = Theme(
     # From AST styles & more distinct colors
     Tokens.IDENTIFIER => Style(:color => :light_blue),
     Tokens._UPPER_IDENTIFIER => Style(:color => :light_green),
-    Tokens.IONIC => Style(:color => :green, :underline => true),
+    Tokens.JULIAEXPR => Style(:color => :green, :underline => true),
     Tokens.NUMERIC => Style(:color => :light_red),
     Tokens.STRING => Style(:color => :green),
     Tokens.CHAR => Style(:color => :green),

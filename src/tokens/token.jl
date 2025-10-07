@@ -13,7 +13,7 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     IDENTIFIER
     _UPPER_IDENTIFIER
 
-    IONIC
+    JULIAEXPR
     NUMERIC
     STRING
     CHAR

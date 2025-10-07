@@ -40,7 +40,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
 
         statement = if tk.type === Tokens.IDENTIFIER
             nx = next!(ts)
-            if nx.type === Tokens.IONIC
+            if nx.type === Tokens.JULIAEXPR
                 name = Symbol(tk.token)
                 params = try
                     Ast.takesnippetparameters(Meta.parse("$(nx.token) -> nothing").args[1])
@@ -102,7 +102,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 end
             end
             loc = next!(ts)
-            condition = take_ionic!(p).expr
+            condition = take_juliaexpr!(p)
             isnothing(condition) && throw(
                 ParseError(
                     "Expected condition, got $(loc.type)",
@@ -139,10 +139,10 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             return take_one!(p)
         elseif tk.type === Tokens.FOR
             next!(ts)
-            iterating = take_ionic!(p).expr
+            iterating = take_juliaexpr!(p)
             shouldbe(peek(ts), [Tokens.IN], "In for loop, expected in")
             next!(ts)
-            iterator = take_ionic!(p).expr
+            iterator = take_juliaexpr!(p)
             endstheline!(p, "After for loop iterator")
             statement = Ast.For(; parent, iterating, iterator, block = Ast.Block())
             push!(p.stack, statement)
@@ -168,11 +168,18 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 throw(ParseError("Unexpected end", tk.location))
             end
 
-        elseif tk.type === Tokens.IONIC
+        elseif tk.type === Tokens.JULIAEXPR
             pos = tk.location.stop
-            ionic = take_ionic!(p)
+            expr = take_juliaexpr!(p)
+            if expr isa Ast.Reactor
+                throw(
+                    ParseError(
+                        "Reactor not supported as julia blocks, use @reactor or @radical instead", tk.location,
+                    )
+                )
+            end
             endstheline!(p, "After julia code block")
-            Ast.JuliaBlock(; parent, code = ionic.expr, type = ionic.type)
+            Ast.JuliaBlock(; parent, code = expr)
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
         end

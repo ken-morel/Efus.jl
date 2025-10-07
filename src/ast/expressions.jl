@@ -1,8 +1,8 @@
 struct Julia <: Expression
-    value::Any
+    expr
 end
 
-struct Ionic <: Expression
+struct Reactor <: Expression
     expr
     type
 end

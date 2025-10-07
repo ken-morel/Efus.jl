@@ -113,9 +113,9 @@ function take_one!(tz::Tokenizer)::Token
             tk = token(KEYWORDS[identifier.token], "", identifier.location)
             if tk.type ∈ (IN, IF, ELSEIF) # take in iterating
                 skip_while!(tz.stream, isindent)
-                cond = take_ionic!(tz, ["\n"])
+                cond = take_juliaexpr!(tz, ["\n"])
                 cond.type == ERROR && return cond
-                push!(tz.pending, token(IONIC, cond.token[begin:(end - 1)], cond.location))
+                push!(tz.pending, token(JULIAEXPR, cond.token[begin:(end - 1)], cond.location))
                 tk
             else
                 tk
@@ -123,7 +123,7 @@ function take_one!(tz::Tokenizer)::Token
         elseif peek(tz.stream) == '''
             pos = loc(tz.stream)
             next!(tz.stream)
-            token(IONIC, identifier.token * ''', identifier.location * pos)
+            token(JULIAEXPR, identifier.token * ''', identifier.location * pos)
         else
             identifier
         end
@@ -150,7 +150,7 @@ function take_one!(tz::Tokenizer)::Token
             value = super.token
             pos = start * super.location
             if peek(tz.stream) === '{'
-                params = take_ionic!(tz)
+                params = take_juliaexpr!(tz)
                 params.type === ERROR && return params
                 value *= params.token
                 pos = pos * params.location
@@ -171,7 +171,7 @@ function take_one!(tz::Tokenizer)::Token
     elseif ch === '"'
         take_string!(tz)
     elseif ch === '('
-        take_ionic!(tz)
+        take_juliaexpr!(tz)
     elseif ch === '#'
         startlocation = location(tz.stream)
         next!(tz.stream)

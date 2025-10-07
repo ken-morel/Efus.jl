@@ -19,7 +19,7 @@ Where a double '' in gets translated to a single ' and ignored.
 function transcribe(orig)::Tuple{Any, Vector}
     !isa(orig, Expr) && return orig, []
     expr = copy(orig)
-    todo = Set{Expr}([expr])
+    todo = Vector{Expr}([expr])
     dependencies = []
     while !isempty(todo)
         current = pop!(todo)
@@ -45,7 +45,7 @@ function transcribe(orig)::Tuple{Any, Vector}
             reactive_var isa Expr && push!(todo, reactive_var)
             value_expr isa Expr && push!(todo, value_expr)
         else
-            push!.((todo,), filter(x -> x isa Expr, current.args))
+            push!(todo, filter(x -> x isa Expr, current.args)...)
         end
     end
     return expr, dependencies

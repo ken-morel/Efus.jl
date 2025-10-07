@@ -29,7 +29,7 @@ function show_ast(io::IO, e::Ast.Expression; _...)
     printstyled(io, e; STYLE[:unknown]...)
     return
 end
-function show_ast(io::IO, i::Ast.Ionic; _...)
+function show_ast(io::IO, i::Ast.Reactor; _...)
     printstyled(io, repr(i.expr); STYLE[:ionic]...)
     if !isnothing(i.type)
         printstyled(io, "::"; STYLE[:sign]...)
@@ -38,7 +38,7 @@ function show_ast(io::IO, i::Ast.Ionic; _...)
     return
 end
 function show_ast(io::IO, j::Ast.Julia; _...)
-    return printstyled(io, repr(j.value); STYLE[:expr]...)
+    return printstyled(io, repr(j.expr); STYLE[:expr]...)
 end
 
 

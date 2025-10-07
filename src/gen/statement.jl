@@ -1,7 +1,5 @@
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
-    println(isa.(node.children, Ast.ComponentCall))
-
     kwargs = [Expr(:kw, arg[1], generate(arg[3])) for arg in node.arguments]
 
     splats = Expr(:parameters, [Expr(:..., splat) for splat in node.splats]...)
@@ -24,7 +22,7 @@ function generate(node::Ast.If)
     result = :(nothing)
     for branch in reverse(node.branches)
         condition = if !isnothing(branch.condition)
-            Ionic.transcribe(branch.condition)[1]
+            generate(branch.condition)
         end
         statement = generate(branch.block)
         result = if !isnothing(condition)
@@ -44,17 +42,20 @@ end
 
 function generate(node::Ast.For)
     name = gensym("__efus_for__")
+    iterating = generate(node.iterating)
+    iterator = generate(node.iterator)
+    block = generate(node.block)
     return if isnothing(node.elseblock)
         quote
-            [$(generate(node.block)) for $(node.iterating) in $(IonicEfus.transcribe(node.iterator)[1])]
+            [$block for $iterating in $iterator]
         end
     else
         quote
-            let $name = $(IonicEfus.transcribe(node.iterator)[1])
+            let $name = $iterator
                 if isempty($name)
                     $(generate(node.elseblock))
                 else
-                    [$(generate(node.block)) for $(node.iterating) in $name]
+                    [$block for $iterating in $name]
                 end
             end
         end
@@ -123,8 +124,4 @@ function generate(node::Ast.Block)
     end
 end
 
-function generate(node::Ast.JuliaBlock)
-    code = Ionic.transcribe(node.code)[1]
-    type = something(Ionic.transcribe(node.type)[1], :Any)
-    return Expr(:(::), code, type)
-end
+generate(node::Ast.JuliaBlock) = generate(node.code)

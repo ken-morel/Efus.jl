@@ -12,7 +12,7 @@ condition.
 See also [`Expression`](@ref), [`Block`](@ref), [`If`](@ref).
 """
 Base.@kwdef struct IfBranch <: Statement
-    condition
+    condition::Union{Expression, Nothing}
     block::Block = Block()
 end
 affiliate!(p::IfBranch, c::Statement) = affiliate!(p.block, c)
@@ -63,8 +63,8 @@ end
 Base.@kwdef mutable struct For <: Statement
     parent::Union{Statement, Nothing} = nothing
     elseblock::Union{Nothing, Block} = nothing
-    iterator
-    iterating
+    iterator::Expression
+    iterating::Expression
     block::Block
 end
 
@@ -92,7 +92,6 @@ end
 
 Base.@kwdef struct JuliaBlock <: Statement
     parent::Union{Statement, Nothing}
-    code
-    type
+    code::Julia
 end
 affiliate!(p::ComponentCall, c::Snippet) = push!(p.snippets, c)
