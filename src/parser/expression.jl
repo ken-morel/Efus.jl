@@ -1,12 +1,12 @@
 const DIRECT_EVAL = [Tokens.IDENTIFIER, Tokens.NUMERIC, Tokens.STRING, Tokens.CHAR, Tokens.SYMBOL]
-function take_ionic!(p::EfusParser)::Ast.Ionic
+function take_juliaexpr!(p::EfusParser)::Union{Ast.Reactor, Ast.Julia}
     ts = p.stream
     tk = peek(ts)
     expr = try
         Meta.parse(tk.token)
     catch e
         message = e isa Meta.ParseError ? e.msg : string(e)
-        throw(ParseError("Error parsing expression: $e", tk.location))
+        throw(ParseError("Error parsing expression: $message", tk.location))
     end
     nx = next!(ts)
     type = if nx.type === Tokens.TYPEASSERT
@@ -15,16 +15,16 @@ function take_ionic!(p::EfusParser)::Ast.Ionic
             Meta.parse(nx.token)
         catch e
             message = e isa Meta.ParseError ? e.msg : string(e)
-            throw(ParseError("Error parsing expression: $e", nx.location))
+            throw(ParseError("Error parsing expression: $message", nx.location))
         end
     end
-    return Ast.Ionic(expr, type)
+    return isnothing(type) ? Ast.Julia(expr) : Ast.Reactor(expr, type)
 end
 function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Expression, Nothing}
     tk = peek(p.stream)
     ts = p.stream
-    return if tk.type === Tokens.IONIC
-        take_ionic!(p)
+    return if tk.type === Tokens.JULIAEXPR
+        take_juliaexpr!(p)
     elseif tk.type ∈ DIRECT_EVAL
         next!(ts)
         expr = Meta.parse(tk.token)

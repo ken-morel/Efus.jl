@@ -1,8 +1,7 @@
-function generate(expr::Ast.Julia)
-    return expr.value
-end
+generate(expr::Ast.Julia) = Ionic.transcribe(expr.expr)[1]
 
-function generate(expr::Ast.Ionic)
+
+function generate(expr::Ast.Reactor)
     getter, dependencies = Ionic.transcribe(expr.expr)
     type = something(Ionic.transcribe(expr.type)[1], :Any)
     dependencies_expr = Expr(:ref, IonicEfus.AbstractReactive, dependencies...)

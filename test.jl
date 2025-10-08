@@ -8,17 +8,24 @@ const FILE = "test.efus"
 
 colors(; args...) = printstyled("HEllo world"; args...)
 
+prints = (; what) -> print(what)
+
+hello = "Hello "
+
+a = Reactant("world!")
+
+
 component = efus"""
-MyLabel(children)#Comment
-  (println("I am printing $children");)#Comment
+prints(what)
+  (begin
+    println(what')
+    a' = "Hy"
+    println(what')
+  end)
 end
-#Comment
-MyLabel #A comment
-  if true # A comment
-    colors color=:blue
-  else # A comment
-    colors color=:red bold=true
-  end # another one
+
+prints what=(hello * a')::String
+
 """
 
 println(component)

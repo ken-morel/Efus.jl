@@ -2,7 +2,7 @@ const BRACES = ("([{", ")]}")
 const QUOTES = "'\""
 
 
-function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
+function take_juliaexpr!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
     bytetokens = codeunits.(endtokens)
     bytetokenlengths = length.(bytetokens)
     maxbytetokenlength = max(0, bytetokenlengths...)
@@ -75,5 +75,5 @@ function take_ionic!(tz::Tokenizer, endtokens::Vector{String} = String[])::Token
         startloc,
     )
 
-    return token(IONIC, String(take!(buffer)), startloc * stoploc)
+    return token(JULIAEXPR, String(take!(buffer)), startloc * stoploc)
 end
