@@ -1,3 +1,11 @@
+"""
+Display module defines various
+[`show_ast`](@ref) methods for a colorful
+indented display of ast structure to an io, or
+stdout.
+
+See also [`Ast`](@ref)
+"""
 module Display
 
 import ..Ast

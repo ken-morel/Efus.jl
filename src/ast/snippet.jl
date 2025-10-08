@@ -1,10 +1,10 @@
-"""
-"""
+"Holds the name, type and default value for a snippet parameter"
 struct SnippetParameter
     name::Symbol
     type::Union{Some, Nothing}
     default::Union{Some, Nothing}
 end
+public SnippetParameter
 
 """
     Base.@kwdef struct Snippet <: Statement
@@ -37,13 +37,20 @@ Base.@kwdef struct Snippet <: Statement
     block::Block = Block()
 end
 
-public Snippet, SnippetParameter
+public Snippet
 
 affiliate!(::T, ::Snippet) where {T <: Statement} = error(
     "Error, container of type $T does not support snippets",
 )
 takesnippetparameters(name::Symbol) = SnippetParameter[SnippetParameter(name, nothing, nothing)]
 
+"""
+    takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
+    takesnippetparameters(name::Symbol)
+
+This function goes through the parameter definition expression
+of a snippet, and retrives argument names, types and defaults.
+"""
 function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
     params = SnippetParameter[]
     # This function should handle keyword arguments, which are under the :parameters key
@@ -87,3 +94,4 @@ function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
     end
     return params
 end
+public takesnippetparameters

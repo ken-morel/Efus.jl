@@ -1,3 +1,15 @@
+"""
+    generate(node::Ast.ComponentCall)
+
+Generates the function call for a componentcall
+The generated is a simple function call, with
+it's parameters and direct snippets as arguments
+and a special keyword argument `children` which
+is passed only if the component had children(which
+were not snippets) and is the children expression 
+is wrapped in [`IonicEfus.cleanchildren`](@ref)
+to make sure children is of type `Vector{Component}`
+"""
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
     kwargs = [Expr(:kw, arg[1], generate(arg[3])) for arg in node.arguments]
@@ -18,6 +30,14 @@ function generate(node::Ast.ComponentCall)
 end
 
 
+"""
+    generate(node::Ast.If)
+
+Generates an if statement and
+other if's inside the else block(
+in case of elseif). If it has, an else block is
+also generated.
+"""
 function generate(node::Ast.If)
     result = :(nothing)
     for branch in reverse(node.branches)
@@ -40,6 +60,18 @@ function generate(node::Ast.If)
     return result
 end
 
+"""
+    generate(node::Ast.For)
+
+Generates a list comprehension, like
+`[\$block for \$iterating in \$iterator]`
+but if the for loop has an else block, it
+evaluates the iterator and assigns a
+nonconclicting name in a let block, containing
+an if statement returning from a comprehension or
+the else block depending on the return of
+`isempty` on the iterable.
+"""
 function generate(node::Ast.For)
     name = gensym("__efus_for__")
     iterating = generate(node.iterating)
@@ -62,6 +94,27 @@ function generate(node::Ast.For)
     end
 end
 
+"""
+    generate(snippet::Ast.Snippet)
+
+Generate a [`IonicEfus.Snippet`](@ref) definition
+and construct it's type from the types of the
+ast snippet, and an anonymous function.
+
+# Example
+```julia
+header(foo::Bar = 5, bar = 5, a::C)
+  <content>
+end
+------
+Snippet{
+  NamedTuple{
+    (:foo, :bar, :a),
+    Tuple{Bar, Any, C}
+  }
+}((foo::Bar = 5, bar = 5, a::C) -> <content>)
+```
+"""
 function generate(snippet::Ast.Snippet)
     names = Symbol[]
     types = []
@@ -110,6 +163,17 @@ function generate(param::Ast.SnippetParameter)
 end
 
 
+"""
+    generate(node::Ast.Block)
+
+Generattes the content of the block as
+a vector definition, which is passed to
+[`IonicEfus.cleanchildren`](@ref).
+Contrarily to component calls, here snippets
+are grouped in a let call wrapping the rest
+of the content, so they can be used as
+functions anywhere in the block.
+"""
 function generate(node::Ast.Block)
     children_exprs = [generate(child) for child in node.children]
     body = Expr(:call, :|>, Expr(:vect, children_exprs...), IonicEfus.cleanchildren)
@@ -124,4 +188,10 @@ function generate(node::Ast.Block)
     end
 end
 
+"""
+    generate(node::Ast.JuliaBlock)
+
+Generates a block of julia code,
+from the contained [`Ast.Julia`](@ref).
+"""
 generate(node::Ast.JuliaBlock) = generate(node.code)

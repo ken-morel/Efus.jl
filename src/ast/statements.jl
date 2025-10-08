@@ -40,6 +40,7 @@ Base.@kwdef struct If <: Statement
     parent::Union{Statement, Nothing} = nothing
     branches::Vector{IfBranch} = []
 end
+public If
 
 """
     Base.@kwdef mutable struct For <: Statement
@@ -67,6 +68,7 @@ Base.@kwdef mutable struct For <: Statement
     iterating::Expression
     block::Block
 end
+public For
 
 
 """
@@ -80,6 +82,16 @@ to the function being called.
 
 # Syntax
 
+```julia
+  Label text="Hello world" args...
+#   |       |               |
+#   |       |              splats
+#   |       |
+#   |     Argument=value
+#   |
+# Function name
+```
+
 """
 Base.@kwdef struct ComponentCall <: Statement
     parent::Union{Statement, Nothing}
@@ -89,9 +101,26 @@ Base.@kwdef struct ComponentCall <: Statement
     children::Vector{Statement} = []
     snippets::Vector{Snippet} = []
 end
+public ComponentCall
 
+
+"""
+    Base.@kwdef struct JuliaBlock <: Statement
+
+Represents a block of julia code acting as
+a statement, it is internally represented as
+a [`Julia`](@ref) and has no child,
+it is passed through [`IonicEfus.transcribe`](@ref).
+
+# Syntax
+```julia
+(My+julia-expr;)
+```
+"""
 Base.@kwdef struct JuliaBlock <: Statement
     parent::Union{Statement, Nothing}
     code::Julia
 end
+
+public JuliaBlock
 affiliate!(p::ComponentCall, c::Snippet) = push!(p.snippets, c)

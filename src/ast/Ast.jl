@@ -9,6 +9,7 @@ The supertype for all expressions.
 See also [`Statement`](@ref)
 """
 abstract type Expression end
+public Expression
 
 import ..IonicEfus
 
@@ -19,6 +20,7 @@ import ..IonicEfus
 Holds a statement.
 """
 abstract type Statement <: Expression end
+public Statement
 
 
 """
@@ -28,6 +30,7 @@ Causes the statement to add to it's parents children, if
 it has a parent.
 """
 function affiliate! end
+public affiliate!
 
 """
     Base.@kwdef struct Block <: Statement
@@ -40,6 +43,7 @@ Base.@kwdef struct Block <: Statement
     children::Vector{Statement} = Statement[]
     snippets::Vector{Statement} = []
 end
+public Block
 
 
 include("./expressions.jl")
@@ -48,6 +52,8 @@ include("./statements.jl")
 include("./Display.jl")
 
 import .Display: show_ast
+
+public show_ast
 
 affiliate!(p::Block, c::Snippet) = push!(p.snippets, c)
 

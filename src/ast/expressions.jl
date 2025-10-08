@@ -32,6 +32,7 @@ But many other literals evaluate to expressions:
 struct Julia <: Expression
     expr
 end
+public Julia
 
 """
     struct Reactor <: Expression
@@ -62,6 +63,7 @@ struct Reactor <: Expression
     expr
     type
 end
+public Reactor
 
 """
     struct Vect <: Expression
@@ -72,3 +74,4 @@ It effectively generates a julia vector.
 struct Vect <: Expression
     items::Vector{Expression}
 end
+public Vect
