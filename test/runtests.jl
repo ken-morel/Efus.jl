@@ -4,8 +4,6 @@ using Test
 
 
 @testset "IonicEfus.jl" begin
-    @testset "Tokens" begin
-        include("./tokens.jl")
-    end
-
+    @testset "Tokens" include("./tokens.jl")
+    @testset "Ast" include("./ast.jl")
 end

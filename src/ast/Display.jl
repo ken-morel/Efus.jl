@@ -1,8 +1,35 @@
 module Display
+
 import ..Ast
+
+export show_ast
+
+"""
+    # summary
+    show_ast(io::IO, node::Ast.Expression; context = IdDict())
+
+Shows a colorful indented display of the ast structure
+to the specified io, using printstyled and styles 
+specified in [`STYLE`](@ref.
+"""
+function show_ast end
 
 show_ast(expr::Ast.Expression) = show_ast(stdout, expr)
 
+
+"""
+    const STYLE::Dict{Symbol, Dict{Symbol, Any}}
+
+The ast displaying styles used with printstyled. You
+can update this dictionary keys to change how 
+they display.
+
+# Examples
+
+```julia
+IonicEfus.Ast.Display.STYLE[:sign] = Dict(:color => :blue, :bold = true)
+```
+"""
 const STYLE = Dict{Symbol, Dict{Symbol, Any}}(
     :sign => Dict(:color => :blue),
     :keyword => Dict(:color => :magenta, :bold => true),
@@ -13,6 +40,8 @@ const STYLE = Dict{Symbol, Dict{Symbol, Any}}(
     :splat => Dict(:color => :light_blue),
     :identifier => Dict(:color => :light_blue)
 )
+
+public STYLE
 
 function show_ast(io::IO, node::Ast.Block; context = IdDict())
     started = false
@@ -157,7 +186,10 @@ function show_ast(io::IO, b::Ast.JuliaBlock; context = IdDict())
     :indent ∉ keys(context) && push!(context, :indent => 0)
     ind = "  "^context[:indent]
 
-    lines = split(string(Expr(:(::), b.code, b.type)), '\n')
+    io = IOBuffer()
+    show_ast(io, b.code)
+    code = String(take!(io))
+    lines = split(code, '\n')
 
     textio = IOBuffer()
     for line in lines

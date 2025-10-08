@@ -19,7 +19,7 @@ function parse_efus(code::AbstractString, file::AbstractString = "<string>")::As
     try
         Parser.parse!(parser)
     catch err
-        if err isa Parser.ParseError && err.location.file === file
+        if err isa Parser.ParseError && err.location.file == file
             lineindex = err.location.start.ln
             lines = split(code, '\n')
             if lineindex <= length(lines)
