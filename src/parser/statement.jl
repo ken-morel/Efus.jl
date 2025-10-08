@@ -103,12 +103,6 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             end
             loc = next!(ts)
             condition = take_juliaexpr!(p)
-            isnothing(condition) && throw(
-                ParseError(
-                    "Expected condition, got $(loc.type)",
-                    loc.location,
-                )
-            )
             endstheline!(p, "After if or elseif block condition")
 
             branch = Ast.IfBranch(; condition)
