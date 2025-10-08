@@ -2,4 +2,6 @@ Foo
   label(ama::Vector{String}, bama::Int = 5)
     Label text="67$unit"
   end
+  # Syntax error: unterminated string
+  BrokenComponent text="unclosed string
 
