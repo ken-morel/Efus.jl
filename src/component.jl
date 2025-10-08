@@ -51,8 +51,9 @@ function cleanchildren(children::Vector)::Vector{Component}
             append!(final, cleanchildren(child))
         elseif !isnothing(child)
             error(
-                "Component was passed an unexpected child of type $(typeof(child)): $child. " *
-                    "Make sure it either returns a component, a vector of components, or nothing."
+                "Component or code block was passed a child of unexpected type $(typeof(child)): $child. " *
+                    "If you use a custom function or julia expression, make sure it either " *
+                    " returns a component, a vector of components, or nothing."
             )
 
         end

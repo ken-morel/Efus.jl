@@ -108,8 +108,8 @@ function lex(code::AbstractString)::Lexed
     tokens = Channel{Tokens.Token}() do channel
         index = 1
         for (type, content, loc) in channel
-            start = loc2index(line_index, loc.start)
-            stop = loc2index(line_index, loc.stop)
+            start = Tokens.loc2index(line_index, loc.start)
+            stop = Tokens.loc2index(line_index, loc.stop)
 
             if index < start
                 push!(lexed, (code[index:(start - 1)], Tokens.NONE))
@@ -142,6 +142,15 @@ function lex(code::AbstractString)::Lexed
     return lexed
 end
 
+"""
+    print_lexed(io::IO, lexed::Lexed, theme::Theme = DEFAULT_THEME)
+    print_lexed(lexed::Lexed, theme::Theme = DEFAULT_THEME)
+    print_lexed(io::IO, text::String, theme::Theme = DEFAULT_THEME)
+    print_lexed(text::String, theme::Theme = DEFAULT_THEME)
+
+Prints the text or lexed to io or stdout with colors from
+tokenizing using printstyled and the specified [`Theme`](@ref).
+"""
 function print_lexed(io::IO, lexed::Lexed, theme::Theme = DEFAULT_THEME)
     for (text, token_type) in lexed
         style = getstyle(theme, token_type)

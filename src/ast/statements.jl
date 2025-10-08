@@ -91,7 +91,6 @@ to the function being called.
 #   |
 # Function name
 ```
-
 """
 Base.@kwdef struct ComponentCall <: Statement
     parent::Union{Statement, Nothing}
@@ -109,7 +108,7 @@ public ComponentCall
 
 Represents a block of julia code acting as
 a statement, it is internally represented as
-a [`Julia`](@ref) and has no child,
+a [`Ast.Julia`](@ref) and has no child,
 it is passed through [`IonicEfus.transcribe`](@ref).
 
 # Syntax

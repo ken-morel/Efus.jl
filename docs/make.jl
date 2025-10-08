@@ -12,8 +12,10 @@ makedocs(;
     ),
     pages = [
         "index.md",
-        "language.md",
-        "reference/index.md",
-        "Examples" => [],
-    ]
+        "efus.md",
+        "Reference" => [
+            "reference/index.md",
+        ],
+    ],
+
 )

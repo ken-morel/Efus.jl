@@ -11,12 +11,6 @@ import ..Ast
 import ..IonicEfus
 import ..Ionic
 
-"""
-The code generation function, receives an instance
-of [`Ast.Expression`](@ref) or [`Ast.Statement`](@ref)
-and generates juila code.
-"""
-function generate end
 
 include("./expression.jl")
 include("./statement.jl")

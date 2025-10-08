@@ -37,7 +37,7 @@ include("./gen/Gen.jl")
 
 include("./macros.jl")
 
-@reexport using .Tokens, .Parser, .Ionic, .Ast, .Lexer
+@reexport using .Tokens,.Parser, .Ionic, .Ast, .Lexer
 
 include("./parse.jl")
 

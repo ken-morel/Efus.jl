@@ -5,7 +5,9 @@ Stores utility functions for processing ionic expressions.
 """
 module Ionic
 
-using ..IonicEfus
+export transcribe
+
+using ..IonicEfus: getvalue, setvalue!
 
 """
     function transcribe(orig)::Tuple{Any, Vector}
@@ -33,14 +35,14 @@ function transcribe(orig)::Tuple{Any, Vector}
             end
             push!(dependencies, current.args[1])
             current.head = :call
-            current.args = [IonicEfus.getvalue, current.args[1]]
+            current.args = [getvalue, current.args[1]]
             current.args[1] isa Expr && push!(todo, current.args[1])
         elseif current.head == Symbol("=") && length(current.args) == 2  && current.args[1] isa Expr && current.args[1].head == Symbol("'")
             # it is an assignment to a reactive variable
             reactive_var = current.args[1].args[1]
             value_expr = current.args[2]
             current.head = :call
-            current.args = [IonicEfus.setvalue!, reactive_var, value_expr]
+            current.args = [setvalue!, reactive_var, value_expr]
 
             reactive_var isa Expr && push!(todo, reactive_var)
             value_expr isa Expr && push!(todo, value_expr)

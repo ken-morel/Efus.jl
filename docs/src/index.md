@@ -6,34 +6,25 @@ Pages = ["index.md"]
 
 [![CI](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml)
 
-> [!NOTE]
-> This is not very stable, but it works.
+!!! NOTE
+This is not very stable, but it works.
 
-## The language
+So good day, and welcome to `IonicEfus.jl` !
 
-The efus language is a pug like language with
-indent-based heirarchy and julia-like control
-structures.
-Though it may look like a markup language, efus
-is not markup but instead instructions to construct
-components.
+IonicEfus.jl is a module providing tools like
+a language parser which transforms markup-like efus
+language to julia code at macro expansion, a pair
+of reactive constructs with tools to interact with
+them easily all to help you build componentized structures
+like ui's and maybe something else.
 
-## Reactivity
+~I wrote wrote this documentation~ I am writing this
+documentation to help you build your own component libraries
+and backends, or use existing ones, or simply get to know
+how to use what efus and ionic provide to you.
 
-Efus uses a few types, like [IonicEfus.Catalyst](@ref),
-[IonicEfus.Reactant](@ref) and [IonicEfus.Reactor](@ref)
-to track and react to value changes.
-
-### The `ionic` expressions
-
-These are simply peices of julia code, where
-[IonicEfus.Ionic.translate](@ref) converts
-expressions preceded by a "'" to getvalue()
-and assignments to setvalue! calls, so as to
-help you use reactants more easily, almost
-every julia expression in efus code passes
-through that translation, so `ionic` is supported
-almost everywhere, in for, if, expressions, ...
-
-You also have macros at your disposal to insert
-them within your code.
+If you are looking fr example usecases, I also started
+[Gtak.jl](https://github.com/ken-morel/Gtak.jl) bindings and
+backend for Gtk4.jl and [Atak.jl](https://github.com/ken-morel/Atak.jl)
+and [Gju.jl](https://github.com/ken-morel/Gju.jl) an example
+application made with Gtak.jl.

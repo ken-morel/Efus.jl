@@ -98,7 +98,7 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
 [[deps.IonicEfus]]
-deps = ["FunctionWrappers", "MacroTools", "Test"]
+deps = ["FunctionWrappers", "MacroTools", "Reexport", "Test"]
 path = ".."
 uuid = "285369d7-3617-4bce-982e-acda657aee64"
 version = "0.1.0"
@@ -250,6 +250,11 @@ version = "1.11.0"
 deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 version = "1.11.0"
+
+[[deps.Reexport]]
+git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
+uuid = "189a3867-3050-52da-a836-e630ba90ab69"
+version = "1.2.2"
 
 [[deps.RegistryInstances]]
 deps = ["LazilyInitializedFields", "Pkg", "TOML", "Tar"]

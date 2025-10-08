@@ -20,14 +20,14 @@ braced expression:
 ```
 But many other literals evaluate to expressions:
 
-- "foo \$bar"
+- "foo \\\$bar"
 - 45_4.5e5px
 - :a_symbol!even_here
 
-> [!NOTE]
-> Number multiples like 45im only support letters
-> as variables names, and not the usual julia
-> !, pi, .. stuff.
+!!! NOTE
+    Number multiples like 45im only support letters
+    as variables names, and not the usual julia
+    !, pi, .. stuff.
 """
 struct Julia <: Expression
     expr
@@ -39,8 +39,8 @@ public Julia
 
 A reactor is a container where several reactions
 between reactans can take place, it has a final
-value, which can be gotten with [`getvalue`](@ref) and
-[`setvalue!`](@ref) and which is lazily computed. And
+value, which can be gotten with [`IonicEfus.getvalue`](@ref) and
+[`IonicEfus.setvalue!`](@ref) and which is lazily computed. And
 holds a getter and setter expressions.
 They support and use reactive syntax, but in addition
 every marked reactant in the reactive getter will be
@@ -51,7 +51,7 @@ but only recomputing it's value when queried and any of
 it's reactants changed since it's last update.
 It has a type assertion at the end which specifies the
 type of the reactor, if this is not included, it is
-instead interpreed as a normal [`Julia`](@ref) expression.
+instead interpreed as a normal [`Ast.Julia`](@ref) expression.
 
 # Example
 #

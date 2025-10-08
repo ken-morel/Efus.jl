@@ -18,6 +18,12 @@ Modules = [IonicEfus]
 Modules = [IonicEfus.Ionic]
 ```
 
+## IonicEfus.Lexer
+
+```@autodocs
+Modules = [IonicEfus.Lexer]
+```
+
 ## IonicEfus.Gen
 
 ```@autodocs
@@ -36,14 +42,14 @@ Modules = [IonicEfus.Ast]
 Modules = [IonicEfus.Parser]
 ```
 
-## IonicEfus.Dev
+## IonicEfus.Tokens
 
 ```@autodocs
-Modules = [IonicEfus.Dev]
+Modules = [IonicEfus.Tokens]
 ```
 
-## IonicEfus.Display
+## IonicEfus.Ast.Display
 
 ```@autodocs
-Modules = [IonicEfus.Display]
+Modules = [IonicEfus.Ast.Display]
 ```

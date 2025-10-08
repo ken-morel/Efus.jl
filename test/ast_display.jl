@@ -14,8 +14,7 @@ using IonicEfus
     end
     Ama a=:ama b=(bar) c=(ama)::Int
       code()
-        Label foo=|
-        4
+        Label foo=4
       end
       ("Inline julia";code;)
       for (foo, bar) in cases'

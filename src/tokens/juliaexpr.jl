@@ -32,7 +32,7 @@ function take_juliaexpr!(tz::Tokenizer, endtokens::Vector{String} = String[])::T
             end
         elseif ch === '''
             prev = ts.prev
-            if isnothing(prev) || !Meta.isidentifier("_" * prev)
+            if prev != ''' && (isnothing(prev) || !Meta.isidentifier("_" * prev))
                 # We are surely at a character
                 ch = take_char!(tz)
                 ch.type === ERROR && return ch
