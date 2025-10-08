@@ -1,5 +1,4 @@
-using IonicEfus.Ast.Display: show_ast
-using IonicEfus.Ast
+using IonicEfus
 
 @testset "Error checks" begin
     io = IOBuffer()
