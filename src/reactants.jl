@@ -1,6 +1,3 @@
-using FunctionWrappers
-
-
 export Reactant, Catalyst, Reaction, AbstractReaction
 export getvalue, setvalue!, catalyze!, inhibit!, denature!
 export resolve, MayBeReactive

@@ -1,11 +1,42 @@
+"""
+Defines a few utilities for colored display
+and lexing efus code using the tokenizer.
+"""
 module Lexer
-export print_lexed
+export print_lexed, lex
 using ..Tokens
 
-const Lexed = Vector{Tuple{String, Tokens.TokenType}}
+"""
+    const Lexed = Vector{Tuple{String, Tokens.TokenType}}
 
+Lexed represents a list of string contents and their
+corresponding tokens. It is returned by [`lex`](@ref).
+
+See also [`Style`](@ref)
+"""
+const Lexed = Vector{Tuple{String, Tokens.TokenType}}
+public Lexed
+
+
+"""
+    const Style = Dict{Symbol, Any}
+
+Represents a dict of keyword arguments passed
+to `printstyled`() when displaying the ast.
+Though they can also be used elswhere.
+
+See also [`print_lexed`](@ref), [`Theme`](@ref).
+"""
 const Style = Dict{Symbol, Any}
+public Style
+
+"""
+    const Theme = Dict{Tokens.TokenType, Style}
+
+A mapping of tokens to their corresponding styles.
+"""
 const Theme = Dict{Tokens.TokenType, Style}
+public Theme
 
 
 const EMPTY_THEME = Theme()
@@ -53,8 +84,24 @@ const DEFAULT_THEME = Theme(
     Tokens.COMMENT => Style(:italic => true, :color => :light_black),
 )
 
-getstyle(theme::Theme, tk::Tokens.TokenType) = tk in keys(theme) ? theme[tk] : EMPTY_STYLE
 
+"""
+    getstyle(theme::Theme, tk::Tokens.TokenType)
+
+Gets the style for the token in the theme, or returns
+`EMPTY_STYLE` if there is no such style in the theme.
+"""
+getstyle(theme::Theme, tk::Tokens.TokenType) = tk in keys(theme) ? theme[tk] : EMPTY_STYLE
+public getstyle
+
+"""
+    lex(code::AbstractString)
+
+Lexes the code using efus tokenizer and
+returns a [`Lexed`](@ref).
+
+See also [`print_lexed`](@ref).
+"""
 function lex(code::AbstractString)::Lexed
     lexed = Lexed()
     line_index = Tokens.LineIndex(code)

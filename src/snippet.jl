@@ -1,6 +1,5 @@
 export Snippet
 
-
 """
     struct Snippet{T <: NamedTuple}
         fn::Function

@@ -1,3 +1,11 @@
+"""
+    take_one!(p::EfusParser; expect_end::Bool = false)
+
+Takes one statement from the parser, returns nothing if
+the EOF reached, and returns missing if end was caught
+and `expect_end` was set to true(else it thows a
+[`ParseError`](@ref)).
+"""
 function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement, Nothing, Missing}
     ts = p.stream
 
@@ -77,10 +85,6 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                     end
 
                     shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
-                    if next!(ts).type === Tokens.NEXTLINE
-                        next!(ts)
-                        endstheline!(p, "After nextline('|') in component call argument")
-                    end
                     paramvalue = take_expression!(p)
                     isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
                     push!(s.arguments, (paramname, paramsub, paramvalue))
@@ -183,3 +187,6 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
     end
     return
 end
+
+
+public take_one!

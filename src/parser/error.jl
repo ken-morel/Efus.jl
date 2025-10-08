@@ -1,3 +1,10 @@
+export ParseError
+
+"""
+    mutable struct ParseError <: IonicEfus.EfusError
+
+A parsing error.
+"""
 mutable struct ParseError <: IonicEfus.EfusError
     message::String
     location::Location

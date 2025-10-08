@@ -37,7 +37,14 @@ struct Tokenizer
 end
 
 
-function tokenize!(tz::Tokenizer)
+"""
+    tokenize!(tz::Tokenizer)::Vector{Token}
+    tokenize!(tz::Tokenizer, out::Channel{Token})::Nothing
+
+Takes all tokens from the tokenizer till EOF and either
+returns then or sends them to the channel.
+"""
+function tokenize!(tz::Tokenizer)::Vector{Token}
     tokens = Token[]
     while true
         tk = take!(tz)
@@ -46,7 +53,7 @@ function tokenize!(tz::Tokenizer)
     end
     return tokens
 end
-function tokenize!(tz::Tokenizer, out::Channel{Token})
+function tokenize!(tz::Tokenizer, out::Channel{Token})::Nothing
     while true
         tk = take!(tz)
         push!(out, tk)
@@ -56,9 +63,14 @@ function tokenize!(tz::Tokenizer, out::Channel{Token})
 end
 
 
-Base.take!(tz::Tokenizer, out::Channel{Token}) = put!(out, take_one!(tz))
+"""
+    Base.take!(tz::Tokenizer, out::Channel{Token})
+    Base.take!(tz::Tokenizer)
 
-@inline
+Takes the next token from the tokenizer and returns
+or sends to the channel
+"""
+Base.take!(tz::Tokenizer, out::Channel{Token}) = put!(out, take_one!(tz))
 Base.take!(tz::Tokenizer) = take_one!(tz)
 
 function take_one!(tz::Tokenizer)::Token

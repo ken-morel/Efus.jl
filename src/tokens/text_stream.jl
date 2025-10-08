@@ -1,5 +1,3 @@
-export TextStream, LineIndex, loc2index
-
 """
     struct LineIndex
 
@@ -63,6 +61,7 @@ mutable struct TextStream
     """
     TextStream(io::IO, file::String = "<taken>") = new(io, file, nothing, nothing, 1, 1)
 end
+public TextStream
 
 """
     TextStream(s::String, file::String = "<string>")

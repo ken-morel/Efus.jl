@@ -1,12 +1,31 @@
+"""
+    mutable struct TokenStream
+
+A tokenstream feeds tokens from a channel
+of function to a parser.
+"""
 mutable struct TokenStream
     channel::Channel{Token}
 
     prev::Union{Token, Nothing}
     current::Union{Token, Nothing}
 
+    """
+        TokenStream(taker::Channel{Token})
+        TokenStream(tokens::Vector{Token})
+
+    Constructs a tokenstream from a channel of tokens or
+    a list of tokens.
+    """
     TokenStream(taker::Channel{Token}) = new(taker, nothing, nothing)
-    TokenStream(fn::Function) = new(Channel{Token}(fn), nothing, nothing)
 end
+function TokenStream(tokens::Vector{Token})
+    chan = Channel{Token}(length(tokens))
+    put!((chan,), tokens)
+    close(chan)
+    return TokenStream(chan)
+end
+public TokenStream
 function peek(ts::TokenStream)::Union{Tokens.Token, Nothing}
     if isnothing(ts.current)
         ts.current = try

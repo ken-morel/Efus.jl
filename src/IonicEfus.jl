@@ -10,6 +10,7 @@ module IonicEfus
 using FunctionWrappers: FunctionWrapper
 
 abstract type EfusError <: Exception end
+using Reexport
 
 
 include("./component.jl")
@@ -36,13 +37,7 @@ include("./gen/Gen.jl")
 
 include("./macros.jl")
 
-
-using .Tokens
-using .Parser
-using .Ionic
-using .Ast
-
-export show_ast
+@reexport using .Tokens, .Parser, .Ionic, .Ast, .Lexer
 
 include("./parse.jl")
 
