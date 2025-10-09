@@ -2,6 +2,7 @@
 Definitions and utilities for efus.jl Ast structures.
 """
 module Ast
+using Reexport
 
 """
 The supertype for all expressions.
@@ -51,9 +52,8 @@ include("./snippet.jl")
 include("./statements.jl")
 include("./Display.jl")
 
-import .Display: show_ast
 
-public show_ast
+@reexport using .Display
 
 affiliate!(p::Block, c::Snippet) = push!(p.snippets, c)
 

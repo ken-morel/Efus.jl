@@ -11,6 +11,9 @@ import ..Ast
 import ..IonicEfus
 import ..Ionic
 
+struct CodeGenerationError <: Exception
+    msg::String
+end
 
 include("./expression.jl")
 include("./statement.jl")

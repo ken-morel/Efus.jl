@@ -4,6 +4,8 @@ using .IonicEfus
 using .IonicEfus.Ast
 using .IonicEfus.Gen
 
+using MacroTools
+
 const FILE = "test.efus"
 
 colors(; args...) = printstyled("HEllo world"; args...)
@@ -17,19 +19,10 @@ a = Reactant("world!")
 
 component = efus"""
 prints(what)
-  (begin
-    println(what')
-    a' = "Hy"
-    println(what')
-  end)
+  (println(what);)
 end
 
-prints what=(hello * a')::String
-
-# Let's add a syntax error to test error reporting
-BrokenComponent text="unclosed string
-But multiline"
-
+prints what:foo=5
 """
 
 println(component)

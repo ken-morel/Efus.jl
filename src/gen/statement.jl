@@ -12,7 +12,41 @@ to make sure children is of type `Vector{Component}`
 """
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
-    kwargs = [Expr(:kw, arg[1], generate(arg[3])) for arg in node.arguments]
+
+    args = Dict{Symbol, Ast.Expression}()
+    dictargs = Dict{Symbol, Dict{Symbol, Ast.Expression}}()
+
+    for (argname, argsub, argvalue) in node.arguments
+        if isnothing(argsub)
+            push!(args, argname => argvalue)
+        else
+            argname ∉ keys(dictargs) && push!(dictargs, argname => Dict{Symbol, Ast.Expression}())
+            dictargs[argname][argsub] = argvalue
+        end
+    end
+    common = intersect(keys(args), keys(dictargs))
+    !isempty(common) && throw(
+        CodeGenerationError(
+            "Could not generate component call. Call for component $(node.componentname)" *
+                " has arguments $common which were both regular arguments and dict(with :)" *
+                " arguments"
+        )
+    )
+    kwargs = [Expr(:kw, key, generate(value)) for (key, value) in args]
+    push!(
+        kwargs, [
+            Expr(
+                    :kw, key,
+                    Expr(
+                        :call, :Dict, [
+                            Expr(
+                                :call, :(=>), QuoteNode(subkey), generate(value)
+                            ) for (subkey, value) in subdict
+                        ]...
+                    )
+                ) for (key, subdict) in dictargs
+        ]...
+    )
 
     splats = Expr(:parameters, [Expr(:..., splat) for splat in node.splats]...)
 
