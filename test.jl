@@ -28,6 +28,7 @@ prints what=(hello * a')::String
 
 # Let's add a syntax error to test error reporting
 BrokenComponent text="unclosed string
+But multiline"
 
 """
 
