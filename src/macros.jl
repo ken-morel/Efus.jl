@@ -11,7 +11,7 @@ code.
 macro efus_str(code::String)
     file = "<macro at $(__source__.file):$(__source__.line)>"
 
-    generated = Gen.generate(IonicEfus.parse_efus(code, file))
+    generated = Gen.generate(parse_efus(code, file))
 
     return quote
         $(LineNumberNode(__source__.line, __source__.file))

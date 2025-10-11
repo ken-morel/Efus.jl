@@ -61,6 +61,11 @@ LabelFrame padding=(1, 1)
 I feel depressed looking all I've spent time working on just shows in
 20 lines of code.
 
+> [!TIP]
+> With [JETLS.jl](https://github.com/aviatesk/JETLS.jl/) you can
+> have parse error inline messages _as you code_,
+> along with unused variables, and other lsp functionalities.
+
 ## Reactivity
 
 A full pack of nice names, Reactant, Reactor, Catalyst, and few more

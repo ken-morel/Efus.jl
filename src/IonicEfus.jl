@@ -34,11 +34,10 @@ include("./parser/Parser.jl")
 
 
 include("./gen/Gen.jl")
-
 include("./macros.jl")
 
-@reexport using .Tokens,.Parser, .Ionic, .Ast, .Lexer
+@reexport using .Tokens, .Parser, .Ionic, .Ast, .Lexer, .Gen
 
 include("./parse.jl")
 
-end # module IonicEfus
+end

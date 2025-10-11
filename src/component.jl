@@ -1,3 +1,4 @@
+export Components
 export Component, mount!, unmount!, remount!
 export update!, render, getchildren, getparent
 export isdirty, dirty!
@@ -20,6 +21,13 @@ end
 """
 abstract type Component end
 
+"""
+    const Components = Vector{<:Component}
+
+Just to help you receive component lists.
+"""
+const Components = Vector{<:Component}
+
 
 function mount! end
 function unmount! end
@@ -41,9 +49,9 @@ and splats any nested vectors, returning a flat vector of `Component`s.
 This function is used by generated code on the children of a componentcall, 
 when it is noticed they contain a codeblock or condition.
 """
-function cleanchildren(children::Vector)::Vector{Component}
-    children isa Vector{<:Component} && return children
-    final = Component[]
+function cleanchildren(children::Vector)::Components
+    children isa Components && return children
+    final::Vector{Component} = Component[]
     for child in children
         if child isa Component
             push!(final, child)
