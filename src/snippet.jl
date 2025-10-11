@@ -1,4 +1,4 @@
-export Snippet
+export Snippet, @Snippet
 
 """
     struct Snippet{T <: NamedTuple}
@@ -32,3 +32,28 @@ Snippet(fn::Function, ::Type{T}) where {T <: NamedTuple} = Snippet{T}(fn)
 
 "Call the snippet inner function with the passed arguments"
 (sn::Snippet)(; args...) = sn.fn(; args...)
+
+macro Snippet(expr::Expr)
+    expr.head == :curly && error("Invalid snippet expression $expr")
+    types = []
+    names = []
+    for arg in expr.args
+        if arg isa Expr && arg.head == :(::)
+            push!(names, arg.args[1])
+            push!(types, arg.args[2])
+        elseif arg isa Symbol
+            push!(names, arg)
+            push!(types, :Any)
+        else
+            error("Invalid snippet def")
+        end
+    end
+    namedtupletype = Expr(
+        :curly,
+        :NamedTuple,
+        Expr(:tuple, QuoteNode.(names)...),
+        Expr(:curly, Tuple, types...),
+    )
+    return esc(Expr(:curly, Snippet, namedtupletype))
+
+end

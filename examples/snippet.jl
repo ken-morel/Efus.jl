@@ -1,6 +1,6 @@
 include("./htmlcomponents.jl")
 
-function list(; iter::Vector{T}, body::Snippet{NamedTuple{(:item,), Tuple{T}}}) where {T}
+function list(; iter::Vector{T}, body::@Snippet{item::T}) where {T}
     return [body(item = item) for item in iter]
 end
 

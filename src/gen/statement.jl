@@ -162,9 +162,9 @@ function generate(snippet::Ast.Snippet)
     end
     namedtupletype = Expr(
         :curly,
-        NamedTuple,
+        :NamedTuple,
         Expr(:tuple, QuoteNode.(names)...),
-        Expr(:curly, Tuple, types...),
+        Expr(:curly, :Tuple, types...),
     )
     exprs = []
     for param in snippet.params
