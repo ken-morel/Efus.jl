@@ -39,6 +39,8 @@ used as slots. They have two behaviours:
     Item ...
     Foo builder=Item
   """
+  ```
+  ```
 
 If you call a snippet with positional arguments, they
 will be converted to keyword arguments before calling.

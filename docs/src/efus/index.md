@@ -23,7 +23,7 @@ for doing that for you.
 ```julia
 using IonicEfus
 
-code = "Hello world=4
+code = "Hello world=4"
 ast = parse_efus(code)
 
 expr = generate(code)

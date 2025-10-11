@@ -13,7 +13,7 @@ Where T is the contained type.
 
 They implement:
 
-- [`IonicEfus.setvalue`](@ref)
+- [`IonicEfus.setvalue!`](@ref)
 - [`IonicEfus.getvalue`](@ref)
 
 You are provided with two reactive types:

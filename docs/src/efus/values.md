@@ -39,6 +39,12 @@ px which is a multiplication, other examples include.
 - `5e-5`
 - ...
 
+### Symbols
+
+They are like julia symbols.
+
+- `:foo` -> a symbol
+
 
 ### Julia expressions
 
@@ -78,3 +84,16 @@ by the expression will always be casted to the reactor
 type.
 
 - `(a' / b')::Float32`
+
+## Lists, Vect or Vectors
+
+- [`IonicEfus.Ast.Vect`](@ref)
+- [`IonicEfus.Gen.generate(::IonicEfus.Ast.Vect)`]
+
+efus permits you to type expressions in `[]` quotes
+with vector syntax, you can nest, vect definitions,
+use newlines, ...
+
+- `[1, [1, 2], :ama]`
+
+

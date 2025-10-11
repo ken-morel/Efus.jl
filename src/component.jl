@@ -71,7 +71,7 @@ end
 """
     update!(c::Component)
 
-Update the data know as [`dirt!`](@ref),
+Update the data know as [`dirty!`](@ref),
 when the component is mounted.
 
 The default implementation throws an exception.
