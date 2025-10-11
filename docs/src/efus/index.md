@@ -6,9 +6,9 @@ well, efus may look like markup language, but in
 fact, efus is a step of instructions for creating
 and composing components.
 
-## What's done in the parsing?
+## What's done in the code generation?
 
-The parsing is done into a few simple steps:
+The code generation is done into a few simple steps:
 
 `IOBuffer` -> **tokenizing** -> `Channel{Token}` ->
 **parsing** -> `Channel{Statement}` -> collect
@@ -35,24 +35,3 @@ component = eval(expr)
 component = efus"Hello world=4"
 
 ```
-
-## The syntax
-
-I will cover here a few things about efus syntax, ast nodes and
-their generated code.
-
-### Component calls
-
-Component calls are I could say the basic and most important
-things you are going to use, they may not be only a
-call to a component constructor, but to any function, or
-a Snippet.
-The return type for calling that function should always
-be either `nothing`, a `Component` or `Vector{Component}`
-efus blocks and parents wrap the children in
-[`IonicEfus.cleanchildren`](@ref) which does the splatting
-and filtering the nothings, but it throws an exception
-if any other kind of value is found.
-
-[`IonicEfus.Ast.ComponentCall`](@ref)
-[`IonicEfus.Gen.generate(::IonicEfus.Ast.ComponentCall)`](@ref)

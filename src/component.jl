@@ -29,15 +29,137 @@ Just to help you receive component lists.
 const Components = Vector{<:Component}
 
 
-function mount! end
-function unmount! end
-function remount! end
-function update! end
-function render end
-function getchildren end
-function getparent end
-function isdirty end
-function dirty! end
+"""
+    mount!(c::Component, [parent::Component];args...)
+
+Mount `c` in it's `parent`, create
+the subscriptions, backend data and more.
+You may return the associated backend data.
+
+The default mount! throws an exception.
+"""
+mount!(
+    ::C, p::Union{Component, Nothing} = nothing;
+    args...
+) where {C <: Component} = error("Mounting not supported by $C")
+
+"""
+    unmount!(::C) where {C <: Component}
+
+Unassociate any data and destroy what
+was creted durint [`mount!`](@ref).
+
+The default implementation throws an exception.
+"""
+unmount!(::C) where {C <: Component} = error("Unmounting not supported by $C")
+
+"""
+    remount!(::Component;args...)
+
+Remounts the component, efus 
+default behaviour is to successively call
+[`unmount!`](@ref) and [`mount!`](@ref).
+It may return the associated data durint
+mount!.
+
+The default implementation throws an exception
+"""
+function remount!(c::C; args...) where {C <: Component}
+    throw("remounting not supported by $C")
+end
+
+"""
+    update!(c::Component)
+
+Update the data know as [`dirt!`](@ref),
+when the component is mounted.
+
+The default implementation throws an exception.
+"""
+function update!(c::C; args...) where {C <: Component}
+    error("Updating not supported by $C")
+end
+
+"""
+    getchildren(c::Component)::Union{Components, Nothing}
+
+Get the childrens of the component. Or return nothing if
+found.
+
+The default implementation checks for a `.children`
+atttribute of type [`Components`](@ref).
+"""
+function getchildren(c::Component)::Union{Components, Nothing}
+    return if hasproperty(c, :children) && c.children isa Components
+        c.children
+    end
+end
+
+"""
+    getparent(c::Component)::Union{Component, Nothing}
+
+Get the parent of component c.
+
+The default implementation checks for a `.parent`
+property of type [`Component`](@ref).
+"""
+function getparent(c::Component)::Union{Component, Nothing}
+    return if hasproperty(c, :parent) && c.parent isa Component
+        c.parent
+    end
+end
+
+"""
+    isdirty(::Component)::Bool
+
+Get if any component field was marked as
+dirty.
+
+The default implementation throws an exception.
+"""
+function isdirty(::C)::Bool where {C <: Component}
+    error("Dirty not supported by $C")
+end
+
+"""
+    getdirty(::Component)::Set{Symbol}
+
+Get the component fields which were marked as dirty.
+
+The default implementation throws an exception.
+"""
+function getdirty(::C)::Set{Symbol} where {C <: Component}
+    error("Dirty not supported by $C")
+end
+
+"""
+    params(::Type{C})::Set{Symbol} where {C <: Component}
+    params(::C)::Set{Symbol} where {C <: Component}
+
+Get the parameters supported by components of
+type C.
+
+The default implementation throws an exception.
+"""
+function params(::Type{C})::Set{Symbol} where {C <: Component}
+    error("Params not implemented for $C")
+end
+params(::C) where {C <: Component} = params(C)
+
+"""
+    dirty!(c::Component, key::Symbol, value)
+    dirty!(c::Component, k::Key)
+
+Mark the specified key as dirty, after setting
+the value.
+
+The default dirty!(c, k, v) sets c.(k) then 
+calls dirty!(c, k)
+"""
+function dirty!(c::Component, key::Symbol, value)
+    c.key = value
+    return dirty!(c, key)
+end
 
 
 """

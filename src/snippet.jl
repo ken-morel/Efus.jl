@@ -11,6 +11,7 @@ for type checking and multiple dispatch.
 """
 struct Snippet{T <: NamedTuple}
     fn::Function
+    params::Tuple
 
     """
         Snippet{T}(fn::Function) where T <: NamedTuple
@@ -24,14 +25,19 @@ struct Snippet{T <: NamedTuple}
         if length(returns) !== 1 || !(returns[1] <: AbstractVector{<:Component})
             @warn "Snippets should return Vector{<:Component}, but $fn returns $returns"
         end
-        return new{T}(fn)
+        return new{T}(fn, T.parameters[1])
     end
 end
 Snippet(::Type{T}, fn::Function) where {T <: NamedTuple} = Snippet{T}(fn)
 Snippet(fn::Function, ::Type{T}) where {T <: NamedTuple} = Snippet{T}(fn)
 
-"Call the snippet inner function with the passed arguments"
+"""
+    (sn::Snippet)(args...; kwargs...)
+
+Call the snippet with specified arguments and kwargs.
+"""
 (sn::Snippet)(; args...) = sn.fn(; args...)
+(sn::Snippet)(args...; kwargs...) = sn.fn(; [k => val for (k, val) in zip(sn.params, args)]..., kwargs...)
 
 macro Snippet(expr::Expr)
     expr.head == :curly && error("Invalid snippet expression $expr")
