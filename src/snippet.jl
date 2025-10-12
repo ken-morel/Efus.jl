@@ -9,7 +9,7 @@ A snippet is a simple typed container for a function returning
 a component, or list of components. It's help is just 
 for type checking and multiple dispatch.
 """
-struct Snippet{T <: NamedTuple}
+struct Snippet{T <: NamedTuple} <: Function
     fn::Function
     params::Tuple
 

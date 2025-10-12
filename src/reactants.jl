@@ -115,7 +115,7 @@ mutable struct Reactor{T} <: AbstractReactive{T}
         initial = isnothing(initial) ? getter() : convert(T, initial)
         r = new{T}(getter, setter, [], [], Catalyst(), initial, false, eager, Base.ReentrantLock())
         callback = (_) -> begin
-            r.fouled = true
+            @lock r.lock r.fouled = true
             eager && getvalue(r)
             notify(r)
         end
@@ -167,7 +167,7 @@ function setvalue!(r::Reactor{T}, new_value; notify::Bool = true) where {T}
         end
         r.fouled = true
     end
-    notify && for reaction in copy(r.reactions)
+    notify && for reaction in (@lock r.lock copy(r.reactions))
         reaction.callback(r)
     end
     return
@@ -210,7 +210,7 @@ getvalue(r::Reactant{T}) where {T} = r.value::T
 
 function setvalue!(r::Reactant{T}, new_value; notify::Bool = true) where {T}
     @lock r.lock r.value = convert(T, new_value)
-    notify && for reaction in copy(r.reactions)
+    notify && for reaction in (@lock r.lock copy(r.reactions))
         reaction.callback(r)
     end
     return r
@@ -291,8 +291,8 @@ It does so by calling [`pop!`](@ref) on the catalyst and reactants, which is aga
 more lowlevel.
 """
 function inhibit!(r::Reaction)
-    pop!(r.reactant, r)
     pop!(r.catalyst, r)
+    pop!(r.reactant, r)
 
     return
 end
@@ -306,7 +306,7 @@ This is the primary cleanup function to be called when a UI component
 is destroyed, preventing memory leaks.
 """
 function denature!(c::Catalyst)
-    for reaction in copy(c.reactions)
+    for reaction in (@lock c.lock copy(c.reactions))
         inhibit!(reaction)
     end
     return
@@ -314,7 +314,7 @@ end
 
 
 function notify(r::Reactor)
-    for reaction in copy(r.reactions)
+    for reaction in (@lock r.lock copy(r.reactions))
         reaction.callback(r)
     end
     #PERF: Trace time and log if too long

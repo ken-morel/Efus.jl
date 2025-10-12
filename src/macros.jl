@@ -29,7 +29,7 @@ The code returns the evaluated expression.
 See also [`@reactor`](@ref)
 """
 macro ionic(expr)
-    return esc(IonicEfus.Ionic.translate(expr)[1])
+    return esc(IonicEfus.Ionic.transcribe(expr)[1])
 end
 
 """
@@ -42,9 +42,9 @@ generated expression returns a lazily evaluated [`Reactor`](@ref)
 See also [`@radical`](@ref)
 """
 macro reactor(expr, setter = nothing, usedeps = nothing)
-    getter, ionicdeps = IonicEfus.Ionic.translate(expr)
+    getter, ionicdeps = IonicEfus.Ionic.transcribe(expr)
     setter = if !isnothing(setter)
-        IonicEfus.Ionic.translate(setter)[1]
+        IonicEfus.Ionic.transcribe(setter)[1]
     end
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
