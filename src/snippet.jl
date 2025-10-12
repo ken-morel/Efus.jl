@@ -40,7 +40,7 @@ Call the snippet with specified arguments and kwargs.
 (sn::Snippet)(args...; kwargs...) = sn.fn(; [k => val for (k, val) in zip(sn.params, args)]..., kwargs...)
 
 macro Snippet(expr::Expr)
-    expr.head == :curly && error("Invalid snippet expression $expr")
+    expr.head != :braces && error("Invalid snippet expression $expr")
     types = []
     names = []
     for arg in expr.args

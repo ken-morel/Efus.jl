@@ -68,7 +68,7 @@ Returns the underlying eagerly evaluated [`Reactor`](@ref).
 See also [`@reactor`](@ref)
 """
 macro radical(expr, usedeps = nothing)
-    getter, ionicdeps = IonicEfus.Ionic.translate(expr)
+    getter, ionicdeps = IonicEfus.Ionic.transcribe(expr)
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
         :(

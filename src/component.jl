@@ -2,6 +2,8 @@ export Components
 export Component, mount!, unmount!, remount!
 export update!, render, getchildren, getparent
 export isdirty, dirty!
+export params
+export SubParams
 
 """
     abstract type Component end
@@ -27,6 +29,14 @@ abstract type Component end
 Just to help you receive component lists.
 """
 const Components = Vector{<:Component}
+
+"""
+    const SubParams = Dict{Symbol, Any}
+
+An alias for the type passed when a component
+call makes use of foo:bar subparams.
+"""
+const SubParams = Dict{Symbol, Any}
 
 
 """

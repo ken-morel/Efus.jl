@@ -42,11 +42,41 @@ and `denature!` functions.
 struct Catalyst
     reactions::Vector{AbstractReaction}
 
+    lock::Base.ReentrantLock
+
     """
     Construct a catalyst with no reactions.
     """
-    Catalyst() = new([])
+    Catalyst() = new([], Base.ReentrantLock())
 end
+
+"""
+    Base.push!(c::Catalyst, r::AbstractReaction)
+
+Add the reaction to the catalyst(thread safe)
+"""
+Base.push!(c::Catalyst, r::AbstractReaction) = @lock c.lock push!(c.reactions, r)
+
+"""
+    Base.pop!(c::Catalyst, r::AbstractReaction)
+
+Remove the reaction from the catalyst(thread safe)
+"""
+Base.pop!(c::Catalyst, r::AbstractReaction) = @lock c.lock filter!(!=(r), c.reactions)
+
+"""
+    Base.push!(a::AbstractReactive, r::AbstractReaction)
+
+Add the reaction to the reactive object(thread safe)
+"""
+Base.push!(a::AbstractReactive, r::AbstractReaction) = @lock a.lock push!(a.reactions, r)
+
+"""
+    Base.pop!(a::AbstractReactive, r::AbstractReaction)
+
+Remove the reaction from the reactive object(thread safe)
+"""
+Base.pop!(a::AbstractReactive, r::AbstractReaction) = @lock a.lock filter!(!=(r), a.reactions)
 
 
 const REACTOR_SETTER{T} = FunctionWrapper{Any, Tuple{T}}
@@ -72,6 +102,7 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     value::T
     fouled::Bool
     eager::Bool
+    lock::Base.ReentrantLock
 
     function Reactor{T}(
             getter::Function, setter::Union{Function, Nothing}, content::Vector{<:AbstractReactive};
@@ -82,7 +113,7 @@ mutable struct Reactor{T} <: AbstractReactive{T}
             REACTOR_SETTER{T}(setter)
         end
         initial = isnothing(initial) ? getter() : convert(T, initial)
-        r = new{T}(getter, setter, [], [], Catalyst(), initial, false, eager)
+        r = new{T}(getter, setter, [], [], Catalyst(), initial, false, eager, Base.ReentrantLock())
         callback = (_) -> begin
             r.fouled = true
             eager && getvalue(r)
@@ -109,7 +140,7 @@ mutable struct Reactor{T} <: AbstractReactive{T}
     end
 end
 
-isfouled(r::Reactor) = r.fouled
+isfouled(r::Reactor) = @lock r.lock r.fouled
 
 """
     function getvalue(r::Reactor{T})::T where {T}
@@ -119,19 +150,23 @@ value if one of it dependencies changed(
 isfouled(r) is true).
 """
 function getvalue(r::Reactor{T})::T where {T}
-    if r.fouled
-        r.value = r.getter()
-        r.fouled = false
+    return @lock r.lock begin
+        if r.fouled
+            r.value = r.getter()
+            r.fouled = false
+        end
+        r.value
     end
-    return r.value
 end
 function setvalue!(r::Reactor{T}, new_value; notify::Bool = true) where {T}
-    if isnothing(r.setter)
-        r.value = convert(T, new_value)
-    else
-        r.setter(convert(T, new_value))
+    @lock r.lock begin
+        if isnothing(r.setter)
+            r.value = convert(T, new_value)
+        else
+            r.setter(convert(T, new_value))
+        end
+        r.fouled = true
     end
-    r.fouled = true
     notify && for reaction in copy(r.reactions)
         reaction.callback(r)
     end
@@ -149,8 +184,10 @@ mutable struct Reactant{T} <: AbstractReactive{T}
     value::T
     reactions::Vector{AbstractReaction{T}}
 
-    Reactant{T}(value) where {T} = new{T}(convert(T, value), [])
-    Reactant(value::T) where {T} = new{T}(value, [])
+    lock::Base.ReentrantLock
+
+    Reactant{T}(value) where {T} = new{T}(convert(T, value), [], Base.ReentrantLock())
+    Reactant(value::T) where {T} = Reactant{T}(value)
 end
 
 """
@@ -172,7 +209,7 @@ end
 getvalue(r::Reactant{T}) where {T} = r.value::T
 
 function setvalue!(r::Reactant{T}, new_value; notify::Bool = true) where {T}
-    r.value = convert(T, new_value)
+    @lock r.lock r.value = convert(T, new_value)
     notify && for reaction in copy(r.reactions)
         reaction.callback(r)
     end
@@ -211,8 +248,8 @@ function catalyze!(c::Catalyst, r::AbstractReactive{T}, callback::Function)::Rea
 
     reaction = Reaction{T}(r, c, wrapped_callback)
 
-    push!(c.reactions, reaction)
-    push!(r.reactions, reaction)
+    push!(c, reaction)
+    push!(r, reaction)
     return reaction
 end
 
@@ -228,30 +265,35 @@ returns the number of inhibited reactions.
 function inhibit! end
 
 function inhibit!(catalyst::Catalyst, reactant::AbstractReactive, callback::Union{Function, Nothing} = nothing)
-    reactions_to_inhibit = if isnothing(callback)
-        filter(catalyst.reactions) do sub
-            sub.reactant == reactant
+    return @lock catalyst.lock begin
+        reactions_to_inhibit = if isnothing(callback)
+            filter(catalyst.reactions) do sub
+                sub.reactant == reactant
+            end
+        else
+            filter(catalyst.reactions) do sub
+                sub.reactant == reactant && sub.callback == callback
+            end
         end
-    else
-        filter(catalyst.reactions) do sub
-            sub.reactant == reactant && sub.callback == callback
-        end
-    end
 
-    for reaction in reactions_to_inhibit
-        inhibit!(reaction)
+        for reaction in reactions_to_inhibit
+            inhibit!(reaction)
+        end
+        length(reactions_to_inhibit)
     end
-    return length(reactions_to_inhibit)
 end
 
 """
     inhibit!(r::Reaction)
 
 Stops and removes a single, specific Reaction. This is the low-level implementation.
+It does so by calling [`pop!`](@ref) on the catalyst and reactants, which is again
+more lowlevel.
 """
 function inhibit!(r::Reaction)
-    filter!(!=(r), r.reactant.reactions)
-    filter!(!=(r), r.catalyst.reactions)
+    pop!(r.reactant, r)
+    pop!(r.catalyst, r)
+
     return
 end
 
