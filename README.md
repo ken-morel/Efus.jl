@@ -102,7 +102,7 @@ General registry docs hosting whatsoever that other modules seem to use.
 If you are looking for examples of usage of this I am also
 having [Gtak.jl](https://github.com/ken-morel/Gtak.jl), which
 provide `IonicEfus.jl` and [Atak.jl](https://github.com/ken-morel/Atak.jl)
-bindings for `Gtk4.jl`.
+bindings for [Gtk4.jl](https://github.com/JuliaGtk/Gtk4.jl).
 
 Well, thanks for reaching up to here, if you want to contribute,
 I recently discovered `git-flow`, and finally started to memorize

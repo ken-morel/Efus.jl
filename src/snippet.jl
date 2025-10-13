@@ -35,6 +35,8 @@ Snippet(fn::Function, ::Type{T}) where {T <: NamedTuple} = Snippet{T}(fn)
     (sn::Snippet)(args...; kwargs...)
 
 Call the snippet with specified arguments and kwargs.
+The positional arguments are transformed to keyword
+arguments before calling the function.
 """
 (sn::Snippet)(; args...) = sn.fn(; args...)
 (sn::Snippet)(args...; kwargs...) = sn.fn(; [k => val for (k, val) in zip(sn.params, args)]..., kwargs...)
