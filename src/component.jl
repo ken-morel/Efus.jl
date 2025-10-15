@@ -181,7 +181,7 @@ and splats any nested vectors, returning a flat vector of `Component`s.
 This function is used by generated code on the children of a componentcall, 
 when it is noticed they contain a codeblock or condition.
 """
-function cleanchildren(children::Vector)::Components
+function cleanchildren(children::Vector)::Vector{Component}
     children isa Components && return children
     final::Vector{Component} = Component[]
     for child in children
