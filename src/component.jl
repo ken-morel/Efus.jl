@@ -23,6 +23,7 @@ end
 """
 abstract type Component end
 
+
 """
     const Components = Vector{<:Component}
 
@@ -143,18 +144,18 @@ function getdirty(::C)::Set{Symbol} where {C <: Component}
 end
 
 """
-    params(::Type{C})::Set{Symbol} where {C <: Component}
-    params(::C)::Set{Symbol} where {C <: Component}
+    params(::Component)::Set{Symbol}
+    params(::Type{<:Component})::Set{Symbol}
 
 Get the parameters supported by components of
 type C.
 
-The default implementation throws an exception.
+The default implementation returns all names which
+are not preceeded by underscores.
 """
-function params(::Type{C})::Set{Symbol} where {C <: Component}
-    error("Params not implemented for $C")
-end
-params(::C) where {C <: Component} = params(C)
+@generated params(::Type{T}) where {T <: Component} = Set(filter(!startswith("_"), fieldnames(T) .|> string))
+params(::T) where {T <: Component} = params(T)
+
 
 """
     dirty!(c::Component, key::Symbol, value)
