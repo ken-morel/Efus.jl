@@ -167,9 +167,7 @@ function setvalue!(r::Reactor{T}, new_value; notify::Bool = true) where {T}
         end
         r.fouled = true
     end
-    notify && for reaction in (@lock r.lock copy(r.reactions))
-        reaction.callback(r)
-    end
+    notify(r)
     return
 end
 
@@ -186,7 +184,7 @@ mutable struct Reactant{T} <: AbstractReactive{T}
 
     lock::Base.ReentrantLock
 
-    Reactant{T}(value) where {T} = new{T}(convert(T, value), [], Base.ReentrantLock())
+    Reactant{T}(value) where {T} = new{T}(convert(T, value), AbstractReaction{T}[], Base.ReentrantLock())
     Reactant(value::T) where {T} = Reactant{T}(value)
 end
 
@@ -313,7 +311,7 @@ function denature!(c::Catalyst)
 end
 
 
-function notify(r::Reactor)
+function notify(r::AbstractReactive)
     for reaction in (@lock r.lock copy(r.reactions))
         reaction.callback(r)
     end
@@ -339,7 +337,7 @@ Creates a reactor which subscribes and get's it value
 from converting that of the other and set's it with another
 conversion.
 """
-converter(::Type{AbstractReactive{T}}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
+converter(::Type{T}, r::AbstractReactive{K}) where {T, K} = Reactor{T}(
     () -> convert(T, getvalue(r)),
     (v::T) -> setvalue!(r, convert(K, v)),
     [r],
@@ -349,13 +347,14 @@ public converter
 
 
 """
-    resolve(r::MayBeReactive{T}) where {T}
-    resolve(::Type{T}, r::MayBeReactive) where {T}
+    resolve(r::MayBeReactive) -> Any
+    resolve(::Type{T}, r::MayBeReactive) -> T
 
-Resolve returns r if it is of type T, else calls getvalue on it,
-use to get the actual value of a [MayBeReactive](@ref).
+It resolves the value
 """
 function resolve end
 
-resolve(r::MayBeReactive{T}) where {T} = resolve(T, r)
-resolve(::Type{T}, r::MayBeReactive) where {T} = r isa T ? r : getvalue(r)
+resolve(r) = r
+resolve(::Type{T}, r) where {T} = convert(T, r)
+resolve(r::AbstractReactive) = getvalue(r)
+resolve(::Type{T}, r::AbstractReactive) where {T} = convert(T, getvalue(r))

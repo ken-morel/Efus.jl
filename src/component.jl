@@ -1,9 +1,10 @@
 export Components
 export Component, mount!, unmount!, remount!
-export update!, render, getchildren, getparent
+export update!, getchildren, getparent
 export isdirty, dirty!
 export params
 export SubParams
+
 
 """
     abstract type Component end
@@ -23,12 +24,15 @@ end
 """
 abstract type Component end
 
+
 """
     const Components = Vector{<:Component}
 
 Just to help you receive component lists.
 """
 const Components = Vector{<:Component}
+Components() = Component[]
+Components(c::Vector) = cleanchildren(c)
 
 """
     const SubParams = Dict{Symbol, Any}
@@ -99,11 +103,7 @@ found.
 The default implementation checks for a `.children`
 atttribute of type [`Components`](@ref).
 """
-function getchildren(c::Component)::Union{Components, Nothing}
-    return if hasproperty(c, :children) && c.children isa Components
-        c.children
-    end
-end
+@generated getchildren(c)::Union{Components, Nothing} = hasfield(c, :children) ? :(c.children) : :nothing
 
 """
     getparent(c::Component)::Union{Component, Nothing}
@@ -143,18 +143,16 @@ function getdirty(::C)::Set{Symbol} where {C <: Component}
 end
 
 """
-    params(::Type{C})::Set{Symbol} where {C <: Component}
-    params(::C)::Set{Symbol} where {C <: Component}
+    params(::Union{T, Type{T}})::Vector{Symbol} where T <: Component
 
-Get the parameters supported by components of
+return the parameter names supported by components of
 type C.
 
-The default implementation throws an exception.
+The default implementation returns all names which
+are not preceeded by underscores.
 """
-function params(::Type{C})::Set{Symbol} where {C <: Component}
-    error("Params not implemented for $C")
-end
-params(::C) where {C <: Component} = params(C)
+@generated params(::Type{T}) where {T} = Vector{Tuple{Symbol, Type}}(filter(!startswith("_") ∘ string ∘ first, zip(fieldnames(T), fieldtypes(T)) |> collect))
+params(::T) where {T} = params(T)
 
 """
     dirty!(c::Component, key::Symbol, value)
@@ -169,6 +167,9 @@ calls dirty!(c, k)
 function dirty!(c::Component, key::Symbol, value)
     c.key = value
     return dirty!(c, key)
+end
+function dirty!(c::Component, key::Symbol)
+    return push!(c._dirty, key)
 end
 
 
@@ -200,3 +201,7 @@ function cleanchildren(children::Vector)::Vector{Component}
     end
     return final
 end
+
+Base.length(::Component) = 1
+Base.iterate(c::Component) = (c, nothing)
+Base.iterate(::Component, _) = nothing
