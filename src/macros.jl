@@ -74,16 +74,24 @@ Returns the underlying eagerly evaluated [`Reactor`](@ref).
 
 See also [`@reactor`](@ref)
 """
-macro radical(expr, usedeps = nothing)
+macro reactor(expr, setter = nothing, usedeps = nothing)
+    expr, type = if expr isa Expr && expr.head == :(::)
+        expr.args
+    else
+        expr, :Any
+    end
     getter, ionicdeps = IonicEfus.Ionic.transcribe(expr)
+    setter = if !isnothing(setter)
+        IonicEfus.Ionic.transcribe(setter)[1]
+    end
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
         :(
-            IonicEfus.Reactor(
+            IonicEfus.Reactor{$type}(
                 () -> $getter,
-                nothing,
+                $setter,
                 $deps;
-                eager = true
+                eager = true,
             )
         )
     )
