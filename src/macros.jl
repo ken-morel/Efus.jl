@@ -37,11 +37,18 @@ end
 
 Shorcut for creating a reactor, with optional setter.
 It accepts ionic expressions for both. The 
-generated expression returns a lazily evaluated [`Reactor`](@ref)
+generated expression returns a lazily evaluated [`Reactor`](@ref).
+If the getter expression is a typeassert the type 
+will be used to cast to the reactor.
 
 See also [`@radical`](@ref)
 """
 macro reactor(expr, setter = nothing, usedeps = nothing)
+    expr, type = if expr isa Expr && expr.head == :(::)
+        expr.args
+    else
+        expr, :Any
+    end
     getter, ionicdeps = IonicEfus.Ionic.transcribe(expr)
     setter = if !isnothing(setter)
         IonicEfus.Ionic.transcribe(setter)[1]
@@ -49,7 +56,7 @@ macro reactor(expr, setter = nothing, usedeps = nothing)
     deps = something(usedeps, Expr(:vect, ionicdeps...))
     return esc(
         :(
-            IonicEfus.Reactor(
+            IonicEfus.Reactor{$type}(
                 () -> $getter,
                 $setter,
                 $deps

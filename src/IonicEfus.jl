@@ -8,6 +8,7 @@ directly to native Julia code.
 module IonicEfus
 
 using FunctionWrappers: FunctionWrapper
+using StructUtils
 
 abstract type EfusError <: Exception end
 using Reexport
