@@ -6,21 +6,15 @@ using .IonicEfus.Gen
 
 using MacroTools
 
-const FILE = "test.efus"
 
 colors(; args...) = printstyled("HEllo world"; args...)
 
 prints = (; what) -> print(what)
 
-hello = "Hello "
-a = Reactant("world!")
-
-component = efus"""
-prints(what)
-  (println(what);)
-end
-
-prints what:foo=5
+expr = @macroexpand efus"""
+prints what:something=(a, b;c::Int=5) -> () -> 56
 """
 
-println(component)
+print(expr)
+
+print(eval(expr))

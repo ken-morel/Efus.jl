@@ -43,6 +43,7 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     IN
 
     TYPEASSERT
+    ARROW
 
     COMMENT
 

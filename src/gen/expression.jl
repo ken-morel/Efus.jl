@@ -41,3 +41,18 @@ generating the vect items and wrapping in a
 :vect. Like `Expr(:vect, generate.(expr.items)...)`
 """
 generate(expr::Ast.Vect) = Expr(:vect, generate.(expr.items)...)
+
+"""
+    generate(expr::Ast.Arrow)
+
+Generates a julia arrow function from
+[`Ast.Arrow`](@ref).
+"""
+function generate(expr::Ast.Arrow)
+    params = if expr.params isa Ast.Julia
+        generate(expr.params)
+    else
+        IonicEfus.transcribe(Expr(:(::), expr.params.expr, expr.params.type))
+    end
+    return Expr(:->, params, generate(expr.body))
+end

@@ -141,10 +141,16 @@ function take_one!(tz::Tokenizer)::Token
         end
     elseif isnumericstart(ch)
         startchar = peek(tz.stream)
-        startpos = loc(tz.stream)
-        next!(tz.stream)
-        content, contentpos = take_while!(tz.stream, isnumericontent)
-        token(NUMERIC, startchar * content, startpos * contentpos)
+        startpos = location(tz.stream)
+        nx = next!(tz.stream)
+        if nx == '>' # it's a -> for arrow
+            tk = token(ARROW, "->", startpos * loc(tz.stream))
+            next!(tz.stream)
+            tk
+        else
+            content, contentpos = take_while!(tz.stream, isnumericontent)
+            token(NUMERIC, startchar * content, startpos * contentpos)
+        end
     elseif ch ∈ (keys(CHARTOKENS))
         ch = peek(tz.stream)
         tk = CHARTOKENS[ch]
