@@ -176,7 +176,7 @@ The default dirty!(c, k, v) sets c.(k) then
 calls dirty!(c, k)
 """
 function dirty!(c::Component, key::Symbol, value)
-    c.key = value
+    setproperty!(c, key, value)
     return dirty!(c, key)
 end
 function dirty!(c::Component, key::Symbol)

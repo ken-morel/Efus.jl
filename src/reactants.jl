@@ -167,7 +167,7 @@ function setvalue!(r::Reactor{T}, new_value; notify::Bool = true) where {T}
         end
         r.fouled = true
     end
-    notify(r)
+    notify && Base.notify(r)
     return
 end
 
@@ -208,9 +208,7 @@ getvalue(r::Reactant{T}) where {T} = r.value::T
 
 function setvalue!(r::Reactant{T}, new_value; notify::Bool = true) where {T}
     @lock r.lock r.value = convert(T, new_value)
-    notify && for reaction in (@lock r.lock copy(r.reactions))
-        reaction.callback(r)
-    end
+    notify && Base.notify(r)
     return r
 end
 
@@ -311,10 +309,11 @@ function denature!(c::Catalyst)
 end
 
 
-function notify(r::AbstractReactive)
+function Base.notify(r::AbstractReactive)
     for reaction in (@lock r.lock copy(r.reactions))
         reaction.callback(r)
     end
+
     #PERF: Trace time and log if too long
     # But spawning a timer takes some time
     return
