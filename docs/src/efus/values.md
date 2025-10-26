@@ -12,7 +12,7 @@ can place after the `=` in a component call.
 - [`IonicEfus.Ast.Julia`]
 
 These are expressions which are directly parsed
-and substituted from julia, they are also 
+and substituted from julia, they are also
 passed through [`IonicEfus.Ionic.transcribe`]
 so you can use ionic in them, they thus provide
 most of julia syntax features, they include.
@@ -23,14 +23,14 @@ You can type strings like `"ama"` and even
 substitute variables like `"ama $foo"`(ionic supported).
 
 !!! !WARNING
-    Placing strings in expressions in strings substitutions
-    are not supported, thus you may not use
-    something like `"foo $(val' * "s")"`, since efus
-    will break parsing at the '"' quote.
+Placing strings in expressions in strings substitutions
+are not supported, thus you may not use
+something like `"foo $(val' * "s")"`, since efus
+will break parsing at the '"' quote.
 
 ### Numeric
 
-Efus allow typing numeric values, these include simple 
+Efus allow typing numeric values, these include simple
 numbers like `13` to complex values like `13e5px`, where
 px which is a multiplication, other examples include.
 
@@ -45,7 +45,6 @@ They are like julia symbols.
 
 - `:foo` -> a symbol
 
-
 ### Julia expressions
 
 This are plain julia expressions, contained in (),
@@ -53,12 +52,12 @@ and expressions following `if`, `for ... in`, `elseif`
 before the newline and type assertions, efus takes
 note of the count of brackets(ignoring those in strings)
 to permit you to use multiline expressions. When
-you use brackets, the whole expressions, including 
+you use brackets, the whole expressions, including
 the brackets are passed to julia, so you can type tuples
 without double quoting:
 
 - `(c = 4; c * 5)` -> a block
-- `(1, 2)` ->  a tuple
+- `(1, 2)` -> a tuple
 - `(...)` -> almost any valid julia.
 
 Single identifiers(and true, false, nothing, ...)
@@ -80,7 +79,7 @@ Reactor syntax permit you to define computed
 reactive values. They are defined as julia expressions
 with braces, and a type assertion which specifies the
 type contained by the reactor but the value returned
-by the expression will always be casted to the reactor 
+by the expression will always be casted to the reactor
 type.
 
 - `(a' / b')::Float32`
@@ -96,4 +95,17 @@ use newlines, ...
 
 - `[1, [1, 2], :ama]`
 
+## Arrows functions
 
+- [`IonicEfus.Ast.Arrow`](@ref)
+- [`IonicEfus.Ast.generate(::IonicEfus.Ast.Arrow)`](@ref)
+
+An arrow is simply an arrow function, it transforms
+into a plain julia arrow function, the left hand side
+is pretty much like a normal julia arrow function's except
+that the body of the function is another efus expression, and
+not julia's.
+
+- `(a) -> (print(a'))::Nothing` # returns a reactor
+- `(a::String) -> (;c)::String -> "Hello $a from $c"` # returns a closure
+- `() -> [() -> val']`
