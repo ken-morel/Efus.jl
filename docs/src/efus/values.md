@@ -107,5 +107,5 @@ that the body of the function is another efus expression, and
 not julia's.
 
 - `(a) -> (print(a'))::Nothing` # returns a reactor
-- `(a::String) -> (;c)::String -> "Hello $a from $c"` # returns a closure
-- `() -> [() -> val']`
+- `(a::String)->(;c)::String -> "Hello $a from $c"` # returns a closure
+- `() -> [() -> val']` # returns a vector
