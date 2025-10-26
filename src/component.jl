@@ -45,17 +45,28 @@ const SubParams = Dict{Symbol, Any}
 
 """
     mount!(c::Component, [parent::Component];args...)
+    mount!(fn::Function, comp::Component, args...; kwargs...)
+  
 
 Mount `c` in it's `parent`, create
 the subscriptions, backend data and more.
 You may return the associated backend data.
 
 The default mount! throws an exception.
+Mount may also take a function first argument, which it 
+will call after mounting the component with the mount 
+result, and then unmount the component.
 """
 mount!(
     ::C, p::Union{Component, Nothing} = nothing;
     args...
 ) where {C <: Component} = error("Mounting not supported by $C")
+
+function mount!(fn::Function, comp::Component, args...; kwargs...)
+    result = mount!(comp, args...; kwargs...)
+    fn(result)
+    return unmount!(comp)
+end
 
 """
     unmount!(::C) where {C <: Component}

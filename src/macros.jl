@@ -66,15 +66,16 @@ macro reactor(expr, setter = nothing, usedeps = nothing)
 end
 
 """
-    macro radical(expr, usedeps = nothing)
+    macro radical(expr,  usedeps = nothing, setter = nothing)
 
 Creates an expression which re-evaluates directly when 
 it's dependencies change, agnostic to svelte's \$: {}.
 Returns the underlying eagerly evaluated [`Reactor`](@ref).
+The setter and usedeps can be put in any direction.
 
 See also [`@reactor`](@ref)
 """
-macro reactor(expr, setter = nothing, usedeps = nothing)
+macro radical(expr, usedeps = nothing, setter = nothing)
     expr, type = if expr isa Expr && expr.head == :(::)
         expr.args
     else
