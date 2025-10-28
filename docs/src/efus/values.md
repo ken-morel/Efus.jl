@@ -23,10 +23,10 @@ You can type strings like `"ama"` and even
 substitute variables like `"ama $foo"`(ionic supported).
 
 !!! !WARNING
-Placing strings in expressions in strings substitutions
-are not supported, thus you may not use
-something like `"foo $(val' * "s")"`, since efus
-will break parsing at the '"' quote.
+    Placing strings in expressions in strings substitutions
+    are not supported, thus you may not use
+    something like `"foo $(val' * \"s\")"`, since efus
+    will break parsing at the '"' quote.
 
 ### Numeric
 
