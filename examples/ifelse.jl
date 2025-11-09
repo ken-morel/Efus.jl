@@ -1,5 +1,3 @@
-using IonicEfus
-
 include("./htmlcomponents.jl")
 
 showcode = true

@@ -52,7 +52,7 @@ function generate(expr::Ast.Arrow)
     params = if expr.params isa Ast.Julia
         generate(expr.params)
     else
-        IonicEfus.transcribe(Expr(:(::), expr.params.expr, expr.params.type))
+        IonicEfus.transcribe(Expr(:(::), expr.params.expr, expr.params.type))[1]
     end
     return Expr(:->, params, generate(expr.body))
 end

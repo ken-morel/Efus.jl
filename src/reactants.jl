@@ -2,6 +2,7 @@ export Reactant, Catalyst, Reaction, AbstractReaction
 export getvalue, setvalue!, catalyze!, inhibit!, denature!
 export resolve, MayBeReactive
 export AbstractReactive, Reactor
+export update!, alter!
 
 
 """
@@ -357,3 +358,30 @@ resolve(r) = r
 resolve(::Type{T}, r) where {T} = convert(T, r)
 resolve(r::AbstractReactive) = getvalue(r)
 resolve(::Type{T}, r::AbstractReactive) where {T} = convert(T, getvalue(r))
+
+"""
+    update!(fn::Function, r::AbstractReactive)
+
+A helper to update the reactive's value, 
+the function receives the reactive's value 
+and returns a new one.
+"""
+function update!(fn::Function, r::AbstractReactive)
+    return @lock r.lock setvalue(r, fn(getvalue(r)))
+end
+
+"""
+    alter!(fn!::Function, r::AbstractReactive)
+
+A helper to modify the value of a reactant, the passed
+function receives the reactant value and can modify it,
+the return of alter! is that of the passed function.
+"""
+function alter!(fn!::Function, r::AbstractReactive)
+    return @lock r.lock begin
+        value = getvalue(r)
+        ret = fn!(value)
+        setvalue!(r, value)
+        ret
+    end
+end

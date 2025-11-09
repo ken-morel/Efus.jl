@@ -143,7 +143,7 @@ function take_one!(tz::Tokenizer)::Token
         startchar = peek(tz.stream)
         startpos = location(tz.stream)
         nx = next!(tz.stream)
-        if nx == '>' # it's a -> for arrow
+        if startchar == '-' && nx == '>' # it's a -> for arrow
             tk = token(ARROW, "->", startpos * loc(tz.stream))
             next!(tz.stream)
             tk
