@@ -24,11 +24,31 @@
       "required": false,
       "types": [
         {
+          "type": "component_call",
+          "named": true
+        },
+        {
+          "type": "for_statement",
+          "named": true
+        },
+        {
           "type": "grouped_property_assignment",
           "named": true
         },
         {
+          "type": "if_statement",
+          "named": true
+        },
+        {
+          "type": "julia_block",
+          "named": true
+        },
+        {
           "type": "property_assignment",
+          "named": true
+        },
+        {
+          "type": "snippet_definition",
           "named": true
         },
         {
@@ -198,7 +218,7 @@
             "named": true
           },
           {
-            "type": "julia_expression",
+            "type": "julia_expression_in_value",
             "named": true
           },
           {
@@ -308,7 +328,7 @@
             "named": true
           },
           {
-            "type": "julia_expression",
+            "type": "julia_expression_in_value",
             "named": true
           },
           {
@@ -374,7 +394,7 @@
             "named": true
           },
           {
-            "type": "julia_expression",
+            "type": "julia_expression_in_value",
             "named": true
           },
           {
@@ -545,6 +565,10 @@
   },
   {
     "type": "julia_expression",
+    "named": true
+  },
+  {
+    "type": "julia_expression_in_value",
     "named": true
   },
   {

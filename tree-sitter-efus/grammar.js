@@ -116,15 +116,13 @@ module.exports = grammar({
       $.julia_block,
     ),
 
-    string_literal: $ => /"[^"]*"/, 
+    string_literal: $ => /"[^\"]*"/, 
     number_literal: $ => /\d+(\.\d*)?/, 
     boolean_literal: $ => choice('true', 'false'),
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
-    julia_expression: $ => /[^
-]+/, 
-    julia_expression_in_value: $ => /[^
-	 ,)]+/, 
+    julia_expression: $ => /[^\n]+/, 
+    julia_expression_in_value: $ => /[^\n\t ,)]+/, 
 
     _block: $ => seq(
       $._indent,

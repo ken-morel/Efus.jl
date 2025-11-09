@@ -91,6 +91,18 @@
               }
             ]
           }
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_block"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
@@ -492,7 +504,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "julia_expression"
+          "name": "julia_expression_in_value"
         },
         {
           "type": "SYMBOL",
@@ -506,7 +518,7 @@
     },
     "string_literal": {
       "type": "PATTERN",
-      "value": "\"[^\"]*\""
+      "value": "\"[^\\\"]*\""
     },
     "number_literal": {
       "type": "PATTERN",
@@ -531,15 +543,15 @@
     },
     "julia_expression": {
       "type": "PATTERN",
-      "value": ".+"
+      "value": "[^\\n]+"
+    },
+    "julia_expression_in_value": {
+      "type": "PATTERN",
+      "value": "[^\\n\\t ,)]+"
     },
     "_block": {
       "type": "SEQ",
       "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_newline"
-        },
         {
           "type": "SYMBOL",
           "name": "_indent"
