@@ -6,34 +6,13 @@
     "source_file": {
       "type": "REPEAT",
       "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_statement"
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          },
-          {
-            "type": "SYMBOL",
-            "name": "_newline"
-          }
-        ]
+        "type": "SYMBOL",
+        "name": "_statement"
       }
     },
     "_statement": {
       "type": "CHOICE",
       "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_identifier_statement"
-        },
         {
           "type": "SYMBOL",
           "name": "if_statement"
@@ -44,20 +23,45 @@
         },
         {
           "type": "SYMBOL",
-          "name": "julia_block"
+          "name": "snippet_definition"
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_expression"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_newline"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "blank_line"
         }
       ]
     },
-    "_identifier_statement": {
+    "blank_line": {
+      "type": "SYMBOL",
+      "name": "_newline"
+    },
+    "_expression": {
       "type": "CHOICE",
       "members": [
         {
           "type": "SYMBOL",
-          "name": "snippet_definition"
+          "name": "component_call"
         },
         {
           "type": "SYMBOL",
-          "name": "component_call"
+          "name": "julia_block"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "vector"
         }
       ]
     },
@@ -91,18 +95,6 @@
               }
             ]
           }
-        },
-        {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "_block"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
         }
       ]
     },
@@ -193,12 +185,19 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "julia_expression"
+            "name": "_multiline_expression"
           }
         },
         {
           "type": "SYMBOL",
-          "name": "_block"
+          "name": "_newline"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_statement"
+          }
         },
         {
           "type": "REPEAT",
@@ -222,6 +221,10 @@
         {
           "type": "STRING",
           "value": "end"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_newline"
         }
       ]
     },
@@ -237,12 +240,19 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "julia_expression"
+            "name": "_multiline_expression"
           }
         },
         {
           "type": "SYMBOL",
-          "name": "_block"
+          "name": "_newline"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_statement"
+          }
         }
       ]
     },
@@ -255,7 +265,14 @@
         },
         {
           "type": "SYMBOL",
-          "name": "_block"
+          "name": "_newline"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_statement"
+          }
         }
       ]
     },
@@ -271,12 +288,19 @@
           "name": "iterator",
           "content": {
             "type": "SYMBOL",
-            "name": "julia_expression"
+            "name": "_multiline_expression"
           }
         },
         {
           "type": "SYMBOL",
-          "name": "_block"
+          "name": "_newline"
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_statement"
+          }
         },
         {
           "type": "CHOICE",
@@ -293,6 +317,10 @@
         {
           "type": "STRING",
           "value": "end"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_newline"
         }
       ]
     },
@@ -304,53 +332,53 @@
           "value": "("
         },
         {
-          "type": "FIELD",
-          "name": "code",
+          "type": "REPEAT",
           "content": {
-            "type": "REPEAT",
-            "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "PATTERN",
-                  "value": "[^()]+"
-                },
-                {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "STRING",
-                      "value": "("
-                    },
-                    {
-                      "type": "REPEAT",
-                      "content": {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "PATTERN",
-                            "value": "[^()]+"
-                          },
-                          {
-                            "type": "SYMBOL",
-                            "name": "julia_block"
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "type": "STRING",
-                      "value": ")"
-                    }
-                  ]
-                }
-              ]
-            }
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "PATTERN",
+                "value": "[^()]+"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "julia_block"
+              }
+            ]
           }
         },
         {
           "type": "STRING",
           "value": ")"
+        }
+      ]
+    },
+    "vector": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "["
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "PATTERN",
+                "value": "[^\\[\\]]+"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "vector"
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "]"
         }
       ]
     },
@@ -390,11 +418,22 @@
           },
           {
             "type": "SYMBOL",
-            "name": "_block"
+            "name": "_newline"
+          },
+          {
+            "type": "REPEAT",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_statement"
+            }
           },
           {
             "type": "STRING",
             "value": "end"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_newline"
           }
         ]
       }
@@ -504,17 +543,37 @@
         },
         {
           "type": "SYMBOL",
-          "name": "julia_expression_in_value"
-        },
-        {
-          "type": "SYMBOL",
           "name": "identifier"
         },
         {
           "type": "SYMBOL",
           "name": "julia_block"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "vector"
         }
       ]
+    },
+    "_multiline_expression": {
+      "type": "REPEAT1",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "julia_block"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "vector"
+          },
+          {
+            "type": "PATTERN",
+            "value": "[^\\n]"
+          }
+        ]
+      }
     },
     "string_literal": {
       "type": "PATTERN",
@@ -541,43 +600,6 @@
       "type": "PATTERN",
       "value": "[a-zA-Z_][a-zA-Z0-9_]*"
     },
-    "julia_expression": {
-      "type": "PATTERN",
-      "value": "[^\\n]+"
-    },
-    "julia_expression_in_value": {
-      "type": "PATTERN",
-      "value": "[^\\n\\t ,)]+"
-    },
-    "_block": {
-      "type": "SEQ",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "_indent"
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_statement"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "_newline"
-              }
-            ]
-          }
-        },
-        {
-          "type": "SYMBOL",
-          "name": "_dedent"
-        }
-      ]
-    },
     "comment": {
       "type": "TOKEN",
       "content": {
@@ -589,10 +611,14 @@
           },
           {
             "type": "PATTERN",
-            "value": ".*"
+            "value": "[^\\n]*"
           }
         ]
       }
+    },
+    "_newline": {
+      "type": "STRING",
+      "value": "\n"
     }
   },
   "extras": [
@@ -612,20 +638,7 @@
     ]
   ],
   "precedences": [],
-  "externals": [
-    {
-      "type": "SYMBOL",
-      "name": "_indent"
-    },
-    {
-      "type": "SYMBOL",
-      "name": "_dedent"
-    },
-    {
-      "type": "SYMBOL",
-      "name": "_newline"
-    }
-  ],
+  "externals": [],
   "inline": [],
   "supertypes": [],
   "reserved": {}

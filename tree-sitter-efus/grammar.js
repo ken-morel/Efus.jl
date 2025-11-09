@@ -12,22 +12,27 @@ module.exports = grammar({
 
   extras: $ => [
     $.comment,
-    /[ \t\r]/, // Allow whitespace, but not newlines
+    /[ \t\r]/, // Allow whitespace, but NOT newlines
   ],
 
   rules: {
-    source_file: $ => repeat(seq(optional($._statement), $._newline)),
+    source_file: $ => repeat($._statement),
 
     _statement: $ => choice(
-      $._identifier_statement,
       $.if_statement,
       $.for_statement,
-      $.julia_block
+      $.snippet_definition,
+      seq($._expression, $._newline),
+      $.blank_line
     ),
 
-    _identifier_statement: $ => choice(
-      $.snippet_definition,
-      $.component_call
+    blank_line: $ => $._newline,
+
+    // An expression is anything that can be on a line by itself
+    _expression: $ => choice(
+      $.component_call,
+      $.julia_block,
+      $.vector
     ),
 
     component_call: $ => seq(
@@ -35,15 +40,14 @@ module.exports = grammar({
       repeat(choice(
         $.property_assignment,
         $.grouped_property_assignment,
-        $.splat_operator,
-      )),
-      optional($._block),
+        $.splat_operator
+      ))
     ),
 
     property_assignment: $ => seq(
       field('key', $.identifier),
       '=',
-      field('value', $._value),
+      field('value', $._value)
     ),
 
     grouped_property_assignment: $ => seq(
@@ -51,43 +55,63 @@ module.exports = grammar({
       ':',
       field('key', $.identifier),
       '=',
-      field('value', $._value),
+      field('value', $._value)
     ),
 
     splat_operator: $ => seq($.identifier, '...'),
 
     if_statement: $ => seq(
       'if',
-      field('condition', $.julia_expression),
-      $._block,
+      field('condition', $._multiline_expression),
+      $._newline,
+      repeat($._statement),
       repeat($.else_if_clause),
       optional($.else_clause),
       'end',
+      $._newline
     ),
 
     else_if_clause: $ => seq(
       'elseif',
-      field('condition', $.julia_expression),
-      $._block,
+      field('condition', $._multiline_expression),
+      $._newline,
+      repeat($._statement)
     ),
 
     else_clause: $ => seq(
       'else',
-      $._block,
+      $._newline,
+      repeat($._statement)
     ),
 
     for_statement: $ => seq(
       'for',
-      field('iterator', $.julia_expression),
-      $._block,
+      field('iterator', $._multiline_expression),
+      $._newline,
+      repeat($._statement),
       optional($.else_clause),
       'end',
+      $._newline
     ),
 
+    // A block of Julia code in parentheses
     julia_block: $ => seq(
       '(' ,
-      field('code', repeat(choice(/[^()]+/, seq('(', repeat(choice(/[^()]+/, $.julia_block)), ')')))),
-      ')',
+      repeat(choice(
+        /[^()]+/, 
+        $.julia_block
+      )),
+      ')'
+    ),
+
+    // A vector in square brackets
+    vector: $ => seq(
+      '[' ,
+      repeat(choice(
+        /[^\[\]]+/, 
+        $.vector
+      )),
+      ']'
     ),
 
     snippet_definition: $ => prec(1, seq(
@@ -95,8 +119,10 @@ module.exports = grammar({
       '(' ,
       optional($._parameters),
       ')',
-      $._block,
+      $._newline,
+      repeat($._statement),
       'end',
+      $._newline
     )),
 
     _parameters: $ => separated_list1(',', $.parameter),
@@ -104,40 +130,35 @@ module.exports = grammar({
     parameter: $ => seq(
       field('name', $.identifier),
       optional(seq('::', field('type', $.identifier))),
-      optional(seq('=', field('default', $._value))),
+      optional(seq('=', field('default', $._value)))
     ),
 
+    // Values that can be assigned to properties
     _value: $ => choice(
       $.string_literal,
       $.number_literal,
       $.boolean_literal,
-      $.julia_expression_in_value,
       $.identifier,
       $.julia_block,
+      $.vector
     ),
+
+    // An expression that can span multiple lines if inside brackets
+    _multiline_expression: $ => repeat1(choice(
+      $.julia_block,
+      $.vector,
+      /[^\n]/ // Any character except a newline
+    )),
 
     string_literal: $ => /"[^\"]*"/, 
     number_literal: $ => /\d+(\.\d*)?/, 
     boolean_literal: $ => choice('true', 'false'),
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
-    julia_expression: $ => /[^\n]+/, 
-    julia_expression_in_value: $ => /[^\n\t ,)]+/, 
+    comment: $ => token(seq('#', /[^\n]*/)),
 
-    _block: $ => seq(
-      $._indent,
-      repeat(seq($._statement, $._newline)),
-      $._dedent,
-    ),
-
-    comment: $ => token(seq('#', /.*/)),
+    _newline: $ => '\n',
   },
-
-  externals: $ => [
-    $._indent,
-    $._dedent,
-    $._newline,
-  ],
 
   conflicts: $ => [
     [$.property_assignment, $.grouped_property_assignment],

@@ -1,5 +1,10 @@
 [
   {
+    "type": "blank_line",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "boolean_literal",
     "named": true,
     "fields": {}
@@ -24,31 +29,11 @@
       "required": false,
       "types": [
         {
-          "type": "component_call",
-          "named": true
-        },
-        {
-          "type": "for_statement",
-          "named": true
-        },
-        {
           "type": "grouped_property_assignment",
           "named": true
         },
         {
-          "type": "if_statement",
-          "named": true
-        },
-        {
-          "type": "julia_block",
-          "named": true
-        },
-        {
           "type": "property_assignment",
-          "named": true
-        },
-        {
-          "type": "snippet_definition",
           "named": true
         },
         {
@@ -67,6 +52,10 @@
       "required": false,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "component_call",
           "named": true
         },
@@ -84,6 +73,10 @@
         },
         {
           "type": "snippet_definition",
+          "named": true
+        },
+        {
+          "type": "vector",
           "named": true
         }
       ]
@@ -94,11 +87,15 @@
     "named": true,
     "fields": {
       "condition": {
-        "multiple": false,
-        "required": true,
+        "multiple": true,
+        "required": false,
         "types": [
           {
-            "type": "julia_expression",
+            "type": "julia_block",
+            "named": true
+          },
+          {
+            "type": "vector",
             "named": true
           }
         ]
@@ -108,6 +105,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
         {
           "type": "component_call",
           "named": true
@@ -127,6 +128,10 @@
         {
           "type": "snippet_definition",
           "named": true
+        },
+        {
+          "type": "vector",
+          "named": true
         }
       ]
     }
@@ -136,11 +141,15 @@
     "named": true,
     "fields": {
       "iterator": {
-        "multiple": false,
-        "required": true,
+        "multiple": true,
+        "required": false,
         "types": [
           {
-            "type": "julia_expression",
+            "type": "julia_block",
+            "named": true
+          },
+          {
+            "type": "vector",
             "named": true
           }
         ]
@@ -150,6 +159,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
         {
           "type": "component_call",
           "named": true
@@ -172,6 +185,10 @@
         },
         {
           "type": "snippet_definition",
+          "named": true
+        },
+        {
+          "type": "vector",
           "named": true
         }
       ]
@@ -218,15 +235,15 @@
             "named": true
           },
           {
-            "type": "julia_expression_in_value",
-            "named": true
-          },
-          {
             "type": "number_literal",
             "named": true
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "vector",
             "named": true
           }
         ]
@@ -238,11 +255,15 @@
     "named": true,
     "fields": {
       "condition": {
-        "multiple": false,
-        "required": true,
+        "multiple": true,
+        "required": false,
         "types": [
           {
-            "type": "julia_expression",
+            "type": "julia_block",
+            "named": true
+          },
+          {
+            "type": "vector",
             "named": true
           }
         ]
@@ -252,6 +273,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
         {
           "type": "component_call",
           "named": true
@@ -279,6 +304,10 @@
         {
           "type": "snippet_definition",
           "named": true
+        },
+        {
+          "type": "vector",
+          "named": true
         }
       ]
     }
@@ -286,25 +315,16 @@
   {
     "type": "julia_block",
     "named": true,
-    "fields": {
-      "code": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "(",
-            "named": false
-          },
-          {
-            "type": ")",
-            "named": false
-          },
-          {
-            "type": "julia_block",
-            "named": true
-          }
-        ]
-      }
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "julia_block",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -328,15 +348,15 @@
             "named": true
           },
           {
-            "type": "julia_expression_in_value",
-            "named": true
-          },
-          {
             "type": "number_literal",
             "named": true
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "vector",
             "named": true
           }
         ]
@@ -394,15 +414,15 @@
             "named": true
           },
           {
-            "type": "julia_expression_in_value",
-            "named": true
-          },
-          {
             "type": "number_literal",
             "named": true
           },
           {
             "type": "string_literal",
+            "named": true
+          },
+          {
+            "type": "vector",
             "named": true
           }
         ]
@@ -429,6 +449,10 @@
       "required": false,
       "types": [
         {
+          "type": "blank_line",
+          "named": true
+        },
+        {
           "type": "component_call",
           "named": true
         },
@@ -451,6 +475,10 @@
         {
           "type": "snippet_definition",
           "named": true
+        },
+        {
+          "type": "vector",
+          "named": true
         }
       ]
     }
@@ -464,6 +492,10 @@
       "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "blank_line",
+          "named": true
+        },
         {
           "type": "component_call",
           "named": true
@@ -483,6 +515,10 @@
         {
           "type": "snippet_definition",
           "named": true
+        },
+        {
+          "type": "vector",
+          "named": true
         }
       ]
     }
@@ -501,6 +537,25 @@
         }
       ]
     }
+  },
+  {
+    "type": "vector",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "vector",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "\n",
+    "named": false
   },
   {
     "type": "(",
@@ -528,6 +583,14 @@
   },
   {
     "type": "=",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
     "named": false
   },
   {
@@ -562,14 +625,6 @@
   {
     "type": "if",
     "named": false
-  },
-  {
-    "type": "julia_expression",
-    "named": true
-  },
-  {
-    "type": "julia_expression_in_value",
-    "named": true
   },
   {
     "type": "number_literal",
