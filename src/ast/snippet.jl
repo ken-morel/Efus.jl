@@ -1,8 +1,8 @@
 "Holds the name, type and default value for a snippet parameter"
 struct SnippetParameter
     name::Symbol
-    type::Union{Some, Nothing}
-    default::Union{Some, Nothing}
+    type::Union{Some,Nothing}
+    default::Union{Some,Nothing}
 end
 public SnippetParameter
 
@@ -30,19 +30,21 @@ Snippet{
 )
 ```
 """
-Base.@kwdef struct Snippet <: Statement
+Base.@kwdef mutable struct Snippet <: Statement
     parent::Statement
     name::Symbol
     params::Vector{SnippetParameter}
     block::Block = Block()
+    tokens::@NamedTuple{name::Tokens.Token, params::Tokens.Token}
+    endtoken::Union{Tokens.Token,Nothing} = nothing
 end
 
 public Snippet
 
-affiliate!(::T, ::Snippet) where {T <: Statement} = error(
-    "Error, container of type $T does not support snippets",
-)
-takesnippetparameters(name::Symbol) = SnippetParameter[SnippetParameter(name, nothing, nothing)]
+affiliate!(::T, ::Snippet) where {T<:Statement} =
+    error("Error, container of type $T does not support snippets")
+takesnippetparameters(name::Symbol) =
+    SnippetParameter[SnippetParameter(name, nothing, nothing)]
 
 """
     takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
@@ -58,9 +60,7 @@ function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
     if expr.head in (:(=), :(::))
         expr = Expr(:tuple, expr)
     end
-    expr.head !== :tuple && error(
-        "Expected a tuple of arguments as expr"
-    )
+    expr.head !== :tuple && error("Expected a tuple of arguments as expr")
     for arg in expr.args
         if arg isa Symbol
             # e.g., `item`
@@ -88,9 +88,7 @@ function takesnippetparameters(expr::Expr)::Vector{SnippetParameter}
                 end
             end
         end
-        error(
-            "Invalid snippet parameters, wrong left hand side to equal, in: $(arg)"
-        )
+        error("Invalid snippet parameters, wrong left hand side to equal, in: $(arg)")
     end
     return params
 end

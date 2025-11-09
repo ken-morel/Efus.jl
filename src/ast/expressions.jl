@@ -29,8 +29,9 @@ But many other literals evaluate to expressions:
     as variables names, and not the usual julia
     !, pi, .. stuff.
 """
-struct Julia <: Expression
-    expr
+Base.@kwdef struct Julia <: Expression
+    expr::Any
+    token::Union{Tokens.Token,Nothing} = nothing
 end
 public Julia
 
@@ -59,9 +60,10 @@ instead interpreed as a normal [`Ast.Julia`](@ref) expression.
 (foo' * reactants[bar']')::String
 ```
 """
-struct Reactor <: Expression
-    expr
-    type
+Base.@kwdef struct Reactor <: Expression
+    expr::Any
+    type::Any
+    tokens::Union{@NamedTuple{expr::Tokens.Token,type::Tokens.Token},Nothing} = nothing
 end
 public Reactor
 
@@ -71,10 +73,12 @@ public Reactor
 It is a list of efus expressions, with vector syntax.
 It effectively generates a julia vector.
 """
-struct Vect <: Expression
+Base.@kwdef struct Vect <: Expression
     items::Vector{Expression}
+    tokens::Union{@NamedTuple{start::Tokens.Token,stop::Tokens.Token},Nothing} = nothing
 end
 public Vect
+
 """
     struct Arrow <: Expression
 
@@ -88,8 +92,9 @@ You can have kwargs of course.
 If you use a Reactor, the reactor type
 expr is used as return type for the function.
 """
-struct Arrow <: Expression
-    params::Union{Reactor, Julia}
+Base.@kwdef struct Arrow <: Expression
+    params::Union{Reactor,Julia}
     body::Expression
+    token::Union{Tokens.Token,Nothing} = nothing
 end
 public ArrowFn

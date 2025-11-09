@@ -6,7 +6,10 @@ the EOF reached, and returns missing if end was caught
 and `expect_end` was set to true(else it thows a
 [`ParseError`](@ref)).
 """
-function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement, Nothing, Missing}
+function take_one!(
+    p::EfusParser;
+    expect_end::Bool = false,
+)::Union{Ast.Statement,Nothing,Missing}
     ts = p.stream
 
 
@@ -20,7 +23,12 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             continue
         elseif tk.type === Tokens.INDENT
             if isnothing(p.last_statement)
-                throw(ParseError("Unexpected indent, no preceding parent or sibling component", tk.location))
+                throw(
+                    ParseError(
+                        "Unexpected indent, no preceding parent or sibling component",
+                        tk.location,
+                    ),
+                )
             end
             push!(p.stack, p.last_statement)
             p.last_statement = nothing
@@ -46,29 +54,51 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
 
         parent = isempty(p.stack) ? p.root : p.stack[end]
 
+        nametoken = tk
         statement = if tk.type === Tokens.IDENTIFIER
             nx = next!(ts)
             if nx.type === Tokens.JULIAEXPR
                 name = Symbol(tk.token)
+                paramstoken = nx
                 params = try
                     Ast.takesnippetparameters(Meta.parse("$(nx.token) -> nothing").args[1])
                 catch e
                     errmsg = e isa Meta.ParseError ? e.msg : string(e)
-                    throw(ParseError("Error parsing arguments for snippet $name: $errmsg", nx.location))
+                    throw(
+                        ParseError(
+                            "Error parsing arguments for snippet $name: $errmsg",
+                            nx.location,
+                        ),
+                    )
                 end
                 next!(ts)
                 endstheline!(p, "After snippet definition")
 
-                snippet = Ast.Snippet(; parent, name, params)
+                snippet = Ast.Snippet(;
+                    parent,
+                    name,
+                    params,
+                    tokens = (; name = nametoken, params = paramstoken),
+                )
 
                 push!(p.stack, snippet)
                 p.last_statement = snippet.block
                 return snippet
             else
-                s = Ast.ComponentCall(; parent, componentname = Symbol(tk.token))
+                s = Ast.ComponentCall(;
+                    parent,
+                    componentname = Symbol(tk.token),
+                    tokens = (; name = nametoken),
+                )
                 while !isending(peek(ts))
                     arg_tk = peek(ts)
-                    shouldbe(arg_tk, [Tokens.IDENTIFIER], "In component call, expected argument name")
+                    shouldbe(
+                        arg_tk,
+                        [Tokens.IDENTIFIER],
+                        "In component call, expected argument name",
+                    )
+                    nametoken = arg_tk
+                    subtoken = nothing
                     paramname = Symbol(arg_tk.token)
                     nx = next!(ts)
 
@@ -79,16 +109,30 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                     end
 
                     paramsub = if nx.type === Tokens.SYMBOL
+                        subtoken = nx
                         n = nx.token
                         nx = next!(ts)
                         Symbol(n[2:end])
                     end
 
-                    shouldbe(nx, [Tokens.EQUAL], "After component call argument name, expected equal after $arg_tk, got '$(nx)'")
+                    shouldbe(
+                        nx,
+                        [Tokens.EQUAL],
+                        "After component call argument name, expected equal after $arg_tk, got '$(nx)'",
+                    )
                     next!(ts)
                     paramvalue = take_expression!(p)
-                    isnothing(paramvalue) && throw(ParseError("Expected value", peek(ts).location))
-                    push!(s.arguments, (paramname, paramsub, paramvalue))
+                    isnothing(paramvalue) &&
+                        throw(ParseError("Expected value", peek(ts).location))
+                    push!(
+                        s.arguments,
+                        (;
+                            name = paramname,
+                            sub = paramsub,
+                            value = paramvalue,
+                            tokens = (; name = nametoken, sub = subtoken),
+                        ),
+                    )
                 end
                 endstheline!(p, "After component call")
                 s
@@ -96,7 +140,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
         elseif tk.type === Tokens.IF || tk.type === Tokens.ELSEIF
             isif = tk.type === Tokens.IF
             statement = if isif
-                s = Ast.If(; parent)
+                s = Ast.If(; parent, tokens = (;))
                 push!(p.stack, s)
                 s
             else
@@ -110,7 +154,7 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             condition = take_juliaexpr!(p)
             endstheline!(p, "After if or elseif block condition")
 
-            branch = Ast.IfBranch(; condition)
+            branch = Ast.IfBranch(; condition, tokens = (; keyword = tk))
             push!(statement.branches, branch)
             p.last_statement = branch
             if isif
@@ -119,16 +163,18 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
                 return take_one!(p)
             end
         elseif tk.type === Tokens.ELSE
+            elsetoken = tk
             statement = if isempty(p.stack)
                 throw(ParseError("Unexpected else", tk.location))
             else
                 p.stack[end]
             end
             p.last_statement = if statement isa Ast.If
-                branch = Ast.IfBranch(; condition = nothing)
+                branch = Ast.IfBranch(; condition = nothing, tokens = (; keyword = elsetoken))
                 push!(statement.branches, branch)
                 branch
             elseif statement isa Ast.For
+                statement.elsetoken = elsetoken
                 statement.elseblock = Ast.Block()
             else
                 throw(ParseError("Unexpected else", tk.location))
@@ -137,20 +183,28 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             endstheline!(p, "After else")
             return take_one!(p)
         elseif tk.type === Tokens.FOR
+            keyword = tk
             next!(ts)
             iterating = take_juliaexpr!(p)
             shouldbe(peek(ts), [Tokens.IN], "In for loop, expected in")
-            next!(ts)
+            inkeyword = next!(ts)
             iterator = take_juliaexpr!(p)
             endstheline!(p, "After for loop iterator")
-            statement = Ast.For(; parent, iterating, iterator, block = Ast.Block())
+            statement = Ast.For(;
+                parent,
+                iterating,
+                iterator,
+                block = Ast.Block(),
+                tokens = (; keyword, inkeyword),
+            )
             push!(p.stack, statement)
             p.last_statement = statement.block
             return statement
         elseif tk.type === Tokens.END
             if !isempty(p.stack)
                 statement = p.stack[end]
-                if statement isa Ast.If || statement isa Ast.For || statement isa Ast.Snippet
+                if statement isa Union{Ast.If,Ast.For,Ast.Snippet}
+                    statement.endtoken = tk
                     next!(ts)
                     endstheline!(p, "After end")
                     pop!(p.stack)
@@ -173,12 +227,13 @@ function take_one!(p::EfusParser; expect_end::Bool = false)::Union{Ast.Statement
             if expr isa Ast.Reactor
                 throw(
                     ParseError(
-                        "Reactor not supported as julia blocks, use @reactor or @radical instead", tk.location,
-                    )
+                        "Reactor not supported as julia blocks, use @reactor or @radical instead",
+                        tk.location,
+                    ),
                 )
             end
             endstheline!(p, "After julia code block")
-            Ast.JuliaBlock(; parent, code = expr)
+            Ast.JuliaBlock(; parent, code = expr, tokens = (; code = tk))
         else
             throw(ParseError("Unexpected token $(tk.type) to start a statement", tk.location))
         end
