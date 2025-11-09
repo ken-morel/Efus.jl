@@ -8,7 +8,7 @@ Component2 prop2=true
 
 # Control flow
 if x > 5
-  Label text="Greater than 5" jl=(if 4 > 4; true end)
+  Label text="Greater than 5" jl=
 elseif x < 5
   Label text="Less than 5"
 else

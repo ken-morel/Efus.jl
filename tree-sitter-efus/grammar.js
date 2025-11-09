@@ -7,12 +7,28 @@
 /// <reference types="tree-sitter-cli/dsl" />
 // @ts-check
 
+const PREC = {
+  assign: -1,
+  conditional: -1,
+  arrow: 1,
+  pair: 1,
+  or: 2,
+  and: 3,
+  not: 4,
+  compare: 5,
+  plus: 6,
+  times: 7,
+  power: 8,
+  unary: 9,
+  call: 10,
+};
+
 module.exports = grammar({
   name: "efus",
 
   extras: $ => [
     $.comment,
-    /[ \t\r]/, // Allow whitespace, but NOT newlines
+    /[ \t\r]/,
   ],
 
   rules: {
@@ -23,18 +39,36 @@ module.exports = grammar({
       $.for_statement,
       $.snippet_definition,
       seq($.component_call, $._newline),
-      seq($.expression, $._newline), // For standalone expressions like julia_block
+      seq($.expression, $._newline),
       $.blank_line
     ),
 
     blank_line: $ => $._newline,
 
-    expression: $ => repeat1(choice(
-      $._value,
-      // Allow operators as part of an expression
-      '+', '-', '*', '/', '>', '<', '==', '!=', '&&', '||', '!', '~', '^', '%',
-      '|', '&', '<<', '>>', '>>>', '+=', '-=', '*=', '/=', '%=', '&=', '|=', '^=', '<<=', '>>=', '>>>=',
-      '?', ':', '...', '=>', '->', '::', '.', '..', '...',
+    expression: $ => choice(
+      $.binary_expression,
+      $.unary_expression,
+      $._value
+    ),
+
+    binary_expression: $ => choice(
+      prec.left(PREC.plus, seq($.expression, '+', $.expression)),
+      prec.left(PREC.plus, seq($.expression, '-', $.expression)),
+      prec.left(PREC.times, seq($.expression, '*', $.expression)),
+      prec.left(PREC.times, seq($.expression, '/', $.expression)),
+      prec.left(PREC.compare, seq($.expression, '==', $.expression)),
+      prec.left(PREC.compare, seq($.expression, '!=' , $.expression)),
+      prec.left(PREC.compare, seq($.expression, '<', $.expression)),
+      prec.left(PREC.compare, seq($.expression, '<=', $.expression)),
+      prec.left(PREC.compare, seq($.expression, '>', $.expression)),
+      prec.left(PREC.compare, seq($.expression, '>=', $.expression)),
+      prec.left(PREC.and, seq($.expression, '&&', $.expression)),
+      prec.left(PREC.or, seq($.expression, '||', $.expression)),
+    ),
+
+    unary_expression: $ => prec.right(PREC.unary, seq(
+      choice('!', '-', '+'),
+      $.expression
     )),
 
     component_call: $ => seq(
@@ -104,7 +138,7 @@ module.exports = grammar({
     ),
 
     for_destructuring: $ => seq(
-      '(',
+      '(' ,
       separated_list1(',', field('name', $.identifier)),
       ')'
     ),
@@ -112,7 +146,7 @@ module.exports = grammar({
     julia_block: $ => seq(
       '(' ,
       repeat(choice(
-        /[^()]+/, 
+        /[^()]+/,
         $.julia_block
       )),
       ')'
@@ -121,7 +155,7 @@ module.exports = grammar({
     vector: $ => seq(
       '[' ,
       repeat(choice(
-        /[^\\\[\\\]]+/, 
+        /[^\\[\\]]+/,
         $.vector
       )),
       ']'
@@ -155,8 +189,8 @@ module.exports = grammar({
       $.vector
     ),
 
-    string_literal: $ => /"[^\"]*"/, // may contain julia $ and $()
-    number_literal: $ => /\d+(\.\d*)?/, // supports 12e48, +23e-38pc
+    string_literal: $ => /"[^"]*"/,
+    number_literal: $ => /\d+(\.\d*)?/,
     boolean_literal: $ => choice('true', 'false'),
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
