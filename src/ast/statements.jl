@@ -11,9 +11,10 @@ condition.
 
 See also [`Expression`](@ref), [`Block`](@ref), [`If`](@ref).
 """
-Base.@kwdef struct IfBranch <: Statement
-    condition::Union{Expression, Nothing}
+Base.@kwdef mutable struct IfBranch <: Statement
+    condition::Union{Expression,Nothing}
     block::Block = Block()
+    tokens::Union{@NamedTuple{keyword::Tokens.Token},Nothing} = nothing
 end
 affiliate!(p::IfBranch, c::Statement) = affiliate!(p.block, c)
 
@@ -36,9 +37,11 @@ else
 end
 ```
 """
-Base.@kwdef struct If <: Statement
-    parent::Union{Statement, Nothing} = nothing
+Base.@kwdef mutable struct If <: Statement
+    parent::Union{Statement,Nothing} = nothing
     branches::Vector{IfBranch} = []
+    tokens::Union{NamedTuple{},Nothing} = nothing
+    endtoken::Union{Tokens.Token,Nothing} = nothing
 end
 public If
 
@@ -62,11 +65,15 @@ end
 ```
 """
 Base.@kwdef mutable struct For <: Statement
-    parent::Union{Statement, Nothing} = nothing
-    elseblock::Union{Nothing, Block} = nothing
+    parent::Union{Statement,Nothing} = nothing
+    elseblock::Union{Nothing,Block} = nothing
+    elsetoken::Union{Tokens.Token,Nothing} = nothing
     iterator::Expression
     iterating::Expression
     block::Block
+    tokens::Union{@NamedTuple{keyword::Tokens.Token,inkeyword::Tokens.Token},Nothing} =
+        nothing
+    endtoken::Union{Tokens.Token,Nothing} = nothing
 end
 public For
 
@@ -93,12 +100,23 @@ to the function being called.
 ```
 """
 Base.@kwdef struct ComponentCall <: Statement
-    parent::Union{Statement, Nothing}
+    parent::Union{Statement,Nothing}
     componentname::Symbol
-    arguments::Vector{Tuple{Symbol, Union{Symbol, Nothing}, <:Expression}} = []
+    arguments::Vector{
+        @NamedTuple{
+            name::Symbol,
+            sub::Union{Symbol,Nothing},
+            value::Expression,
+            tokens::Union{
+                @NamedTuple{name::Tokens.Token,sub::Union{Tokens.Token,Nothing}},
+                Nothing,
+            },
+        }
+    } = []
     splats::Vector{Symbol} = []
     children::Vector{Statement} = []
     snippets::Vector{Snippet} = []
+    tokens::@NamedTuple{name::Tokens.Token}
 end
 public ComponentCall
 
@@ -116,9 +134,10 @@ it is passed through [`IonicEfus.transcribe`](@ref).
 (My+julia-expr;)
 ```
 """
-Base.@kwdef struct JuliaBlock <: Statement
-    parent::Union{Statement, Nothing}
+Base.@kwdef mutable struct JuliaBlock <: Statement
+    parent::Union{Statement,Nothing}
     code::Julia
+    tokens::Union{@NamedTuple{code::Tokens.Token},Nothing} = nothing
 end
 
 public JuliaBlock
