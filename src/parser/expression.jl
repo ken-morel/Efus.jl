@@ -30,7 +30,7 @@ function take_juliaexpr!(p::EfusParser)::Union{Ast.Reactor,Ast.Julia,Ast.Arrow}
         arrowtoken = peek(ts)
         next!(ts)
         content = take_expression!(p; mustbe = true)
-        Ast.Arrow(params, content, token = arrowtoken)
+        Ast.Arrow(; params, body = content, token = arrowtoken)
     else
         params
     end
