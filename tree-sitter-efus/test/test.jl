@@ -8,7 +8,7 @@ Component2 prop2=true
 
 # Control flow
 if x > 5
-  Label text="Greater than 5" jl=
+  Label text="Greater than 5" jl=(if 4 > 5 else "ama" end)
 elseif x < 5
   Label text="Less than 5"
 else
@@ -21,7 +21,7 @@ for i in 1:10
 end
 
 # Snippet definition
-my_snippet(name::String{Ama}="default")
+my_snippet(name::String="default")
   Button text=name
 end
 
