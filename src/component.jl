@@ -24,6 +24,10 @@ end
 """
 abstract type Component end
 
+for n in [:lock, :trylock, :unlock]
+    @eval Base.$n(c::Component) = Base.$n(c._lock)
+end
+
 
 """
     const Components = Vector{<:Component}
@@ -57,11 +61,6 @@ Mount may also take a function first argument, which it
 will call after mounting the component with the mount 
 result, and then unmount the component.
 """
-mount!(
-    ::C, p::Union{Component, Nothing} = nothing;
-    args...
-) where {C <: Component} = error("Mounting not supported by $C")
-
 function mount!(fn::Function, comp::Component, args...; kwargs...)
     result = mount!(comp, args...; kwargs...)
     fn(result)
@@ -176,7 +175,7 @@ The default dirty!(c, k, v) sets c.(k) then
 calls dirty!(c, k)
 """
 function dirty!(c::Component, key::Symbol, value)
-    c.key = value
+    setproperty!(c, key, value)
     return dirty!(c, key)
 end
 function dirty!(c::Component, key::Symbol)

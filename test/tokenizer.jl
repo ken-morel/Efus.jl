@@ -207,4 +207,3 @@ using IonicEfus.Tokens
         @test tokens[first_id].location.start[1] == 1  # Line 1
     end
 end
-

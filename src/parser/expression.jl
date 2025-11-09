@@ -1,5 +1,5 @@
 const DIRECT_EVAL = [Tokens.IDENTIFIER, Tokens.NUMERIC, Tokens.STRING, Tokens.CHAR, Tokens.SYMBOL]
-function take_juliaexpr!(p::EfusParser)::Union{Ast.Reactor, Ast.Julia}
+function take_juliaexpr!(p::EfusParser)::Union{Ast.Reactor, Ast.Julia, Ast.Arrow}
     ts = p.stream
     tk = peek(ts)
     expr = try
@@ -18,7 +18,14 @@ function take_juliaexpr!(p::EfusParser)::Union{Ast.Reactor, Ast.Julia}
             throw(ParseError("Error parsing expression: $message", nx.location))
         end
     end
-    return isnothing(type) ? Ast.Julia(expr) : Ast.Reactor(expr, type)
+    params = isnothing(type) ? Ast.Julia(expr) : Ast.Reactor(expr, type)
+    return if peek(ts).type == Tokens.ARROW # An arrow
+        next!(ts)
+        content = take_expression!(p; mustbe = true)
+        Ast.Arrow(params, content)
+    else
+        params
+    end
 end
 function take_expression!(p::EfusParser; mustbe::Bool = true)::Union{Ast.Expression, Nothing}
     tk = peek(p.stream)

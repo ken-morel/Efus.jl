@@ -68,6 +68,7 @@ const DEFAULT_THEME = Theme(
     Tokens.SQOPEN => Style(:color => :cyan),
     Tokens.SQCLOSE => Style(:color => :cyan),
     Tokens.TYPEASSERT => Style(:color => :yellow),
+    Tokens.COMMA => Style(:color => :yellow),
 
 
     # Keywords

@@ -75,3 +75,21 @@ struct Vect <: Expression
     items::Vector{Expression}
 end
 public Vect
+"""
+    struct Arrow <: Expression
+
+Represents an efus arrow function,
+it has the syntat:
+
+`(Julia|Reactor) -> (Expression)`
+
+It renders to an actual julia function.
+You can have kwargs of course.
+If you use a Reactor, the reactor type
+expr is used as return type for the function.
+"""
+struct Arrow <: Expression
+    params::Union{Reactor, Julia}
+    body::Expression
+end
+public ArrowFn

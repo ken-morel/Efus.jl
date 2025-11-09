@@ -1,6 +1,5 @@
 # Efus style guide
 
-
 - Indent using 2 spaces.
 - Use `PascalCase` for naming component
   constructors.

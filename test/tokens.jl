@@ -1,6 +1,7 @@
 @testset "Locations" begin
     locs = [Tokens.loc(1, 1), Tokens.loc(5, 5)]
-    locations = [Tokens.Location((1, 1), (1, 1), "hello"), Tokens.Location((5, 5), (5, 5), "world")]
+    locations =
+        [Tokens.Location((1, 1), (1, 1), "hello"), Tokens.Location((5, 5), (5, 5), "world")]
     @test_throws MethodError locs[1] * locs[2]
     @test let pos = locs[1] * locations[2]
         pos.start == locs[1] &&
@@ -13,7 +14,7 @@
             pos.file == locations[1].file
     end
     @test_throws AssertionError locations[1] * locations[2]
-    @test  locations[1] * locs[2] == locations[1] * (locations[1] * locs[2])
+    @test locations[1] * locs[2] == locations[1] * (locations[1] * locs[2])
 end
 @testset "TextStream" begin
     @testset "Integrity&&Coherence" begin
@@ -24,7 +25,8 @@ end
         for stream in textstreams
             @test Tokens.peek(stream) == 'H' && Tokens.test(stream, ==('H'))
             @test Tokens.next!(stream) == 'e'
-            @test Tokens.take_while!(∈("le"), stream) == ("ell", Tokens.Location((1, 2), (1, 4), "test"))
+            @test Tokens.take_while!(∈("le"), stream) ==
+                  ("ell", Tokens.Location((1, 2), (1, 4), "test"))
             @test Tokens.peek(stream) == ('o')
         end
 
