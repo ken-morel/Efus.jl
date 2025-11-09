@@ -1,0 +1,32 @@
+# A simple component call
+Component1 prop1="value1"
+
+# A component with a block
+Component2 prop2=true
+  Child1
+  Child2
+
+# Control flow
+if x > 5
+  Label text="Greater than 5" jl=(if 4 > 4; true end)
+elseif x < 5
+  Label text="Less than 5"
+else
+  Label text="Equal to 5"
+end
+
+# For loop
+for i in 1:10
+  ListItem text=i
+end
+
+# Snippet definition
+my_snippet(name::String="default")
+  Button text=name
+end
+
+# Julia block
+(x = 5; println(x))
+
+# Grouped property
+Button lay:pos=(1, 2)
