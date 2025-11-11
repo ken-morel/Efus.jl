@@ -193,9 +193,9 @@ Efus's reactivity is powered by `Ionic.jl`. The `'` syntax is automatically enab
 ```julia
 @efus_str """
 (
-    first_name = Reactant("John")
-    last_name = Reactant("Doe")
-    full_name = @reactor "$(first_name') $(last_name')"
+    first_name = Reactant("John");
+    last_name = Reactant("Doe");
+    full_name = @reactor "$(first_name') $(last_name')";
 )
 
 Label text="Full Name: $(full_name')"
