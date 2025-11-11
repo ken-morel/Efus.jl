@@ -26,7 +26,7 @@ version = "1.11.0"
 
 [[deps.Ionic]]
 deps = ["Test"]
-git-tree-sha1 = "9f0f0b9eb886dcd45960f64dfd71eccc85dacb6f"
+git-tree-sha1 = "bbff92a1492fcafdaca11d1b255f69cdef92882e"
 repo-rev = "main"
 repo-url = "https://github.com/ken-morel/Ionic.jl"
 uuid = "1fe31619-e050-4c22-88e3-621fdf7467f4"
