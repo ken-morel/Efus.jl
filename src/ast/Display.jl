@@ -35,7 +35,7 @@ they display.
 # Examples
 
 ```julia
-IonicEfus.Ast.Display.STYLE[:sign] = Dict(:color => :blue, :bold = true)
+Efus.Ast.Display.STYLE[:sign] = Dict(:color => :blue, :bold = true)
 ```
 """
 const STYLE = Dict{Symbol, Dict{Symbol, Any}}(

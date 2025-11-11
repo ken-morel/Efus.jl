@@ -23,7 +23,7 @@ dependencies.
 function generate(expr::Ast.Reactor)
     trans = Ionic.transcribe(expr.expr)
     type = something(Ionic.transcribe(expr.type).code, :Any)
-    dependencies_expr = Expr(:ref, IonicEfus.AbstractReactive, trans.gets...)
+    dependencies_expr = Expr(:ref, Efus.AbstractReactive, trans.gets...)
     return quote
         $(Ionic.Reactor){$type}(() -> $(trna.code), nothing, $dependencies_expr)
     end
@@ -48,7 +48,7 @@ function generate(expr::Ast.Arrow)
     params = if expr.params isa Ast.Julia
         generate(expr.params)
     else
-        IonicEfus.transcribe(Expr(:(::), expr.params.expr, expr.params.type)).code
+        Efus.transcribe(Expr(:(::), expr.params.expr, expr.params.type)).code
     end
     return Expr(:->, params, generate(expr.body))
 end

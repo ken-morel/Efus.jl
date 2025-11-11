@@ -1,8 +1,8 @@
 # Snippets
 
-- [`IonicEfus.Snippet`]
-- [`IonicEfus.@Snippet`]
-- [`IonicEfus.Ast.Snippet`]
+- [`Efus.Snippet`]
+- [`Efus.@Snippet`]
+- [`Efus.Ast.Snippet`]
 
 
 Snippets are functions which create ui

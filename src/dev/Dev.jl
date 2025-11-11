@@ -35,7 +35,7 @@ parameters.
     params = Param[]
     defaults = StructUtils.fielddefaults(StructStyle, c)
     docs = StructUtils.fieldtags(StructStyle, c)
-    for (name, type) in IonicEfus.params(c)
+    for (name, type) in Efus.params(c)
         default = get(defaults, name, nothing)
         ntdocs = get(docs, name, nothing)
         docs::Union{String,Nothing} = nothing

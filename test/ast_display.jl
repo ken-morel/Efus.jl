@@ -1,4 +1,4 @@
-using IonicEfus
+using Efus
 
 @testset "Error checks" begin
     io = IOBuffer()
@@ -27,7 +27,7 @@ using IonicEfus
         end
       end
     """
-    AST = IonicEfus.parse_efus(CODE)
+    AST = Efus.parse_efus(CODE)
     @test try
         show_ast(io, AST)
         true

@@ -1,6 +1,6 @@
-using IonicEfus
-using IonicEfus.Gen
-using IonicEfus.Ast
+using Efus
+using Efus.Gen
+using Efus.Ast
 
 @testset "Code Generation" begin
     @testset "Basic Component Generation" begin

@@ -1,5 +1,5 @@
 """
-IonicEfus.jl is a Julia module that provides the Efus language,
+Efus.jl is a Julia module that provides the Efus language,
 a pug-like declarative syntax for building reactive components that compile
 directly to native Julia code.
 """

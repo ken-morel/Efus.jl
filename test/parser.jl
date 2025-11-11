@@ -1,6 +1,6 @@
-using IonicEfus
-using IonicEfus.Parser
-using IonicEfus.Ast
+using Efus
+using Efus.Parser
+using Efus.Ast
 
 @testset "Parser" begin
     @testset "Basic Component Parsing" begin

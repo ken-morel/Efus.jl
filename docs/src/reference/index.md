@@ -1,4 +1,4 @@
-# IonicEfus.jl Reference
+# Efus.jl Reference
 
 ## Contents
 
@@ -6,50 +6,50 @@
 Pages = ["index.md"]
 ```
 
-## IonicEfus
+## Efus
 
 ```@autodocs
-Modules = [IonicEfus]
+Modules = [Efus]
 ```
 
-## IonicEfus.Ionic
+## Efus.Ionic
 
 ```@autodocs
-Modules = [IonicEfus.Ionic]
+Modules = [Efus.Ionic]
 ```
 
-## IonicEfus.Lexer
+## Efus.Lexer
 
 ```@autodocs
-Modules = [IonicEfus.Lexer]
+Modules = [Efus.Lexer]
 ```
 
-## IonicEfus.Gen
+## Efus.Gen
 
 ```@autodocs
-Modules = [IonicEfus.Gen]
+Modules = [Efus.Gen]
 ```
 
-## IonicEfus.Ast
+## Efus.Ast
 
 ```@autodocs
-Modules = [IonicEfus.Ast]
+Modules = [Efus.Ast]
 ```
 
-## IonicEfus.Parser
+## Efus.Parser
 
 ```@autodocs
-Modules = [IonicEfus.Parser]
+Modules = [Efus.Parser]
 ```
 
-## IonicEfus.Tokens
+## Efus.Tokens
 
 ```@autodocs
-Modules = [IonicEfus.Tokens]
+Modules = [Efus.Tokens]
 ```
 
-## IonicEfus.Ast.Display
+## Efus.Ast.Display
 
 ```@autodocs
-Modules = [IonicEfus.Ast.Display]
+Modules = [Efus.Ast.Display]
 ```

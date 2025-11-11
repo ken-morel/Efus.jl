@@ -25,7 +25,7 @@
       }
     ],
     "links": {
-      "repository": "https://github.com/ken-morel/IonicEfus.jl"
+      "repository": "https://github.com/ken-morel/Efus.jl"
     }
   },
   "bindings": {
