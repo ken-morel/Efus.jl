@@ -50,7 +50,10 @@ using Efus.Ast
         @test container_call.args[1] == :Container
 
         # Should have children argument
-        children_kw = findfirst(arg -> arg isa Expr && arg.head == :kw && arg.args[1] == :children, container_call.args)
+        children_kw = findfirst(
+            arg -> arg isa Expr && arg.head == :kw && arg.args[1] == :children,
+            container_call.args,
+        )
         @test children_kw !== nothing
     end
 
@@ -106,4 +109,3 @@ using Efus.Ast
         @test_throws Gen.CodeGenerationError Gen.generate(code)
     end
 end
-

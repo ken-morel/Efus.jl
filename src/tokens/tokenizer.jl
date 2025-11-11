@@ -88,6 +88,9 @@ function tokenize!(tz::Tokenizer, out::Channel{Token})::Nothing
     end
     return
 end
+function tokenize!(txt::AbstractString, file::AbstractString = "<string>")
+    tokenize!(Tokenizer(TextStream(txt, file)))
+end
 
 
 """
@@ -227,13 +230,16 @@ function take_one!(tz::Tokenizer)::Token
         token(COMMENT, text, startlocation * stoploc)
     elseif ch == '.'
         startloc = location(tz.stream)
-        for _ = 1:2
+        if next!(tz.stream) !== '.'
+            token(DOT, ".", startloc)
+        else
             '.' === @next(tz.stream, "In splat") ||
                 return token(ERROR, "Invalid splat", startloc * loc(tz.stream))
+            stoploc = loc(tz.stream)
+            next!(tz.stream)
+            token(SPLAT, "", startloc * stoploc)
         end
-        stoploc = loc(tz.stream)
-        next!(tz.stream)
-        token(SPLAT, "", startloc * stoploc)
+
     else
         tk = token(ERROR, "Unexpected token '$ch'", location(tz.stream))
         next!(tz.stream)

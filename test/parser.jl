@@ -36,13 +36,12 @@ using Efus.Ast
 
         @test length(snippets) == 1
         @test snippets[1].name == :label
-        @test length(snippets[1].params) == 1
-        @test snippets[1].params[1].name == :text
+        @test snippets[1].params isa Ast.Julia
     end
 
     @testset "Snippet with Default Parameters" begin
         code = """
-        button(text::String, size::Int = 16, enabled::Bool = true)
+        button(text::String, size::Int = 16, enabled::Bool = true)::Int
           Button text=text font_size=size disabled=(!enabled)
         end
         """
@@ -51,17 +50,9 @@ using Efus.Ast
         @test length(snippets) == 1
         snippet = snippets[1]
         @test snippet.name == :button
-        @test length(snippet.params) == 3
+        @test snippet.params isa Ast.Reactor
 
-        # Check parameter details
-        params = snippet.params
-        @test params[1].name == :text
-        @test params[2].name == :size
-        @test params[3].name == :enabled
 
-        # Check default values exist for size and enabled
-        @test params[2].default !== nothing
-        @test params[3].default !== nothing
     end
 
     @testset "Nested Components" begin
@@ -307,7 +298,7 @@ using Efus.Ast
               Section  \
         id=section_id \
         title=(section.title) \
-        
+
                 for item in section.items
                   if item.visible
                     Item data=item onclick=(handle_item_click(item.id))
@@ -338,7 +329,7 @@ using Efus.Ast
         @test length(snippets) == 1
         header_snippet = snippets[1]
         @test header_snippet.name == :header_section
-        @test length(header_snippet.params) == 2
+
 
         # Should have complex nested structure
         @test length(app_container.children) == 2

@@ -17,7 +17,7 @@ function take_string!(tz::Tokenizer)::Token
         )
         ch = peek(ts)
         if ch === '\\'
-            escaped = @next ch "In string escape"
+            escaped = @next ts "In string escape"
             escaped ∉ ESCAPABLE &&
                 return token(ERROR, "Invlid escape: $escaped", location(ts))
         elseif ch === '"'

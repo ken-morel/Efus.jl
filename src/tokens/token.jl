@@ -53,13 +53,8 @@ export TokenType, Token, Tokenizer, token, Loc, Location
 end
 
 
-const CHARTOKENS = Dict{Char,TokenType}(
-    '=' => EQUAL,
-    '[' => SQOPEN,
-    ']' => SQCLOSE,
-    ',' => COMMA,
-    '.' => DOT,
-)
+const CHARTOKENS =
+    Dict{Char,TokenType}('=' => EQUAL, '[' => SQOPEN, ']' => SQCLOSE, ',' => COMMA)
 const KEYWORDS = Dict{String,TokenType}(
     "begin" => BEGIN,
     "end" => END,

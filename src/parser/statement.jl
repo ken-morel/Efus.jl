@@ -72,7 +72,7 @@ function take_one!(
             else
                 name = nametoken.token
                 nametokens = Tokens.Token[nametoken]
-                while next!(ts).token === Tokens.DOT
+                while peek(ts).token === Tokens.DOT
                     push!(nametokens, peek(ts))
                     tk = next!(ts)
                     tk.type === Tokens.IDENTIFIER || throw(
@@ -83,6 +83,7 @@ function take_one!(
                     )
                     name *= "." * tk.token
                     push!(nametokens, tk)
+                    next!(ts)
                 end
 
                 s = Ast.ComponentCall(;
