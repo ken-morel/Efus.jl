@@ -1,10 +1,15 @@
 # Efus.jl
 
 [![CI](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml)
+[![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)
 
-`Efus.jl` is a reactive component framework for Julia. It provides a declarative, indentation-based templating language that compiles directly to high-performance Julia code. Combined with a powerful reactivity system inherited from `Ionic.jl`, Efus makes it easy to build complex, dynamic user interfaces and other component-based systems in a clean and maintainable way.
 
-The core philosophy of Efus is to blend the readability of a templating language with the power and performance of native Julia code.
+`Efus.jl` is a reactive component framework for Julia. It provides a declarative, indentation-based templating
+language that compiles directly to Julia code. Combined with reactivity system from `Ionic.jl` to build complex,
+dynamic user interfaces and other component-based systems in a clean and maintainable way.
+
+The core philosophy of Efus is to blend the readability of a templating language
+with the power and performance of native Julia code.
 
 ## Core Features
 
@@ -28,7 +33,7 @@ Instantiate a component by its name, followed by properties. This syntax is comp
 
 ```julia
 # This Efus code...
-@efus_str """
+efus"""
 MyComponent text="Click Me" width=200 active
 """
 
@@ -38,11 +43,11 @@ MyComponent text="Click Me" width=200 active
 
 ### 2. Nesting Components
 
-Create component hierarchies through indentation. The children are passed as a `Vector{<:Component}` to the parent's constructor.
+Create component hierarchies through indentation. The children are passed as a `Vector{Component}` to the parent's constructor.
 
 ```julia
 # This Efus code...
-@efus_str """
+efus"""
 Window title="My App"
   Box orientation=:vertical
     Label text="Welcome!"
@@ -58,12 +63,14 @@ Window title="My App"
 
 ### 3. Control Flow
 
-Use standard Julia `if`/`elseif`/`else` and `for` loops to conditionally or dynamically generate components.
+Use standard Julia `if`/`elseif`/`else` and `for` loops to conditionally or dynamically generate components,
+you may add an `else` clause to for loops which evalueates when the iterable
+responds positively to `isempty`.
 
 **If/Else Statements:**
 
 ```julia
-@efus_str """
+efus"""
 if is_loading'
   Spinner
 else
@@ -77,39 +84,51 @@ end
 ```julia
 items = ["One", "Two", "Three"]
 
-@efus_str """
+efus"""
 for item in items
   ListItem text=item
+else
+  Nothing
 end
 """
 ```
 
 ### 4. Snippets (Reusable Blocks)
 
-Snippets are reusable blocks of Efus code, similar to functions or slots. They allow you to pass templating code as an argument to another component, enabling powerful composition patterns like layouts.
+Snippets are reusable blocks of Efus code, similar to functions or slots. They allow you to pass templating code as an argument to another component,
+when defined in a component call, but in code blocks or at top level it creates
+an anonymous function available in local scope.
+enabling powerful composition patterns like layouts.
 
 -   **Definition**: `snippetName(arg1, arg2::Type=default) ... end`
 -   **Passing**: Pass them to components like any other property.
 
 ```julia
-@efus_str """
+efus"""
 # Define a snippet for the header
-header_content(title) = Label font_weight=:bold text=title
+header_content(;title)
+ Label font_weight=:bold text=title
+end
 
 # Pass the snippet to a Card component that knows how to render it
-Card header=header_content("My Card")
-  Label text="This is the card content."
+Card
+  content(title) #pass content() as argument
+    Label text="This is the card content."
+    header_content title="title is $title"
+  end
 """
 ```
 
 ### 5. Embedding Julia Code
 
-You can embed arbitrary Julia code within parentheses `()`. This is useful for defining local variables, running logic, or calling functions directly within your template.
+You can embed arbitrary Julia code within parentheses `()` and define anonymous
+functions which contains efus expressions with `() -> <efus expr>`. This is useful for
+ defining local variables, running logic, or calling functions directly within your template.
 
 ```julia
-@efus_str """
+efus"""
 (
-  items = ["One", "Two", "Three"]
+  items = ["One", "Two", "Three"];
   current_user = "Admin"
 )
 
@@ -163,8 +182,8 @@ function Efus.mount!(c::Counter, parent)
   set_backend_onclick(c.backend_ref, () -> c.on_click(c))
 
   # Set up reactivity: when `count` changes, update the button text
-  catalyze!(c.catalyst, c.count) do new_count
-    set_backend_button_text(c.backend_ref, "Count: $(new_count)")
+  catalyze!(c.catalyst, c.count) do count
+    set_backend_button_text(c.backend_ref, "Count: $(count[])")
   end
 
   # Attach to the parent in the backend
@@ -181,8 +200,9 @@ end
 # --- Usage ---
 increment(c::Counter) = c.count[] += 1
 
-@efus_str """
-Counter initial_value=5 onclick=increment
+counter = nothing
+content = efus"""
+Counter initial_value=5 onclick=() -> (increment(content[1]))
 """
 ```
 
@@ -191,7 +211,7 @@ Counter initial_value=5 onclick=increment
 Efus's reactivity is powered by `Ionic.jl`. The `'` syntax is automatically enabled inside `@efus_str` templates, making it easy to work with reactive state.
 
 ```julia
-@efus_str """
+efus"""
 (
     first_name = Reactant("John");
     last_name = Reactant("Doe");
@@ -206,5 +226,22 @@ Entry placeholder="First Name" onchange=(new_text -> first_name' = new_text)
 For a full overview of the reactivity system, see the [`Ionic.jl` README](https://github.com/ken-morel/Ionic.jl).
 
 ## Style Guide
+
+For conventions on indentation, naming, and formatting, please see the [STYLE_GUIDE.md](./STYLE_GUIDE.md).
+
+## How Efus Works: The Compilation Pipeline
+
+A key feature of Efus is its performance. This is achieved because `efus"..."` is not an interpreted language; it's a macro that compiles your template into native Julia code before your program even runs. This means you get the readability of a templating language with zero runtime overhead.
+
+The process is, in short:
+1.  **Tokenizing**: The raw text is broken down into fundamental tokens (like identifiers, keywords, and indentation).
+2.  **Parsing**: The tokens are used to build an Abstract Syntax Tree (AST), which is a hierarchical representation of your component structure.
+3.  **Code Generation**: The AST is traversed and converted into a standard Julia `Expr` (expression). During this stage, reactive `'` syntax is also translated into `getvalue` and `setvalue!` calls.
+
+The final Julia expression is what gets compiled, making your Efus templates just as fast as handwritten Julia code.
+
+## Further Reading
+
+-   [Creating Components](./CREATING_COMPONENTS.md): A detailed guide for building your own Efus components and component libraries.
 
 For conventions on indentation, naming, and formatting, please see the [STYLE_GUIDE.md](./STYLE_GUIDE.md).

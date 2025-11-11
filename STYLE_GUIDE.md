@@ -35,7 +35,7 @@ This document outlines the recommended coding style and conventions for writing 
 
 ### Property Naming
 
--   **Use `snake_case` for property names.** This aligns with Julia's general convention for function and variable names.
+-   **Avoid `snake_case` for property names, avoiding underscores.** This aligns with Julia's general convention for function.
 -   **Avoid uppercase letters and hyphens.**
 
     ```efus
@@ -63,10 +63,10 @@ This document outlines the recommended coding style and conventions for writing 
     ```efus
     # Correct
     Button ...common_props text="Submit"
-    Button text="Submit" ...common_props
+    Button text="Submit" common_props...
 
     # Less Readable
-    Button text="Submit" ...common_props class="primary"
+    Button text="Submit" common_props... class="primary"
     ```
 
 ## Julia Components
@@ -75,7 +75,8 @@ This document outlines the recommended coding style and conventions for writing 
 
 -   **Use `PascalCase` for the component's struct name.**
 -   **Prefer `Reactant`s for internal state** to make your component reactive.
--   **Include a `Catalyst` field** to manage the component's subscriptions.
+-   **Include a `_catalyst` field** to manage the component's subscriptions.
+-   **Prefix hidden arguments with _** to permit `Efus.params()` correctly guess parameters. 
 
 ### Constructors
 

@@ -1,41 +1,43 @@
 export Tokenizer, tokenize!
 
 
-const RESERVED_WORDS = Set([
-    "baremodule",
-    "begin",
-    "break",
-    "catch",
-    "const",
-    "continue",
-    "do",
-    "else",
-    "elseif",
-    "end",
-    "export",
-    "false",
-    "finally",
-    "for",
-    "function",
-    "global",
-    "if",
-    "import",
-    "in",
-    "isa",
-    "let",
-    "local",
-    "macro",
-    "module",
-    "outer",
-    "quote",
-    "return",
-    "struct",
-    "true",
-    "try",
-    "using",
-    "where",
-    "while",
-])
+const RESERVED_WORDS = Set(
+    [
+        "baremodule",
+        "begin",
+        "break",
+        "catch",
+        "const",
+        "continue",
+        "do",
+        "else",
+        "elseif",
+        "end",
+        "export",
+        "false",
+        "finally",
+        "for",
+        "function",
+        "global",
+        "if",
+        "import",
+        "in",
+        "isa",
+        "let",
+        "local",
+        "macro",
+        "module",
+        "outer",
+        "quote",
+        "return",
+        "struct",
+        "true",
+        "try",
+        "using",
+        "where",
+        "while",
+    ]
+)
 
 is_julia_name(s::String) = s in RESERVED_WORDS || Meta.isidentifier(s)
 
@@ -88,8 +90,8 @@ function tokenize!(tz::Tokenizer, out::Channel{Token})::Nothing
     end
     return
 end
-function tokenize!(txt::AbstractString, file::AbstractString = "<string>")
-    tokenize!(Tokenizer(TextStream(txt, file)))
+function tokenize(txt::AbstractString, file::AbstractString = "<string>")
+    return tokenize!(Tokenizer(TextStream(txt, file)))
 end
 
 
@@ -159,7 +161,7 @@ function take_one!(tz::Tokenizer)::Token
                 cond.type == ERROR && return cond
                 push!(
                     tz.pending,
-                    token(JULIAEXPR, cond.token[begin:(end-1)], cond.location),
+                    token(JULIAEXPR, cond.token[begin:(end - 1)], cond.location),
                 )
                 tk
             else
