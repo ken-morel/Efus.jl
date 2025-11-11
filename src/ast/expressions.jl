@@ -40,8 +40,8 @@ public Julia
 
 A reactor is a container where several reactions
 between reactans can take place, it has a final
-value, which can be gotten with [`IonicEfus.getvalue`](@ref) and
-[`IonicEfus.setvalue!`](@ref) and which is lazily computed. And
+value, which can be gotten with [`Ionic.getvalue`](@ref) and
+[`Ionic.setvalue!`](@ref) and which is lazily computed. And
 holds a getter and setter expressions.
 They support and use reactive syntax, but in addition
 every marked reactant in the reactive getter will be

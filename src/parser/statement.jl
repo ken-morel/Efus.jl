@@ -59,36 +59,36 @@ function take_one!(
             nx = next!(ts)
             if nx.type === Tokens.JULIAEXPR
                 name = Symbol(tk.token)
-                paramstoken = nx
-                params = try
-                    Ast.takesnippetparameters(Meta.parse("$(nx.token) -> nothing").args[1])
-                catch e
-                    errmsg = e isa Meta.ParseError ? e.msg : string(e)
-                    throw(
-                        ParseError(
-                            "Error parsing arguments for snippet $name: $errmsg",
-                            nx.location,
-                        ),
-                    )
-                end
-                next!(ts)
+                params = take_juliaexpr!(p)
+                params isa Ast.Arrow &&
+                    throw(ParseError("Unexpected arrow function", params.token)) #TEST: params.token
                 endstheline!(p, "After snippet definition")
-
-                snippet = Ast.Snippet(;
-                    parent,
-                    name,
-                    params,
-                    tokens = (; name = nametoken, params = paramstoken),
-                )
+                snippet =
+                    Ast.Snippet(; parent, name, params, tokens = (; name = nametoken))
 
                 push!(p.stack, snippet)
                 p.last_statement = snippet.block
                 return snippet
             else
+                name = nametoken.token
+                nametokens = Tokens.Token[nametoken]
+                while next!(ts).token === Tokens.DOT
+                    push!(nametokens, peek(ts))
+                    tk = next!(ts)
+                    tk.type === Tokens.IDENTIFIER || throw(
+                        ParseError(
+                            "Expected identifier after dot in component name",
+                            tk.location,
+                        ),
+                    )
+                    name *= "." * tk.token
+                    push!(nametokens, tk)
+                end
+
                 s = Ast.ComponentCall(;
                     parent,
-                    componentname = Symbol(tk.token),
-                    tokens = (; name = nametoken),
+                    componentname = Meta.parse(name),
+                    tokens = (; name = nametokens),
                 )
                 while !isending(peek(ts))
                     arg_tk = peek(ts)

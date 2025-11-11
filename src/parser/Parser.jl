@@ -8,7 +8,7 @@ export EfusParser
 
 using ..Tokens: Tokens, Token, Location, Loc, location, loc, TokenType
 import ..Ast
-import ..IonicEfus
+import ..Efus
 import ..Lexer
 
 

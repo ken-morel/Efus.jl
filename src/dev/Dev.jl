@@ -5,7 +5,8 @@ Developer tools for using and introspecting
 components or debugging code.
 """
 module Dev
-using ..IonicEfus: Component, IonicEfus
+using ..Efus: Component
+using Ionic
 using StructUtils
 
 const StructStyle = StructUtils.DefaultStyle()
@@ -19,8 +20,8 @@ a component's parameter.
 struct Param
     name::Symbol
     type::Type
-    default::Union{Nothing, Some}
-    doc::Union{Nothing, String}
+    default::Union{Nothing,Some}
+    doc::Union{Nothing,String}
 end
 
 """
@@ -37,7 +38,7 @@ parameters.
     for (name, type) in IonicEfus.params(c)
         default = get(defaults, name, nothing)
         ntdocs = get(docs, name, nothing)
-        docs::Union{String, Nothing} = nothing
+        docs::Union{String,Nothing} = nothing
         docs = if ntdocs isa NamedTuple
             get(ntdocs, :doc, nothing)
         elseif ntdocs isa String

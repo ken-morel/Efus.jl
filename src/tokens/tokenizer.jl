@@ -1,14 +1,41 @@
 export Tokenizer, tokenize!
 
 
-const RESERVED_WORDS = Set(
-    [
-        "baremodule", "begin", "break", "catch", "const", "continue", "do", "else",
-        "elseif", "end", "export", "false", "finally", "for", "function", "global",
-        "if", "import", "in", "isa", "let", "local", "macro", "module", "outer",
-        "quote", "return", "struct", "true", "try", "using", "where", "while",
-    ]
-)
+const RESERVED_WORDS = Set([
+    "baremodule",
+    "begin",
+    "break",
+    "catch",
+    "const",
+    "continue",
+    "do",
+    "else",
+    "elseif",
+    "end",
+    "export",
+    "false",
+    "finally",
+    "for",
+    "function",
+    "global",
+    "if",
+    "import",
+    "in",
+    "isa",
+    "let",
+    "local",
+    "macro",
+    "module",
+    "outer",
+    "quote",
+    "return",
+    "struct",
+    "true",
+    "try",
+    "using",
+    "where",
+    "while",
+])
 
 is_julia_name(s::String) = s in RESERVED_WORDS || Meta.isidentifier(s)
 
@@ -127,7 +154,10 @@ function take_one!(tz::Tokenizer)::Token
                 skip_while!(tz.stream, isindent)
                 cond = take_juliaexpr!(tz, ["\n"])
                 cond.type == ERROR && return cond
-                push!(tz.pending, token(JULIAEXPR, cond.token[begin:(end - 1)], cond.location))
+                push!(
+                    tz.pending,
+                    token(JULIAEXPR, cond.token[begin:(end-1)], cond.location),
+                )
                 tk
             else
                 tk
@@ -197,10 +227,9 @@ function take_one!(tz::Tokenizer)::Token
         token(COMMENT, text, startlocation * stoploc)
     elseif ch == '.'
         startloc = location(tz.stream)
-        for _ in 1:2
-            '.' === @next(tz.stream, "In splat") || return token(
-                ERROR, "Invalid splat", startloc * loc(tz.stream),
-            )
+        for _ = 1:2
+            '.' === @next(tz.stream, "In splat") ||
+                return token(ERROR, "Invalid splat", startloc * loc(tz.stream))
         end
         stoploc = loc(tz.stream)
         next!(tz.stream)

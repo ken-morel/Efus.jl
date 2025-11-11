@@ -4,7 +4,8 @@ Definitions and utilities for efus.jl Ast structures.
 module Ast
 using Reexport
 import ..Tokens
-import ..IonicEfus
+import ..Efus
+using Ionic
 
 """
 The supertype for all expressions.

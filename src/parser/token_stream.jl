@@ -7,8 +7,8 @@ of function to a parser.
 mutable struct TokenStream
     channel::Channel{Token}
 
-    prev::Union{Token, Nothing}
-    current::Union{Token, Nothing}
+    prev::Union{Token,Nothing}
+    current::Union{Token,Nothing}
 
     """
         TokenStream(taker::Channel{Token})
@@ -26,7 +26,7 @@ function TokenStream(tokens::Vector{Token})
     return TokenStream(chan)
 end
 public TokenStream
-function peek(ts::TokenStream)::Union{Tokens.Token, Nothing}
+function peek(ts::TokenStream)::Union{Tokens.Token,Nothing}
     if isnothing(ts.current)
         ts.current = try
             tk = take!(ts.channel)
@@ -43,7 +43,7 @@ function peek(ts::TokenStream)::Union{Tokens.Token, Nothing}
     return ts.current
 end
 
-function next!(ts::TokenStream)::Union{Tokens.Token, Nothing}
+function next!(ts::TokenStream)::Union{Tokens.Token,Nothing}
     st = peek(ts)
     return if !isnothing(st)
         ts.prev = st
@@ -52,7 +52,9 @@ function next!(ts::TokenStream)::Union{Tokens.Token, Nothing}
             while !isnothing(c) && c.type === Tokens.COMMENT
                 c = take!(ts.channel)
             end
-            !isnothing(c) && c.type === Tokens.ERROR && throw(ParseError(c.token, c.location))
+            !isnothing(c) &&
+                c.type === Tokens.ERROR &&
+                throw(ParseError(c.token, c.location))
             c
         catch e
             if !isa(e, InvalidStateException)

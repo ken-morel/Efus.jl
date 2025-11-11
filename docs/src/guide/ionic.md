@@ -1,16 +1,18 @@
 # Ionic
 
-- [`IonicEfus.Ionic`](@ref)
+- [`Ionic`](@ref)
 
 Ionic is a little macro utility, which
 provides you sugar to set and get the
 value of reactive objects.
-See [`IonicEfus.Ionic.transcribe`](@ref).
+See [`Ionic.transcribe`](@ref).
 
-Efus defines the [`IonicEfus.@ionic`] macro
+Efus defines the [`Efus.@ionic`] macro
 which does the transformation.
 
 ```julia
+using Ionic
+
 a = Reactant(1)
 b = Reactant(2)
 

@@ -1,9 +1,9 @@
-using Documenter, IonicEfus
+using Documenter, Efus
 
 makedocs(;
-    sitename = "IonicEfus.jl",
-    modules = [IonicEfus],
-    repo = Remotes.GitHub("ken-morel", "IonicEfus.jl"),
+    sitename = "Efus.jl",
+    modules = [Efus],
+    repo = Remotes.GitHub("ken-morel", "Efus.jl"),
     format = Documenter.HTML(
         assets = [],
         highlights = ["yaml"],
@@ -26,10 +26,7 @@ makedocs(;
             "guide/reactors.md",
             "guide/snippets.md",
         ],
-        "Reference" => [
-            "reference/index.md",
-        ],
+        "Reference" => ["reference/index.md"],
         "styleguide.md",
     ],
-
 )

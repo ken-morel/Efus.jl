@@ -36,7 +36,6 @@ Just to help you receive component lists.
 """
 const Components = Vector{<:Component}
 Components() = Component[]
-Components(c::Vector) = cleanchildren(c)
 
 """
     const SubParams = Dict{Symbol, Any}
@@ -44,7 +43,7 @@ Components(c::Vector) = cleanchildren(c)
 An alias for the type passed when a component
 call makes use of foo:bar subparams.
 """
-const SubParams = Dict{Symbol, Any}
+const SubParams = Dict{Symbol,Any}
 
 
 """
@@ -75,7 +74,7 @@ was creted durint [`mount!`](@ref).
 
 The default implementation throws an exception.
 """
-unmount!(::C) where {C <: Component} = error("Unmounting not supported by $C")
+unmount!(::C) where {C<:Component} = error("Unmounting not supported by $C")
 
 """
     remount!(::Component;args...)
@@ -88,7 +87,7 @@ mount!.
 
 The default implementation throws an exception
 """
-function remount!(c::C; args...) where {C <: Component}
+function remount!(c::C; args...) where {C<:Component}
     throw("remounting not supported by $C")
 end
 
@@ -100,7 +99,7 @@ when the component is mounted.
 
 The default implementation throws an exception.
 """
-function update!(c::C; args...) where {C <: Component}
+function update!(c::C; args...) where {C<:Component}
     error("Updating not supported by $C")
 end
 
@@ -113,7 +112,8 @@ found.
 The default implementation checks for a `.children`
 atttribute of type [`Components`](@ref).
 """
-@generated getchildren(c)::Union{Components, Nothing} = hasfield(c, :children) ? :(c.children) : :nothing
+@generated getchildren(c)::Union{Components,Nothing} =
+    hasfield(c, :children) ? :(c.children) : :nothing
 
 """
     getparent(c::Component)::Union{Component, Nothing}
@@ -123,7 +123,7 @@ Get the parent of component c.
 The default implementation checks for a `.parent`
 property of type [`Component`](@ref).
 """
-function getparent(c::Component)::Union{Component, Nothing}
+function getparent(c::Component)::Union{Component,Nothing}
     return if hasproperty(c, :parent) && c.parent isa Component
         c.parent
     end
@@ -137,7 +137,7 @@ dirty.
 
 The default implementation throws an exception.
 """
-function isdirty(::C)::Bool where {C <: Component}
+function isdirty(::C)::Bool where {C<:Component}
     error("Dirty not supported by $C")
 end
 
@@ -148,7 +148,7 @@ Get the component fields which were marked as dirty.
 
 The default implementation throws an exception.
 """
-function getdirty(::C)::Set{Symbol} where {C <: Component}
+function getdirty(::C)::Set{Symbol} where {C<:Component}
     error("Dirty not supported by $C")
 end
 
@@ -161,7 +161,9 @@ type C.
 The default implementation returns all names which
 are not preceeded by underscores.
 """
-@generated params(::Type{T}) where {T} = Vector{Tuple{Symbol, Type}}(filter(!startswith("_") ∘ string ∘ first, zip(fieldnames(T), fieldtypes(T)) |> collect))
+@generated params(::Type{T}) where {T} = Vector{Tuple{Symbol,Type}}(
+    filter(!startswith("_") ∘ string ∘ first, zip(fieldnames(T), fieldtypes(T)) |> collect),
+)
 params(::T) where {T} = params(T)
 
 """
@@ -203,8 +205,8 @@ function cleanchildren(children::Vector)::Vector{Component}
         elseif !isnothing(child)
             error(
                 "Component or code block was passed a child of unexpected type $(typeof(child)): $child. " *
-                    "If you use a custom function or julia expression, make sure it either " *
-                    " returns a component, a vector of components, or nothing."
+                "If you use a custom function or julia expression, make sure it either " *
+                " returns a component, a vector of components, or nothing.",
             )
 
         end

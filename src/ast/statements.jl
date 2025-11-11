@@ -90,18 +90,18 @@ to the function being called.
 # Syntax
 
 ```julia
-  Label text="Hello world" args...
-#   |       |               |
-#   |       |              splats
-#   |       |
-#   |     Argument=value
-#   |
-# Function name
+  Foo.Label text="Hello world" args...
+#    |          |               |
+#    |          |              splats
+#    |          |
+#    |        Argument=value
+#    |
+# Function name/path
 ```
 """
 Base.@kwdef struct ComponentCall <: Statement
     parent::Union{Statement,Nothing}
-    componentname::Symbol
+    componentname::Union{Expr,Symbol}
     arguments::Vector{
         @NamedTuple{
             name::Symbol,
@@ -116,7 +116,7 @@ Base.@kwdef struct ComponentCall <: Statement
     splats::Vector{Symbol} = []
     children::Vector{Statement} = []
     snippets::Vector{Snippet} = []
-    tokens::@NamedTuple{name::Tokens.Token}
+    tokens::@NamedTuple{name::Vector{Tokens.Token}}
 end
 public ComponentCall
 
@@ -127,7 +127,7 @@ public ComponentCall
 Represents a block of julia code acting as
 a statement, it is internally represented as
 a [`Ast.Julia`](@ref) and has no child,
-it is passed through [`IonicEfus.transcribe`](@ref).
+it is passed through [`Ionic.transcribe`](@ref).
 
 # Syntax
 ```julia

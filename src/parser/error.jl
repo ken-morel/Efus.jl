@@ -1,19 +1,19 @@
 export ParseError
 
 """
-    mutable struct ParseError <: IonicEfus.EfusError
+    mutable struct ParseError <: Efus.EfusError
 
 A parsing error.
 """
-mutable struct ParseError <: IonicEfus.EfusError
+mutable struct ParseError <: Efus.EfusError
     message::String
     location::Location
-    line::Union{String, Nothing}
+    line::Union{String,Nothing}
     ParseError(msg::String, loc::Location) = new(msg, loc, nothing)
 end
 
 function Base.showerror(io::IO, err::ParseError)
-    printstyled(io, "IonicEfus.Parser.ParseError: "; color = :red, bold = true)
+    printstyled(io, "Efus.Parser.ParseError: "; color = :red, bold = true)
     println(io, err.message)
     Tokens.show_location(io, err.location)
     println(io)

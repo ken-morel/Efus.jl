@@ -3,9 +3,9 @@
 
 Generates a valid julia expr from the
 passed ast expression by taking the 
-output of [`IonicEfus.transcribe`](@ref).
+output of [`Ionic.transcribe`](@ref).
 """
-generate(expr::Ast.Julia) = Ionic.transcribe(expr.expr)[1]
+generate(expr::Ast.Julia) = Ionic.transcribe(expr.expr).code
 
 
 """
@@ -21,15 +21,11 @@ dependencies.
 ```
 """
 function generate(expr::Ast.Reactor)
-    getter, dependencies = Ionic.transcribe(expr.expr)
-    type = something(Ionic.transcribe(expr.type)[1], :Any)
-    dependencies_expr = Expr(:ref, IonicEfus.AbstractReactive, dependencies...)
+    trans = Ionic.transcribe(expr.expr)
+    type = something(Ionic.transcribe(expr.type).code, :Any)
+    dependencies_expr = Expr(:ref, IonicEfus.AbstractReactive, trans.gets...)
     return quote
-        $(IonicEfus.Reactor){$type}(
-            () -> $getter,
-            nothing,
-            $dependencies_expr,
-        )
+        $(Ionic.Reactor){$type}(() -> $(trna.code), nothing, $dependencies_expr)
     end
 end
 
@@ -52,7 +48,7 @@ function generate(expr::Ast.Arrow)
     params = if expr.params isa Ast.Julia
         generate(expr.params)
     else
-        IonicEfus.transcribe(Expr(:(::), expr.params.expr, expr.params.type))[1]
+        IonicEfus.transcribe(Expr(:(::), expr.params.expr, expr.params.type)).code
     end
     return Expr(:->, params, generate(expr.body))
 end
