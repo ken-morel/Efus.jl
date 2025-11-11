@@ -12,7 +12,7 @@ function returning a component, it accepts
 component would be:
 
 ```julia
-struct Label <: IonicEfus.Component
+struct Label <: Efus.Component
     foo::Bar = folk
     foos::Bars = foo + 1
     <...>
@@ -46,7 +46,7 @@ Base.@kwdef mutable struct Button <: GtakWidgetComponent
 
     const catalyst::Catalyst = Catalyst()            | 5
 end
-IonicEfus.params(::Type{Button}) = [:text, :onclick]
+Efus.params(::Type{Button}) = [:text, :onclick]
 
 ```
 
@@ -54,14 +54,14 @@ IonicEfus.params(::Type{Button}) = [:text, :onclick]
    These are attributes passed by the caller
 2. **Children**:
    If the component receives children, efus.jl will
-   pass to it an array of type [`IonicEfus.Components`](@ref)
+   pass to it an array of type [`Efus.Components`](@ref)
    simply an alias to `Vector{<:Component}`.
 
    This will be ignored if it received no child,
    and you may also use `children` as keyword argument.
 
    Efus treats the array
-   by cleaning it with [`IonicEfus.cleanchildren`](@ref)
+   by cleaning it with [`Efus.cleanchildren`](@ref)
    which removes nothings, splats arrays returned by ifs,
    though reduces performance.
 3. **Backend data**:
@@ -81,14 +81,14 @@ IonicEfus.params(::Type{Button}) = [:text, :onclick]
 
 ## mounting
 
-- [`IonicEfus.mount!`](@ref)
+- [`Efus.mount!`](@ref)
 
 A component is meant to be a reusable blue print.
 During mounting the component is initialized,
 subscriptions are made, and the parent is set.
 
 ```julia
-function IonicEfus.mount!(b::Button, parent::GtakComponent)
+function Efus.mount!(b::Button, parent::GtakComponent)
     b.parent = parent               # Associating the parent
     b.widget = GtkButton()                           # Create backend widgets
     b.widget[] = b.label = GtkLabel(resolve(b.text)) #
@@ -116,8 +116,8 @@ function IonicEfus.mount!(b::Button, parent::GtakComponent)
 end
 ```
 
-[`IonicEfus.resolve`](@ref) helps you get the value of
-[`IonicEfus.MayBeReactive`](@ref) objects.
+[`Efus.resolve`](@ref) helps you get the value of
+[`Efus.MayBeReactive`](@ref) objects.
 
 When the text get's updated from the reactive instance,
 you may add an entry to `dirty!` instead of updating
@@ -125,7 +125,7 @@ directly, and then schedule a ui update.
 
 ## Updating
 
-- [`IonicEfus.update!`](@ref)
+- [`Efus.update!`](@ref)
 
 During the update, you can update all the
 parameters you know to have passed through dirty.
@@ -134,7 +134,7 @@ in threads you may obviously need to hold a lock
 or simply wrap the dirty in a `Base.Lockable`.
 
 ```julia
-function IonicEfus.update!(c::Button)
+function Efus.update!(c::Button)
     ...
     empty!(c.dirty)
     return
@@ -143,14 +143,14 @@ end
 
 ## Unmounting
 
-- [`IonicEfus.unmount!`](@ref)
+- [`Efus.unmount!`](@ref)
 
 Here we may dissociate and destroy any data
 associated during mount, denature catalysts,
 to obtain back a clean component.
 
 ```julia
-function IonicEfus.unmount!(c::Button)
+function Efus.unmount!(c::Button)
     children = getchildren(c)
     if !isnothing(children)
         foreach(unmount!, c.children)
@@ -169,21 +169,21 @@ implementations for the component:
 
 - **Important:**
 
-  - [`IonicEfus.params`](@ref)
-  - [`IonicEfus.mount!`](@ref)
-  - [`IonicEfus.unmount!`](@ref)
+  - [`Efus.params`](@ref)
+  - [`Efus.mount!`](@ref)
+  - [`Efus.unmount!`](@ref)
 
 - **Adviced:**
 
-  - [`IonicEfus.getparent`](@ref)
-  - [`IonicEfus.getchildren`](@ref)
-  - [`IonicEfus.remount!`](@ref)
-  - [`IonicEfus.update!`](@ref)
+  - [`Efus.getparent`](@ref)
+  - [`Efus.getchildren`](@ref)
+  - [`Efus.remount!`](@ref)
+  - [`Efus.update!`](@ref)
 
 - If you want to implement the dirty mechanism
 
-  - [`IonicEfus.dirty!`](@ref)
-  - [`IonicEfus.isdirty`](@ref)
-  - [`IonicEfus.getdirty`](@ref)
+  - [`Efus.dirty!`](@ref)
+  - [`Efus.isdirty`](@ref)
+  - [`Efus.getdirty`](@ref)
 
 

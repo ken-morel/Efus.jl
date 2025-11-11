@@ -7,11 +7,11 @@ macro next(ts, at = "")
                 isnothing($name) && return token(
                     ERROR,
                     "Unexpected EOF " * $at,
-                    Location($loc, $loc, $ts.file)
+                    Location($loc, $loc, $ts.file),
                 )
                 $name
             end
 
-        end
+        end,
     )
 end

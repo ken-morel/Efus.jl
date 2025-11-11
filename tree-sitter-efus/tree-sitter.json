@@ -1,0 +1,40 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "efus",
+      "camelcase": "Efus",
+      "title": "Efus template parser",
+      "scope": "source.efus",
+      "file-types": [
+        "efus"
+      ],
+      "injection-regex": "^efus$",
+      "class-name": "TreeSitterEfus"
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "A tree-sitter grammar parser for the efus mini language",
+    "authors": [
+      {
+        "name": "Engon Ken Morel",
+        "email": "engonken8@gmail.com",
+        "url": "https://ama.cm/"
+      }
+    ],
+    "links": {
+      "repository": "https://github.com/ken-morel/Efus.jl"
+    }
+  },
+  "bindings": {
+    "c": true,
+    "go": true,
+    "node": true,
+    "python": true,
+    "rust": true,
+    "swift": true,
+    "zig": false
+  }
+}

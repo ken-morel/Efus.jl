@@ -8,8 +8,8 @@ module Gen
 export generate
 
 import ..Ast
-import ..IonicEfus
-import ..Ionic
+import ..Efus
+import Ionic
 
 struct CodeGenerationError <: Exception
     msg::String
@@ -25,7 +25,7 @@ include("./statement.jl")
 A fallback for Ast nodes which don't support code
 generation.
 """
-function generate(::T) where {T <: Ast.Expression}
+function generate(::T) where {T<:Ast.Expression}
     error("Code generation not supported for $T")
 end
 

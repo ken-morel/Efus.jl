@@ -4,7 +4,6 @@ it does the first step in efus code processing,
 spliting the code into tokens.
 """
 module Tokens
-using FunctionWrappers: FunctionWrapper
 
 include("./macros.jl")
 include("./token.jl")

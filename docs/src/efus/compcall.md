@@ -1,7 +1,7 @@
 # Component calls
 
-- [`IonicEfus.Ast.ComponentCall`](@ref)
-- [`IonicEfus.Gen.generate(::IonicEfus.Ast.ComponentCall)`](@ref)
+- [`Efus.Ast.ComponentCall`](@ref)
+- [`Efus.Gen.generate(::Efus.Ast.ComponentCall)`](@ref)
 
 The component call is the most basic and what
 really builds the ui, a component call
@@ -21,7 +21,7 @@ ____   _________    ________________   ______
 
 This componentname or component constructor name
 is the simple name of the function which
-will be called, IonicEfus supports julia names
+will be called, Efus supports julia names
 like `Label!`.
 Since it simply calls a function you may place
 almost anything there, even `print`.
@@ -34,7 +34,7 @@ The key is any valid julia identifier, and the value
 is any accepted [Evus value](./values.md).
 
 Another variation is the `(3)` case, in that case,
-`IonicEfus.Gen.generate` converts the statement to a dict construction,
+`Efus.Gen.generate` converts the statement to a dict construction,
 e.g in that case, we may have:
 
 ```julia

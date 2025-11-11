@@ -8,7 +8,7 @@ export EfusParser
 
 using ..Tokens: Tokens, Token, Location, Loc, location, loc, TokenType
 import ..Ast
-import ..IonicEfus
+import ..Efus
 import ..Lexer
 
 
@@ -29,7 +29,7 @@ mutable struct EfusParser
     stream::TokenStream
     stack::Vector{Ast.Statement}
     root::Ast.Block
-    last_statement::Union{Ast.Statement, Nothing}
+    last_statement::Union{Ast.Statement,Nothing}
 
     """
         EfusParser(input::TokenStream)
@@ -74,7 +74,7 @@ root block, if `out` is passed, it also sends each received
 statement there, where the first sent statement is the parser
 root.
 """
-function parse!(p::EfusParser, out::Union{StatementChannel, Nothing} = nothing)
+function parse!(p::EfusParser, out::Union{StatementChannel,Nothing} = nothing)
     isnothing(out) || put!(out, p.root)
     try
         while true

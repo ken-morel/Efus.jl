@@ -2,8 +2,8 @@
 
 ## If
 
-- [`IonicEfus.Ast.If`](@ref)
-- [`IonicEfus.Gen.generate(::IonicEfus.Ast.If)`](@ref)
+- [`Efus.Ast.If`](@ref)
+- [`Efus.Gen.generate(::Efus.Ast.If)`](@ref)
 
 efus if syntax is almost and why not actually
 identical to julia's.
@@ -29,8 +29,8 @@ consider begin - end, so always wrap them in  braces(`()` or `{}` or `[]`).
 
 ## For
 
-- [`IonicEfus.Ast.For`](@ref)
-- [`IonicEfus.Gen.generate(::IonicEfus.Ast.For)`](@ref)
+- [`Efus.Ast.For`](@ref)
+- [`Efus.Gen.generate(::Efus.Ast.For)`](@ref)
 
 The for loop again is similar to julia's syntax,
 you can use usual things like destructuring, ...

@@ -1,4 +1,4 @@
-using IonicEfus
+using Efus
 
 abstract type HTMLTag <: Component end
 abstract type CoupleTag <: HTMLTag end
@@ -15,46 +15,46 @@ render(t::text) = t.t
 
 Base.@kwdef struct div <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component} = []
 end
 Base.@kwdef struct form <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component} = []
 end
 Base.@kwdef struct button <: OrphelineTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     type::Symbol
 end
 
 
 Base.@kwdef struct span <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component} = []
 end
 Base.@kwdef struct h1 <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component}
 end
 Base.@kwdef struct h2 <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component}
 end
 Base.@kwdef struct h3 <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component}
 end
 
@@ -67,21 +67,21 @@ render(c::html) = "<html lang=\"$(c.lang)\">$(renderchildren(c))</html>"
 
 Base.@kwdef struct body <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component} = []
 end
 
 Base.@kwdef struct p <: CoupleTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     children::Vector{Component}
 end
 Base.@kwdef struct input <: OrphelineTag
     classes::Vector{AbstractString} = []
-    id::Union{AbstractString, Nothing} = nothing
-    style::Dict{Symbol, Any} = Dict()
+    id::Union{AbstractString,Nothing} = nothing
+    style::Dict{Symbol,Any} = Dict()
     type::String = "text"
     placeholder = ""
     value = ""
@@ -90,7 +90,7 @@ function render(c::input)
     return """<input type="$(c.type)" value="$(c.value)" placeholder="$(c.placeholder)" $(renderargsdefault(c))/>"""
 end
 
-tagname(::T) where {T <: HTMLTag} = nameof(T)
+tagname(::T) where {T<:HTMLTag} = nameof(T)
 
 #### Some backend logick to actually generate html
 #
@@ -122,7 +122,7 @@ renderargs(c::HTMLTag) = renderargsdefault(c)
 renderchildren(c::HTMLTag) = render(c.children)
 
 
-struct Pixels{T <: Number}
+struct Pixels{T<:Number}
     num::T
 end
 

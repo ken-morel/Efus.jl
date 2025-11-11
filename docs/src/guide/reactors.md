@@ -1,6 +1,6 @@
 # Reactors
 
-- [`IonicEfus.Reactor`](@ref)
+- [`Efus.Reactor`](@ref)
 
 Reactors are reactive values
 whose values depend on computing other
@@ -14,8 +14,8 @@ it is created with `eager=true`.
 You are provided with two macros
 to create reactors:
 
-- [`IonicEfus.@reactor`](@ref)
-- [`IonicEfus.@radical`](@ref)
+- [`Efus.@reactor`](@ref)
+- [`Efus.@radical`](@ref)
 
 `@radical` permits you to create
 a statement which re-runs when the value

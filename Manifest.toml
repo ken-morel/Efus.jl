@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.12.0"
+julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "e6b427b55cdfd4240a6b21b35d50df1989e1a3af"
+project_hash = "855b5cf89bb70696a4dbc0cb0dba41bbe60f6460"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -13,20 +13,23 @@ deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 version = "1.11.0"
 
-[[deps.FunctionWrappers]]
-git-tree-sha1 = "d62485945ce5ae9c0c48f124a84998d755bae00e"
-uuid = "069b7b12-0de2-55c6-9aab-29f3d0a68a2e"
-version = "1.1.3"
+[[deps.Efus]]
+deps = ["Ionic", "Reexport", "StructUtils", "Test"]
+path = "."
+uuid = "285369d7-3617-4bce-982e-acda657aee64"
+version = "0.1.0"
 
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
-[[deps.IonicEfus]]
-deps = ["FunctionWrappers", "MacroTools", "Reexport", "StructUtils", "Test"]
-path = "."
-uuid = "285369d7-3617-4bce-982e-acda657aee64"
+[[deps.Ionic]]
+deps = ["Test"]
+git-tree-sha1 = "9f0f0b9eb886dcd45960f64dfd71eccc85dacb6f"
+repo-rev = "main"
+repo-url = "https://github.com/ken-morel/Ionic.jl"
+uuid = "1fe31619-e050-4c22-88e3-621fdf7467f4"
 version = "0.1.0"
 
 [[deps.JuliaSyntaxHighlighting]]
@@ -37,11 +40,6 @@ version = "1.12.0"
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 version = "1.11.0"
-
-[[deps.MacroTools]]
-git-tree-sha1 = "1e0228a030642014fe5cfe68c2c0a818f9e3f522"
-uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
-version = "0.5.16"
 
 [[deps.Markdown]]
 deps = ["Base64", "JuliaSyntaxHighlighting", "StyledStrings"]
@@ -73,9 +71,9 @@ version = "1.11.0"
 
 [[deps.StructUtils]]
 deps = ["Dates", "UUIDs"]
-git-tree-sha1 = "cd47aa083c9c7bdeb7b92de26deb46d6a33163c9"
+git-tree-sha1 = "79529b493a44927dd5b13dde1c7ce957c2d049e4"
 uuid = "ec057cc2-7a8d-4b58-b3b3-92acb9f63b42"
-version = "2.5.1"
+version = "2.6.0"
 
     [deps.StructUtils.extensions]
     StructUtilsMeasurementsExt = ["Measurements"]

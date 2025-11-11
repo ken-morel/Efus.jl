@@ -1,5 +1,5 @@
-using IonicEfus
-using IonicEfus.Tokens
+using Efus
+using Efus.Tokens
 
 @testset "Tokenizer" begin
     @testset "Basic Tokenization" begin

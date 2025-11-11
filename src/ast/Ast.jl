@@ -3,6 +3,9 @@ Definitions and utilities for efus.jl Ast structures.
 """
 module Ast
 using Reexport
+import ..Tokens
+import ..Efus
+using Ionic
 
 """
 The supertype for all expressions.
@@ -12,7 +15,6 @@ See also [`Statement`](@ref)
 abstract type Expression end
 public Expression
 
-import ..IonicEfus
 
 
 """

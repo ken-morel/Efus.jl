@@ -15,13 +15,13 @@ The code generation is done into a few simple steps:
 -> **generation** -> `Expr`
 
 This permits efus to support streaming, though for convenience,
-efus provides a [`IonicEfus.parse_efus`](@ref) which does the parsing
-and [`IonicEfus.Gen.generate`](@ref) for generating code. But
+efus provides a [`Efus.parse_efus`](@ref) which does the parsing
+and [`Efus.Gen.generate`](@ref) for generating code. But
 I'm sure most at times you will just want to use the macros
 for doing that for you.
 
 ```julia
-using IonicEfus
+using Efus
 
 code = "Hello world=4"
 ast = parse_efus(code)

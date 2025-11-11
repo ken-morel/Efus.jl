@@ -14,7 +14,7 @@ corresponding tokens. It is returned by [`lex`](@ref).
 
 See also [`Style`](@ref)
 """
-const Lexed = Vector{Tuple{String, Tokens.TokenType}}
+const Lexed = Vector{Tuple{String,Tokens.TokenType}}
 public Lexed
 
 
@@ -27,7 +27,7 @@ Though they can also be used elswhere.
 
 See also [`print_lexed`](@ref), [`Theme`](@ref).
 """
-const Style = Dict{Symbol, Any}
+const Style = Dict{Symbol,Any}
 public Style
 
 """
@@ -35,7 +35,7 @@ public Style
 
 A mapping of tokens to their corresponding styles.
 """
-const Theme = Dict{Tokens.TokenType, Style}
+const Theme = Dict{Tokens.TokenType,Style}
 public Theme
 
 
@@ -113,7 +113,7 @@ function lex(code::AbstractString)::Lexed
             stop = Tokens.loc2index(line_index, loc.stop)
 
             if index < start
-                push!(lexed, (code[index:(start - 1)], Tokens.NONE))
+                push!(lexed, (code[index:(start-1)], Tokens.NONE))
             end
 
             if type == Tokens.EOF
@@ -166,9 +166,7 @@ function print_lexed(io::IO, text::String, theme::Theme = DEFAULT_THEME)
     lexed = lex(text)
     return print_lexed(io, lexed, theme)
 end
-print_lexed(
-    text::String, theme::Theme = DEFAULT_THEME
-) = print_lexed(stdout, text, theme)
+print_lexed(text::String, theme::Theme = DEFAULT_THEME) = print_lexed(stdout, text, theme)
 
 
 end

@@ -45,26 +45,23 @@ export TokenType, Token, Tokenizer, token, Loc, Location
     TYPEASSERT
     ARROW
 
+    DOT
+
     COMMENT
 
     NONE
 end
 
 
-const CHARTOKENS = Dict{Char, TokenType}(
-    '=' => EQUAL,
-    '[' => SQOPEN,
-    ']' => SQCLOSE,
-    ',' => COMMA,
-)
-const KEYWORDS = Dict{String, TokenType}(
+const CHARTOKENS =
+    Dict{Char,TokenType}('=' => EQUAL, '[' => SQOPEN, ']' => SQCLOSE, ',' => COMMA)
+const KEYWORDS = Dict{String,TokenType}(
     "begin" => BEGIN,
     "end" => END,
     "for" => FOR,
     "if" => IF,
     "else" => ELSE,
     "elseif" => ELSEIF,
-
     "in" => IN,
     "∈" => IN,
 )

@@ -7,20 +7,21 @@ it's parameters and direct snippets as arguments
 and a special keyword argument `children` which
 is passed only if the component had children(which
 were not snippets) and is the children expression 
-is wrapped in [`IonicEfus.cleanchildren`](@ref)
+is wrapped in [`Efus.cleanchildren`](@ref)
 to make sure children is of type `Vector{Component}`
 """
 function generate(node::Ast.ComponentCall)
     # literally: not all children are ComponentCalls
 
-    args = Dict{Symbol, Ast.Expression}()
-    dictargs = Dict{Symbol, Dict{Symbol, Ast.Expression}}()
+    args = Dict{Symbol,Ast.Expression}()
+    dictargs = Dict{Symbol,Dict{Symbol,Ast.Expression}}()
 
     for (argname, argsub, argvalue) in node.arguments
         if isnothing(argsub)
             push!(args, argname => argvalue)
         else
-            argname ∉ keys(dictargs) && push!(dictargs, argname => Dict{Symbol, Ast.Expression}())
+            argname ∉ keys(dictargs) &&
+                push!(dictargs, argname => Dict{Symbol,Ast.Expression}())
             dictargs[argname][argsub] = argvalue
         end
     end
@@ -28,24 +29,27 @@ function generate(node::Ast.ComponentCall)
     !isempty(common) && throw(
         CodeGenerationError(
             "Could not generate component call. Call for component $(node.componentname)" *
-                " has arguments $common which were both regular arguments and dict(with :)" *
-                " arguments"
-        )
+            " has arguments $common which were both regular arguments and dict(with :)" *
+            " arguments",
+        ),
     )
     kwargs = [Expr(:kw, key, generate(value)) for (key, value) in args]
     push!(
-        kwargs, [
+        kwargs,
+        [
             Expr(
-                    :kw, key,
-                    Expr(
-                        :call, :Dict, [
-                            Expr(
-                                :call, :(=>), QuoteNode(subkey), generate(value)
-                            ) for (subkey, value) in subdict
-                        ]...
-                    )
-                ) for (key, subdict) in dictargs
-        ]...
+                :kw,
+                key,
+                Expr(
+                    :call,
+                    :Dict,
+                    [
+                        Expr(:call, :(=>), QuoteNode(subkey), generate(value)) for
+                        (subkey, value) in subdict
+                    ]...,
+                ),
+            ) for (key, subdict) in dictargs
+        ]...,
     )
 
     splats = Expr(:parameters, [Expr(:..., splat) for splat in node.splats]...)
@@ -55,7 +59,7 @@ function generate(node::Ast.ComponentCall)
     snippets = [Expr(:kw, snippet.name, generate(snippet)) for snippet in node.snippets]
 
     if !isempty(children_exprs)
-        children = Expr(:call, :|>, Expr(:vect, children_exprs...), IonicEfus.cleanchildren)
+        children = Expr(:call, :|>, Expr(:vect, children_exprs...), Efus.cleanchildren)
 
         children_kw = Expr(:kw, :children, children)
         push!(kwargs, children_kw)
@@ -131,7 +135,7 @@ end
 """
     generate(snippet::Ast.Snippet)
 
-Generate a [`IonicEfus.Snippet`](@ref) definition
+Generate a [`Efus.Snippet`](@ref) definition
 and construct it's type from the types of the
 ast snippet, and an anonymous function.
 
@@ -150,59 +154,19 @@ Snippet{
 ```
 """
 function generate(snippet::Ast.Snippet)
-    names = Symbol[]
-    types = []
-    for param in snippet.params
-        push!(names, param.name)
-        if isnothing(param.type)
-            push!(types, Any)
-        else
-            push!(types, param.type.value)
-        end
-    end
-    namedtupletype = Expr(
-        :curly,
-        :NamedTuple,
-        Expr(:tuple, QuoteNode.(names)...),
-        Expr(:curly, :Tuple, types...),
-    )
-    exprs = []
-    for param in snippet.params
-        expr = param.name
-        if param.type !== nothing
-            expr = Expr(:(::), expr, param.type.value)
-        end
-        if param.default !== nothing
-            expr = Expr(:kw, expr, param.default.value)
-        end
-        push!(exprs, expr)
-    end
-    signature = Expr(:parameters, exprs...)
+    params = generate(snippet.params)
+
     content = generate(snippet.block)
 
-    snippettype = Expr(:curly, IonicEfus.Snippet, namedtupletype)
-    functiondef = Expr(:->, Expr(:tuple, signature), content)
-    return Expr(:call, snippettype, functiondef)
+    return Expr(:call, Efus.Snippet, Expr(:->, params, content))
 end
-
-function generate(param::Ast.SnippetParameter)
-    expr = param.name
-    if !isnothing(param.type)
-        expr = Expr(:(::), expr, param.type.value)
-    end
-    if !isnothing(param.default)
-        expr = Expr(:(=), expr, param.default.value)
-    end
-    return expr
-end
-
 
 """
     generate(node::Ast.Block)
 
 Generattes the content of the block as
 a vector definition, which is passed to
-[`IonicEfus.cleanchildren`](@ref).
+[`Efus.cleanchildren`](@ref).
 Contrarily to component calls, here snippets
 are grouped in a let call wrapping the rest
 of the content, so they can be used as
@@ -210,14 +174,19 @@ functions anywhere in the block.
 """
 function generate(node::Ast.Block)
     children_exprs = [generate(child) for child in node.children]
-    body = Expr(:call, :|>, Expr(:vect, children_exprs...), IonicEfus.cleanchildren)
+    body = Expr(:call, :|>, Expr(:vect, children_exprs...), Efus.cleanchildren)
     return if isempty(node.snippets)
         body
     else
         return Expr(
             :let,
-            Expr(:block, [Expr(:(=), snippet.name, generate(snippet)) for snippet in node.snippets]...),
-            Expr(:block, body)
+            Expr(
+                :block,
+                [
+                    Expr(:(=), snippet.name, generate(snippet)) for snippet in node.snippets
+                ]...,
+            ),
+            Expr(:block, body),
         )
     end
 end

@@ -1,17 +1,17 @@
-# IonicEfuss Documentation
+# Efuss Documentation
 
 ```@contents
 Pages = ["index.md"]
 ```
 
-[![CI](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml)
+[![CI](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml)
 
 !!! NOTE
 This is not very stable, but it works.
 
-So good day, and welcome to `IonicEfus.jl` !
+So good day, and welcome to `Efus.jl` !
 
-IonicEfus.jl is a module providing tools like
+Efus.jl is a module providing tools like
 a language parser which transforms markup-like efus
 language to julia code at macro expansion, a pair
 of reactive constructs with tools to interact with

@@ -1,14 +1,14 @@
-# IonicEfus.jl
+# Efus.jl
 
-[![code style: runic](https://img.shields.io/badge/code_style-%E1%9A%B1%E1%9A%A2%E1%9A%BE%E1%9B%81%E1%9A%B2-black)](https://github.com/fredrikekre/Runic.jl)
-[![CI](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/IonicEfus.jl/actions/workflows/CI.yml)
+[![CI](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ken-morel/Efus.jl/actions/workflows/CI.yml)
 
 > [!NOTE]
 > This is not very stable, but it works.
 
-IonicEfus.jl is a julia module providing template building language and
-rectivity constructs to help you build structures organised as
-components. It aims for providing the base so that custom libraries
+Efus.jl is a julia module providing template building language and
+rectivity constructs from [Ionic.jl](https://github.com/ken-morel/Ionic.jl)
+to help you build structures organised as components. It aims for providing
+ the base so that custom libraries
 can define components to be used by a final client, but
 with a set of standards to help debugging, and using
 components:
@@ -36,7 +36,7 @@ It is built so as to completely integrate with your julia code, and
 actually translates to julia code.
 
 ```julia
-using IonicEfus
+using Efus
 using MyComponentLib: LabelFrame
 
 const WHAT = "Items"
@@ -67,42 +67,20 @@ I feel depressed looking all I've spent time working on just shows in
 > have parse error inline messages _as you code_,
 > along with unused variables, and other lsp functionalities.
 
-## Reactivity
+## Reactivity with Ionic.jl
 
-A full pack of nice names, Reactant, Reactor, Catalyst, and few more
-to revive your form 2 chem. Not that I love the subject, it actually
-caused my worst grade
-
-```chem
-(salt + funnel + H2O ---pooring--> 😢).
-```
-
-In short:
-
-- A `Reaction`: Links a `Catalyst`, a `Reactant` and a callback. An
-  can be `inhibit!` -ed. Your usually don't have to manage this.
-- A `Catalyst`: `catalyze!` and manage reactions with `Reactants` ,
-  can be `denature!` -ed.
-- a `Reactant` hold a value and notify all ongoing reactions when
-  it's value change.
-- A `Reactor`: holds several catalysts, and acts like a computed
-  reactant whose value depends on other `AbstractReactive` objects
-  and whose value is lazily-computed.
-- `@ionic`: is just a tool, a translater, or something like that,
-  I'm not so good at names, but in fact, it transforms assignments
-  and getting values to ''' prepended values into
-  a `IonicEfus.setvalue` and `IonicEfus.getvalue!` call.
+see [Ionic.jl](https://github.com/ken-morel/Ionic.jl)
 
 ## Getting to it
 
 Well, this was just to briefly describe(🤧) what is there, but
-to learn more about it, you could read the [IonicEfus.jl documentation](https://ionicefus.engon.rbs.cm).
+to learn more about it, you could read the [Efus.jl documentation](https://efus.engon.rbs.cm).
 I will host it there as soon as i get the docs hosted by julia
 General registry docs hosting whatsoever that other modules seem to use.
 
 If you are looking for examples of usage of this I am also
 having [Gtak.jl](https://github.com/ken-morel/Gtak.jl), which
-provide `IonicEfus.jl` and [Atak.jl](https://github.com/ken-morel/Atak.jl)
+provide `Efus.jl` and [Atak.jl](https://github.com/ken-morel/Atak.jl)
 bindings for [Gtk4.jl](https://github.com/JuliaGtk/Gtk4.jl).
 
 Well, thanks for reaching up to here, if you want to contribute,

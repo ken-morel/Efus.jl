@@ -1,7 +1,7 @@
 # Efus expressions
 
-- [`IonicEfus.Ast.Expression`](@ref)
-- [`IonicEfus.Gen.generate(::IonicEfus.Ast.Expression)`](@ref)
+- [`Efus.Ast.Expression`](@ref)
+- [`Efus.Gen.generate(::Efus.Ast.Expression)`](@ref)
 
 Here we are going to talk about the various
 type of expressions that efus allows, those you
@@ -9,11 +9,11 @@ can place after the `=` in a component call.
 
 ## Julia expressions
 
-- [`IonicEfus.Ast.Julia`]
+- [`Efus.Ast.Julia`]
 
 These are expressions which are directly parsed
 and substituted from julia, they are also
-passed through [`IonicEfus.Ionic.transcribe`]
+passed through [`Efus.Ionic.transcribe`]
 so you can use ionic in them, they thus provide
 most of julia syntax features, they include.
 
@@ -71,9 +71,9 @@ similar syntax but I'll explain later.
 
 ## Reactors
 
-- [`IonicEfus.Reactor`](@ref)
-- [`IonicEfus.Ast.Reactor`](@ref)
-- [`IonicEfus.Gen.generate(::IonicEfus.Ast.Reactor)`](@ref)
+- [`Efus.Reactor`](@ref)
+- [`Efus.Ast.Reactor`](@ref)
+- [`Efus.Gen.generate(::Efus.Ast.Reactor)`](@ref)
 
 Reactor syntax permit you to define computed
 reactive values. They are defined as julia expressions
@@ -86,8 +86,8 @@ type.
 
 ## Lists, Vect or Vectors
 
-- [`IonicEfus.Ast.Vect`](@ref)
-- [`IonicEfus.Gen.generate(::IonicEfus.Ast.Vect)`]
+- [`Efus.Ast.Vect`](@ref)
+- [`Efus.Gen.generate(::Efus.Ast.Vect)`]
 
 efus permits you to type expressions in `[]` quotes
 with vector syntax, you can nest, vect definitions,
@@ -97,8 +97,8 @@ use newlines, ...
 
 ## Arrows functions
 
-- [`IonicEfus.Ast.Arrow`](@ref)
-- [`IonicEfus.Ast.generate(::IonicEfus.Ast.Arrow)`](@ref)
+- [`Efus.Ast.Arrow`](@ref)
+- [`Efus.Ast.generate(::Efus.Ast.Arrow)`](@ref)
 
 An arrow is simply an arrow function, it transforms
 into a plain julia arrow function, the left hand side

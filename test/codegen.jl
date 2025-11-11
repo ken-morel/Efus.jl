@@ -1,6 +1,6 @@
-using IonicEfus
-using IonicEfus.Gen
-using IonicEfus.Ast
+using Efus
+using Efus.Gen
+using Efus.Ast
 
 @testset "Code Generation" begin
     @testset "Basic Component Generation" begin
@@ -50,7 +50,10 @@ using IonicEfus.Ast
         @test container_call.args[1] == :Container
 
         # Should have children argument
-        children_kw = findfirst(arg -> arg isa Expr && arg.head == :kw && arg.args[1] == :children, container_call.args)
+        children_kw = findfirst(
+            arg -> arg isa Expr && arg.head == :kw && arg.args[1] == :children,
+            container_call.args,
+        )
         @test children_kw !== nothing
     end
 
@@ -106,4 +109,3 @@ using IonicEfus.Ast
         @test_throws Gen.CodeGenerationError Gen.generate(code)
     end
 end
-
