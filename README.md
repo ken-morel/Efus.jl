@@ -8,6 +8,8 @@
 language that compiles directly to Julia code. Combined with reactivity system from `Ionic.jl` to build complex,
 dynamic user interfaces and other component-based systems in a clean and maintainable way.
 
+Efus.jl is the core templating and reactivity engine of a larger ecosystem. For building graphical user interfaces, it is complemented by [Gtak.jl](https://github.com/ken-morel/Gtak.jl), which provides GTK4 bindings. For application-level services like data storage and task scheduling, it integrates with [Atak.jl](https://github.com/ken-morel/Atak.jl).
+
 The core philosophy of Efus is to blend the readability of a templating language
 with the power and performance of native Julia code.
 

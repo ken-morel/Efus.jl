@@ -1,34 +1,58 @@
 # Creating Efus Components
 
-This guide provides an in-depth look at how to create your own components in Efus. A component is the fundamental building block of an Efus application, encapsulating state, logic, and a piece of the user interface (or any other backend representation).
+This guide provides an in-depth look at how to create your own components in Efus, drawing best practices from the `Gtak.jl` framework. A component is the fundamental building block of an Efus application, encapsulating state, logic, and a piece of the user interface (or any other backend representation).
 
-## 1. The Component Struct
+## 1. The Component Struct and Macros
 
 At its core, a component is a Julia `struct` that subtypes `Efus.Component`. This struct holds the component's state, properties, and any internal data it needs to manage its lifecycle.
 
-**Best Practices for Component Structs:**
+In `Gtak.jl`, specialized macros (`@gtakcomponent` and `@gtakwidgetcomponent`) are used to streamline component definition and automatically inject common fields.
 
--   **Name**: Use `PascalCase` for the struct name (e.g., `DataGrid`, `SimpleButton`).
--   **State**: Use `Reactant`s from `Ionic.jl` to hold the component's internal, mutable state. This makes the component's state observable and allows other parts of the system to react to its changes.
--   **Properties**: Define fields for the properties that can be passed to the component from an Efus template. These can be `Reactant`s if the property itself needs to be reactive, or plain Julia types for static values.
--   **Catalyst**: Always include a `catalyst::Catalyst` field. This is crucial for managing the lifecycle of any subscriptions the component makes to reactive objects, preventing memory leaks.
--   **Backend Reference**: Include a field to hold a reference to the backend object the component manages (e.g., a GTK widget, an HTML element). Initialize it to `nothing`.
+### `@gtakcomponent` (Base Component Macro)
+
+This macro, defined in `Gtak.jl/src/component.jl`, is used for general-purpose components. It automatically adds the following essential internal fields to your component struct:
+
+-   `_dirty::Set{Symbol}`: Tracks which properties have changed, used by the `update!` mechanism.
+-   `_lock::ReentrantLock`: Provides thread-safe access to the component's internal state.
+-   `_catalyst::Catalyst`: Manages all reactive subscriptions made by the component, crucial for cleanup.
+-   `_parent::Union{Component, Nothing}`: A reference to the component's parent in the component tree.
+-   `_widget::Union{Gtk4.GLib.GObject, Nothing}`: A reference to the primary backend object (e.g., a GTK widget) managed by this component.
+
+**Example Usage:**
 
 ```julia
-using Efus, Ionic
+using Efus, Ionic, Gtk4 # Assuming Gtk4 for backend_ref type
 
-struct MyButton <: Component
-  # --- Properties ---
-  text::Reactant{String}
-  is_disabled::Reactant{Bool}
+@gtakcomponent struct MyCustomComponent <: Efus.Component
+  # --- Component-specific properties ---
+  my_property::MayBeReactive{String} = "default"
+  another_property::Int = 0
 
-  # --- State ---
-  is_hovered::Reactant{Bool}
+  # --- Children (if it's a container) ---
+  children::Vector{Efus.Component} = []
+end
+```
 
-  # --- Internals ---
-  on_click::Function
-  catalyst::Catalyst
-  widget # Reference to the backend widget
+### `@gtakwidgetcomponent` (Widget-Specific Macro)
+
+This macro, defined in `Gtak.jl/src/widgets/widgets.jl`, is built on top of `@gtakcomponent`. It's designed for components that directly wrap a single backend widget (like a `GtkButton` or `GtkLabel`). In addition to the fields from `@gtakcomponent`, it automatically injects a comprehensive set of common GTK-specific properties:
+
+-   `opacity`, `margin`, `align`, `expand`, `canfocus`, `hasfocus`, `cursor`, `sensitive`, `tooltip`, `visible`, `cssclasses`, `cssname`, `width_request`, `height_request`, `lay` (for layout parameters).
+
+These properties are automatically made reactive (`MayBeReactive`) and are handled by shared `_gtakwidgetupdatecommon` and `_gtakwidgetmountcommon!` functions in `Gtak.jl`.
+
+**Example Usage:**
+
+```julia
+using Efus, Ionic, Gtk4
+
+@gtakwidgetcomponent struct MyButton <: Efus.Component
+  # --- Widget-specific properties ---
+  text::MayBeReactive{String} = ""
+  on_click::Union{Function, Nothing} = nothing
+
+  # --- Internal fields (if needed, beyond what macros provide) ---
+  _handler_id::UInt = 0 # Example: for Gtk signal connection
 end
 ```
 
@@ -36,20 +60,19 @@ end
 
 Provide a user-friendly, keyword-based constructor for your component. The function name should match the struct name. This is the function that will be called by the compiled Efus template.
 
--   Initialize all `Reactant` fields.
--   Initialize the `Catalyst`.
--   Set default values for optional properties.
+-   Initialize all properties (often with default values).
+-   The internal fields (`_dirty`, `_lock`, `_catalyst`, `_parent`, `_widget`) are typically initialized by the macros and do not need explicit initialization in your constructor.
 
 ```julia
-function MyButton(; text, is_disabled=false, on_click=()->nothing)
-  MyButton(
-    Reactant(text),
-    Reactant(is_disabled),
-    Reactant(false), # internal state `is_hovered`
-    on_click,
-    Catalyst(),
-    nothing # widget is not created yet
-  )
+# For MyCustomComponent
+function MyCustomComponent(; my_property="default", another_property=0, children=[])
+  MyCustomComponent(my_property, another_property, children)
+end
+
+# For MyButton
+function MyButton(; text="", on_click=()->nothing, kwargs...)
+  # Pass kwargs to the macro-generated constructor for common widget properties
+  MyButton(text, on_click, 0; kwargs...)
 end
 ```
 
@@ -61,31 +84,60 @@ The lifecycle methods are the heart of a component. You must implement them by e
 
 This method is called once to bring the component to life. Its responsibilities are:
 
-1.  **Create Backend Objects**: Instantiate the actual backend object (e.g., a `GtkButton`, a `Plot`) using the component's initial properties. Store a reference to it in the component `struct`.
-2.  **Set up Reactivity**: Use `catalyze!` to subscribe to the component's own `Reactant` properties and state. The callbacks should update the backend object whenever the reactive data changes.
-3.  **Attach to Parent**: Add the newly created backend object to the parent's backend representation.
+1.  **Set Parent**: Store the `parent` reference in `component._parent`.
+2.  **Create Backend Objects**: Instantiate the actual backend object (e.g., a `GtkButton`, a `Plot`) using the component's initial properties. Store a reference to it in `component._widget`.
+3.  **Handle Common Widget Properties (for `@gtakwidgetcomponent`)**: Call `_gtakwidgetmountcommon!(component, [])` to apply common properties like `margin`, `align`, etc., and set up their reactivity.
+4.  **Set up Component-Specific Reactivity**: Use `catalyze!` with `component._catalyst` to subscribe to the component's own `Reactant` properties and state. The callbacks should update the backend object whenever the reactive data changes.
+5.  **Attach to Parent**: Add the newly created backend object (`component._widget`) to the parent's backend representation.
+6.  **Mount Children**: If the component is a container, iterate through `component.children` and call `mount!(child, component)` for each.
+
+**Example (`MyButton`):**
 
 ```julia
-function Efus.mount!(c::MyButton, parent_widget)
-  # 1. Create backend widget
-  c.widget = GtkButton(c.text[])
-  set_widget_disabled(c.widget, c.is_disabled[])
+function Efus.mount!(b::MyButton, p::Efus.Component)
+  @lock b._lock begin # Use the macro-provided lock
+    b._parent = p
+    b._widget = GtkButton() # Create the GTK button
 
-  # 2. Set up reactivity
-  catalyze!(c.catalyst, c.text) do new_text
-    set_widget_text(c.widget, new_text)
-  end
-  catalyze!(c.catalyst, c.is_disabled) do disabled
-    set_widget_disabled(c.widget, disabled)
-  end
+    # Handle common widget properties and their reactivity
+    _gtakwidgetmountcommon!(b, [])
 
-  # (Example of reacting to internal state)
-  catalyze!(c.catalyst, c.is_hovered) do hovered
-    set_widget_style(c.widget, hovered ? "hovered" : "")
-  end
+    # Set up component-specific reactivity (e.g., for `text`)
+    catalyze!(b._catalyst, b.text) do new_text
+      b._widget.label = new_text # Update GTK button label
+    end
 
-  # 3. Attach to parent
-  add_widget_to_container(parent_widget, c.widget)
+    # Connect GTK signal to Efus event
+    b._handler_id = signal_connect(b._widget, :clicked) do _
+      if !isnothing(b.on_click)
+        # Schedule the callback to run on the scheduler
+        schedule(b, Atak.Sched.CallbackCall(b.on_click, Atak.Sched.UserInteractive) do
+          @invokelatest b.on_click()
+        end)
+      end
+    end
+
+    # Return the main widget
+    return b._widget
+  end
+end
+```
+
+### `Efus.update!(component)`
+
+This method is called when a component's properties are updated *after* it has been mounted.
+
+-   For `@gtakwidgetcomponent`s, the `_updates` helper function (from `Gtak.jl/src/widgets/widgets.jl`) is typically used. This function iterates through the `_dirty` set, handles common widget properties via `_gtakwidgetupdatecommon`, and then calls a provided function for component-specific updates.
+
+**Example (`MyButton`):**
+
+```julia
+function Efus.update!(c::MyButton)
+  return _updates(c) do dirt # _updates handles common properties
+    if dirt == :text # Handle component-specific dirty property
+      c._widget.label = Efus.resolve(c.text)
+    end
+  end
 end
 ```
 
@@ -93,46 +145,63 @@ end
 
 This method is called to destroy the component and clean up its resources.
 
-1.  **Denature the Catalyst**: Call `denature!(c.catalyst)`. This is the **most critical step**. It tears down all subscriptions the component made, preventing memory leaks.
-2.  **Destroy Backend Objects**: Explicitly destroy the backend widget to free up memory and other system resources.
+1.  **Denature the Catalyst**: Call `denature!(component._catalyst)`. This is **critical** for preventing memory leaks by tearing down all reactive subscriptions.
+2.  **Unmount Children**: If the component has children, recursively call `unmount!` on them.
+3.  **Disconnect Signals/Events**: Disconnect any event handlers or signals (e.g., GTK signals) to prevent dangling references.
+4.  **Destroy Backend Objects**: Explicitly destroy the backend widget(s) to free up memory and other system resources. For `@gtakwidgetcomponent`s, `_gtakunmountwidget!` is a helper function that handles this.
+
+**Example (`MyButton`):**
 
 ```julia
-function Efus.unmount!(c::MyButton)
-  # 1. CRITICAL: Clean up all subscriptions
-  denature!(c.catalyst)
+function Efus.unmount!(b::MyButton)
+  @lock b._lock begin
+    # Disconnect GTK signal
+    if b._widget !== nothing && b._handler_id != 0
+      signal_handler_disconnect(b._widget, b._handler_id)
+      b._handler_id = 0
+    end
 
-  # 2. Destroy the backend widget
-  destroy_widget(c.widget)
+    # Handle common widget unmounting and destroy the main widget
+    _gtakunmountwidget!(b; widgets = [:_widget]) # Pass widgets to destroy
+
+    # Denature the catalyst (critical for reactivity cleanup)
+    denature!(b._catalyst)
+
+    # Clear internal state
+    empty!(b._dirty)
+    b._widget = nothing
+    b._parent = nothing
+  end
 end
 ```
 
-### `Efus.update!(component)`
+## 4. Handling Children (Container Components)
 
-This method is called when a component's properties are updated *after* it has been mounted. The default behavior is often sufficient, but you can implement custom logic if needed.
+If your component is a container that can accept nested components (e.g., a `Box` or `Window`), the children will be passed as a `children::Vector{Efus.Component}` keyword argument to your constructor.
 
-## 4. Handling Children
-
-If your component is a container that can accept nested components (e.g., a `Box` or `Window`), the children will be passed as a `children` keyword argument to your constructor.
-
-Your `mount!` method should iterate over `c.children` and call `mount!` on each child, passing its own backend widget as the parent.
+Your `mount!` method should iterate over `component.children` and call `mount!` on each child, passing its own backend widget as the parent.
 
 ```julia
-struct Box <: Component
-  children::Vector{<:Component}
-  widget
+@gtakcomponent struct MyBox <: Efus.Component
+  children::Vector{Efus.Component} = []
 end
 
-function Box(; children)
-  Box(children, nothing)
+function MyBox(; children=[])
+  MyBox(children)
 end
 
-function Efus.mount!(c::Box, parent_widget)
-  c.widget = create_backend_box()
-  add_widget_to_container(parent_widget, c.widget)
+function Efus.mount!(c::MyBox, parent_widget)
+  @lock c._lock begin
+    c._parent = parent_widget
+    c._widget = GtkBox() # Create the GTK box
 
-  # Mount each child, passing this Box's widget as the new parent
-  for child in c.children
-    mount!(child, c.widget)
+    add_widget_to_container(parent_widget, c._widget) # Hypothetical
+
+    # Mount each child, passing this Box's widget as the new parent
+    for child in c.children
+      mount!(child, c._widget)
+    end
+    return c._widget
   end
 end
 ```

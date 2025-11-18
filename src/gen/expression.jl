@@ -2,7 +2,7 @@
     generate(expr::Ast.Julia)
 
 Generates a valid julia expr from the
-passed ast expression by taking the 
+passed ast expression by taking the
 output of [`Ionic.transcribe`](@ref).
 """
 generate(expr::Ast.Julia) = Ionic.transcribe(expr.expr).code
@@ -25,7 +25,7 @@ function generate(expr::Ast.Reactor)
     type = something(Ionic.transcribe(expr.type).code, :Any)
     dependencies_expr = Expr(:ref, Efus.AbstractReactive, trans.gets...)
     return quote
-        $(Ionic.Reactor){$type}(() -> $(trna.code), nothing, $dependencies_expr)
+        $(Ionic.Reactor){$type}(() -> $(trans.code), nothing, $dependencies_expr)
     end
 end
 
